@@ -9,19 +9,10 @@
  *  Copyright 2007 __Andrew Nelson and The Australian Nuclear Science and Technology Organisation__. All rights reserved.
  *
  */
+#include "XOPStandardHeaders.h"
 #include "GenCurveFit.h"
 
 #define TINY 1.0e-20
-
-static int ludcmp(double**,int,int*,double*);
-static int lubksb(double **a, int n, int *indx, double b[]);
-static int matrixInversion(double **a, int N);
-int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP);
-int updatePartialDerivative(double**, GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP);
-int partialDerivative(double**, int, GenCurveFitRuntimeParamsPtr, GenCurveFitInternalsPtr,int);
-int updateAlpha(double**,double**, GenCurveFitInternalsPtr goiP);
-int calculateAlphaElement(int row, int col, double **alpha, double **derivativeMatrix, GenCurveFitInternalsPtr goiP);
-int packAlphaSymmetric(double** alpha,GenCurveFitInternalsPtr);
 
 int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	int err;
@@ -169,7 +160,7 @@ static int ludcmp(double **a, int n, int *indx, double *d){
 		for(j=0 ; j<n ; j++)
 			if((temp = fabs(a[i][j])) > big) big = temp;
 		if(big == 0.0){
-			err = 0;
+			err = UNSPECIFIED_ERROR;
 			goto done;
 		}
 		vv[i] = 1.0/big;	
@@ -250,13 +241,13 @@ int matrixInversion(double **a, int N){
 	
 	indx = (int*)malloc(sizeof(int)*N);
 	if(indx == NULL){
-		err = 0;
+		err = NOMEM;
 		goto done;
 	}
 	
 	tempA = (double**)malloc2d(N,N,sizeof(double));
 	if(tempA == NULL){
-		err = 0;
+		err = NOMEM;
 		goto done;
 	}
 	for(i=0; i<N; i++){
@@ -267,7 +258,7 @@ int matrixInversion(double **a, int N){
 	
 	col = (double*)malloc(sizeof(double)*N);
 	if(col == NULL){
-		err = 0;
+		err = NOMEM;
 		goto done;
 	}
 
@@ -282,6 +273,12 @@ int matrixInversion(double **a, int N){
 		  a[i][j] = col[i];
 		  };
 	}
-	done:
+done:
+	if(col!=NULL)
+		free(col);
+	if(indx!=NULL)
+		free(indx);
+	if(tempA!=NULL)
+		free(tempA);
 	return err;
 	}
