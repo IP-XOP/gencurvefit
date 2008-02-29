@@ -5,3 +5,6 @@ The individual XOP's for Mac and Windows are contained in the folders /mac and /
 
 WIN32 INSTALLATION:
 Simply use the Win32 installer provided, there's no need to do anything else!
+
+Mac OSX INSTALLATION:
+Mount the Mac_GencurvefitInstaller.dmg by double clicking on it.  The double click on the installer package, which will install Gencurvefit.
