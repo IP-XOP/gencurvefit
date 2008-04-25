@@ -1,3 +1,4 @@
+#include "XOPStandardHeaders.h"
 #include "memutils.h"
 
 //create a platform independent routine for continuous reallocation of memory, appending data to it
@@ -78,4 +79,3 @@ void* malloc2d(int ii, int jj, int sz)
   }
   return p;
 }
-

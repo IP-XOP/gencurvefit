@@ -1,3 +1,4 @@
+#include "XOPStandardHeaders.h"
 #include "GenCurvefit.h"
 
 /*
