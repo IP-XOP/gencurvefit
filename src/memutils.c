@@ -1,7 +1,31 @@
-/*
-GenOpt.c -- An XOP for curvefitting via Differential Evolution.
-@copyright: Andrew Nelson and the Australian Nuclear Science and Technology Organisation 2007.
-*/
+#include "memutils.h"
+
+//create a platform independent routine for continuous reallocation of memory, appending data to it
+void *myrealloc(void *src_ptr, size_t size)
+{
+    /* There might be a realloc() out there that doesn't like reallocing
+	NULL pointers, so we take care of it here */
+    if(src_ptr)
+		return realloc(src_ptr, size);
+    else
+		return malloc(size);
+}
+
+size_t
+WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
+{
+    size_t realsize = size * nmemb;
+    struct MemoryStruct *mem = (struct MemoryStruct *)data;
+	
+    mem->memory = (char *)myrealloc(mem->memory, mem->size + realsize + 1);
+    if (mem->memory) {
+		memcpy(&(mem->memory[mem->size]), ptr, realsize);
+		mem->size += realsize;
+		mem->memory[mem->size] = 0;
+    }
+    return realsize;
+}
+
 
 /*
  * \brief Create a two-dimensional array in a single allocation
@@ -31,7 +55,6 @@ Note you can access elements by
 	 *(*(p+i)+j) is equivalent to p[i][j]
  In addition *(p+i) points to a whole row.
 	*/
-#include "XOPStandardHeaders.h"
 
 void* malloc2d(int ii, int jj, int sz)
 {
@@ -55,3 +78,4 @@ void* malloc2d(int ii, int jj, int sz)
   }
   return p;
 }
+

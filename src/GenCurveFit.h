@@ -7,6 +7,7 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #include "XOPStandardHeaders.h"			// Include ANSI headers, Mac headers, IgorXOP.h, XOP.h and XOPSupport.h
 #include <time.h>
 #include <stdlib.h>
+#include "memutils.h"
 
 //maximum dimension of fit
 #define MAX_MDFIT_SIZE 50
@@ -77,6 +78,10 @@ typedef struct fitfuncStruct* fitfuncStructPtr;
 struct GenCurveFitRuntimeParams {
 	// Flag parameters.
 
+	// Parameters for /DUMP flag group.
+	int DUMPFlagEncountered;
+	// There are no fields for this group because it has no parameters.
+	
 	// Parameters for /STRC flag group.
 	int STRCFlagEncountered;
 	fitfuncStruct* STRCFlag_sp;
@@ -372,7 +377,7 @@ static double roundDouble(double);
 static waveStats getWaveStats(double*,long,int);
 static void checkLimits(GenCurveFitInternalsPtr,GenCurveFitRuntimeParamsPtr);
 int WindowMessage(void);
-
+int dumpRecordToWave(GenCurveFitInternalsPtr goiP,	MemoryStruct *dumpRecord);
 
 /*
 	Functions contained in updateXOP<x>.c
@@ -403,9 +408,6 @@ int partialDerivative(double**, int, GenCurveFitRuntimeParamsPtr, GenCurveFitInt
 int updateAlpha(double**,double**, GenCurveFitInternalsPtr goiP);
 int calculateAlphaElement(int row, int col, double **alpha, double **derivativeMatrix, GenCurveFitInternalsPtr goiP);
 int packAlphaSymmetric(double** alpha,GenCurveFitInternalsPtr);
-
-//in malloc2D.c
-void* malloc2d(int ii, int jj, int sz);
 
 /* Prototypes */
 HOST_IMPORT void main(IORecHandle ioRecHandle);
