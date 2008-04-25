@@ -1109,7 +1109,11 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 	int requiredParameterTypes[MAX_MDFIT_SIZE+2];
 	int badParameterNumber;
 	allFitFunc allParameters;
-	fitFunc parameters;	
+	fitFunc parameters;
+	
+	//experimenting with faster wave access
+	long dataOffset; 
+	int hState; 
 	
 	double result;
 	long numfitpoints = WavePoints(output);
@@ -1150,9 +1154,17 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 					goto done;
 				*(outputPtr+ii) = result;
 			}
+
 			// copy the output array into an output wave
-			if(err = MDStoreDPDataInNumericWave(output,outputPtr))
-				goto done;
+//			if(err = MDStoreDPDataInNumericWave(output,outputPtr))
+//				goto done;
+			
+			if (err = MDAccessNumericWaveData(output, kMDWaveAccessMode0, &dataOffset)) 
+				goto done; 
+			hState = MoveLockHandle(output); // Lock handle so data won’t move.
+			memcpy((*output) + dataOffset , outputPtr,numfitpoints*sizeof(double));
+			HSetState((Handle)output, hState);
+
 			break;
 			case 1:
 			allParameters.waveC = coefs;
@@ -1178,9 +1190,15 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 				err = USER_CHANGED_FITWAVE;
 				goto done;
 			}
+
 			// get the output wave and put it into the output array
-			if(err = MDGetDPDataFromNumericWave(output,outputPtr))
-				goto done;
+//			if(err = MDGetDPDataFromNumericWave(output,outputPtr))
+//				goto done;			
+			if (err = MDAccessNumericWaveData(output, kMDWaveAccessMode0, &dataOffset)) 
+				goto done; 
+			hState = MoveLockHandle(output); // Lock handle so data won’t move.
+			memcpy(outputPtr , (*output) + dataOffset,numfitpoints*sizeof(double));
+			HSetState((Handle)output, hState);
 			break;
 			case 2:
 			if(sp == NULL){
@@ -1216,8 +1234,13 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 				goto done;
 			}
 			// get the output wave and put it into the output array
-			if(err = MDGetDPDataFromNumericWave(output,outputPtr))
-				goto done;
+//			if(err = MDGetDPDataFromNumericWave(output,outputPtr))
+//				goto done;
+			if (err = MDAccessNumericWaveData(output, kMDWaveAccessMode0, &dataOffset)) 
+				goto done; 
+			hState = MoveLockHandle(output); // Lock handle so data won’t move.
+			memcpy(outputPtr , (*output) + dataOffset,numfitpoints*sizeof(double));
+			HSetState((Handle)output, hState);
 			break;
 			default:
 			err = UNSPECIFIED_ERROR;
@@ -1614,8 +1637,6 @@ createTrialVector(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p, i
 	
 	for(ii=0 ; ii<numvarparams ; ii+=1){
 		*(goiP->gen_bprime+ii) = goiP->gen_populationvector[0][ii] + km*(goiP->gen_populationvector[randomA][ii] - goiP->gen_populationvector[randomB][ii]);
-	}
-	for(ii=0 ; ii<numvarparams ; ii+=1){
 		*(goiP->gen_trial+ii) = goiP->gen_populationvector[currentpvector][ii];
 	}
 	
@@ -1697,10 +1718,10 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 #endif				
 			}	
 			//cmd-dot or abort button
-			if(CheckAbort(0)==-1){
-				err = FIT_ABORTED;
-				goto done;
-			}
+//			if(CheckAbort(0)==-1){
+//				err = FIT_ABORTED;
+//				goto done;
+//			}
 			
 			currentpvector=ii;
 			//now set up the trial vector using a wave from the populationvector and bprime
