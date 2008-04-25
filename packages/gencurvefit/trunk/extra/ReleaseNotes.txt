@@ -22,3 +22,8 @@ First Mac Unversal Binary.  Win32 and Mac versions are on same branch now.  Mac 
 070925
 Fit errors (standard deviation) are now estimated using the correlation matrix approach.  This means that one can now view the correlation matrix as well, using the /MAT flag.  NOTE: the fitting process doesn't use the correlation matrix to direct the fit, it is only calculated after the fit has finished.  It is possible for this calculation to fail if the fit is not dependent on some parameters. 
 Added /SEED, which initialises the random number generator.  If SEED is set then the fit will be reproducible.  This should only be used for diagnostic purposes.
+
+080425
+improved some number crunching speed (clearer code)
+Cleaned and split some source code into more manageable chunks
+Added /DUMP flag to dump genetic population into a wave at the end of every  iteration.
