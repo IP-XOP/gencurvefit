@@ -1718,10 +1718,10 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 #endif				
 			}	
 			//cmd-dot or abort button
-//			if(CheckAbort(0)==-1){
-//				err = FIT_ABORTED;
-//				goto done;
-//			}
+			if(CheckAbort(0)==-1){
+				err = FIT_ABORTED;
+				goto done;
+			}
 			
 			currentpvector=ii;
 			//now set up the trial vector using a wave from the populationvector and bprime
@@ -2144,7 +2144,7 @@ static waveStats getWaveStats(double *sort, long length,int moment){
 			case 1:
 			for(ii=0;ii<length;ii+=1){
 				nx += (*(sort+ii));
-				nx2 += pow(*(sort+ii),2);
+				nx2 += *(sort+ii)*(*(sort+ii));
 				if(*(sort+ii)>maxval){
 					maxval = *(sort+ii);
 					maxpos = ii;
@@ -2157,7 +2157,7 @@ static waveStats getWaveStats(double *sort, long length,int moment){
 			retval.V_maxloc = maxpos;
 			retval.V_minloc = minpos;
 			retval.V_avg = nx/(double)length;
-			retval.V_stdev = sqrt((nx2/(double)length)-pow(retval.V_avg,2));
+			retval.V_stdev = sqrt((nx2/(double)length)-(retval.V_avg*retval.V_avg));
 			break;
 	}
 	return retval;
