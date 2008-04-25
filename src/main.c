@@ -6,8 +6,9 @@
  *  Copyright 2008 __MyCompanyName__. All rights reserved.
  *
  */
+#include "XOPStandardHeaders.h"
+#include "GenCurveFit.h"
 
-#include "GenCurvefit.h"
 
 static int
 RegisterGenCurveFit(void)
@@ -89,4 +90,3 @@ main(IORecHandle ioRecHandle){
 	
 	SetXOPResult(0);
 }
-
