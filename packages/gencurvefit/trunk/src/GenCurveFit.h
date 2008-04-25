@@ -336,9 +336,10 @@ typedef struct allFitFunc* allFitFuncPtr;
 /*
 	Functions contained in Gencurvefit.c
 */
-static int checkInput(GenCurveFitRuntimeParamsPtr, GenCurveFitInternalsPtr);
-static int checkNanInf(waveHndl);
-static int checkZeros(waveHndl ,long* );
+int ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p);
+int checkInput(GenCurveFitRuntimeParamsPtr, GenCurveFitInternalsPtr);
+int checkNanInf(waveHndl);
+int checkZeros(waveHndl ,long* );
 static void freeAllocMem(GenCurveFitInternalsPtr goiP);
 static int randomInteger(int upper);
 static double randomDouble(double lower, double upper);
@@ -360,7 +361,7 @@ static int calcChi2(double*, double*, double*, long, double*,int);
 static int calcMaxLikelihood(double* , double* , double* , long , double* , int );
 static int calcRobust(double* , double* , double* , long , double* , int );
 static int init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr, GenCurveFitInternalsPtr);
-static int identicalWaves(waveHndl , waveHndl , int* );
+int identicalWaves(waveHndl , waveHndl , int* );
 static int subtractTwoWaves(waveHndl, waveHndl   );
 static int isWaveDisplayed(waveHndl, int *);
 static long numInArray3SD(double*, double , long);
@@ -370,7 +371,7 @@ static int getRange (WaveRange ,long *,long *);
 static double roundDouble(double);
 static waveStats getWaveStats(double*,long,int);
 static void checkLimits(GenCurveFitInternalsPtr,GenCurveFitRuntimeParamsPtr);
-static int WindowMessage(void);
+int WindowMessage(void);
 
 
 /*
