@@ -461,7 +461,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	double temp1=0;
 	long temp;
 	waveStats wavStats;
-	
+		
 	//initialise the chi2value
 	goiP->chi2 = -1;
 	
@@ -946,6 +946,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	swapChi2values(goiP,0,wavStats.V_minloc);
 	if(err = swapPopVector(goiP,goiP->totalpopsize,0,wavStats.V_minloc))
 		goto done;
+	
 	
 done:
 	if(holdstr != NULL)
@@ -1515,13 +1516,8 @@ swapPopVector(GenCurveFitInternalsPtr goiP,int popsize, int i, int j){
  */
 static int 
 setPvector(GenCurveFitInternalsPtr goiP,double* vector, int vectorsize){
-	int ii;
-	if(vectorsize == goiP->numvarparams){
-		for(ii=0 ; ii<vectorsize ; ii+=1){
-			*(goiP->gen_pvector+ii) = *(vector+ii);
-		}
-		return 0;
-	} else return UNSPECIFIED_ERROR;
+	//goiP->gen_pvector[] = vector[p]
+	memcpy(goiP->gen_pvector,vector,vectorsize*sizeof(double));
 	return 0;
 }
 /*
@@ -1532,12 +1528,8 @@ setPvector(GenCurveFitInternalsPtr goiP,double* vector, int vectorsize){
 
 static int 
 setPvectorFromPop(GenCurveFitInternalsPtr goiP, int vector){
-	int ii;
-	double val;
-	for(ii = 0 ; ii<goiP->numvarparams ; ii+=1){
-		val = goiP->gen_populationvector[vector][ii];
-		*(goiP->gen_pvector+ii) = goiP->gen_populationvector[vector][ii];
-	}
+	//goiP->gen_pvector[] = goiP->gen_populationvector[vector][p]
+	memcpy(goiP->gen_pvector, *(goiP->gen_populationvector+vector), goiP->numvarparams*sizeof(double));
 	return 0;
 }
 
@@ -1548,13 +1540,9 @@ setPvectorFromPop(GenCurveFitInternalsPtr goiP, int vector){
  */
 static int 
 setPopVectorFromPVector(GenCurveFitInternalsPtr goiP,double* vector, int vectorsize, int replace){
-	int ii;
-	if(vectorsize == goiP->numvarparams){
-		for(ii=0 ; ii<vectorsize ; ii+=1){
-			goiP->gen_populationvector[replace][ii] = *(vector+ii);
-		}
+		//goiP->gen_populationvector[replace][] = vector[q]
+		memcpy(*(goiP->gen_populationvector+replace), vector, vectorsize*sizeof(double));
 		return 0;
-	} else return UNSPECIFIED_ERROR;
 }
 
 /*
@@ -1667,11 +1655,16 @@ ensureConstraints(GenCurveFitInternalsPtr goiP,GenCurveFitRuntimeParamsPtr p){
 static int
 optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 	
-	long ii,kk;
+	long ii,kk,mm;
 	int err=0;
 	int currentpvector;
 	double chi2pvector,chi2trial;
 	waveStats wavStats;
+	
+	//an array for dumping the population at each iteration
+	MemoryStruct dumpRecord;
+	dumpRecord.memory = NULL;
+	dumpRecord.size = 0;
 	
 	//Display the coefficients so far.
 	if(!p->NFlagEncountered){
@@ -1681,6 +1674,14 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 	
 	// the user sets how many times through the entire population
 	for(kk=0; kk<p->KFlag_iterations ; kk+=1){
+		if(p->DUMPFlagEncountered){
+			for(mm=0 ; mm < goiP->totalpopsize ; mm+=1){
+				WriteMemoryCallback((goiP->gen_populationvector[mm]), sizeof(double), goiP->numvarparams, &dumpRecord);
+				if(dumpRecord.memory == NULL)
+					return NOMEM;
+			}
+		}
+		
 		goiP->V_numfititers = kk;
 		
 		//iterate over all the individual members of the population
@@ -1756,20 +1757,49 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 					 if the fractional decrease in chi2 is less than the tolerance then abort the fit
 					 */
 					wavStats = getWaveStats(goiP->chi2Array,goiP->totalpopsize,1);
-					
-					if( wavStats.V_stdev/wavStats.V_avg < p->TOLFlag_tol){	//if the fractional decrease is less and 0.5% stop.
-						*(goiP->chi2Array) = chi2trial;
-						return err;
-					}
-					
+
 					/*
 					 update the best chi2 if you've just found a better fit (but not yet reached termination
 					 */
 					*(goiP->chi2Array) = chi2trial;
+					
+					if( wavStats.V_stdev/wavStats.V_avg < p->TOLFlag_tol){	//if the fractional decrease is less and 0.5% stop.
+						*(goiP->chi2Array) = chi2trial;
+						if(p->DUMPFlagEncountered){
+							if(err = dumpRecordToWave(goiP,&dumpRecord))
+								return err;
+						}
+						return err;
+					}
+					
+
 				}
 			}
 		}
 	}
+	return err;
+}
+
+/*
+dumpRecordToWave puts the dumped population array into a wave, if the /DUMP flag was specified.
+*/
+int dumpRecordToWave(GenCurveFitInternalsPtr goiP,	MemoryStruct *dumpRecord){
+	int err = 0;
+	
+	waveHndl dump;
+	long dimensionSizes[MAX_DIMENSIONS+1]; // Array of dimension sizes 
+	
+	memset(dimensionSizes,0,sizeof(dimensionSizes));
+	dimensionSizes[0] = goiP->numvarparams;
+	dimensionSizes[1] = goiP->totalpopsize;
+	dimensionSizes[2] = goiP->V_numfititers;
+	
+	if(err = MDMakeWave(&dump,"M_gencurvefitpopdump",goiP->cDF,dimensionSizes,NT_FP64,1))
+		return err;
+	
+	if(err = MDStoreDPDataInNumericWave(dump, (double*)dumpRecord->memory))
+		return err;
+	
 	return err;
 }
 
@@ -1823,6 +1853,7 @@ done:
 	
 	return err;
 };
+
 
 /*
  identicalWaves tests whether two waveHandles refer to the same wave.
