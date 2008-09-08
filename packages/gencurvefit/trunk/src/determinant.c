@@ -6,7 +6,7 @@
  *  Copyright 2008 __MyCompanyName__. All rights reserved.
  *
  */
-
+#include "XOPStandardHeaders.h"
 #include "determinant.h"
 //==============================================================================
 // Recursive definition of determinate using expansion by minors.
