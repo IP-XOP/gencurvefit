@@ -20,6 +20,7 @@ int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr g
 	double **derivativeMatrix = NULL;
 	double hessianDeterminant = 0;
 	int ii,jj;
+	double temp;
 	
 	err = 0;
 	
@@ -38,6 +39,12 @@ int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr g
 	hessianDeterminant = Determinant(goiP->covarianceMatrix,goiP->numvarparams);
 	goiP->V_logBayes = exp(-0.5 * (*(goiP->chi2Array)) / (double)(goiP->unMaskedPoints - goiP->numvarparams)) * pow(4*3.14159,(double) goiP->numvarparams);
 	goiP->V_logBayes /= (sqrt(hessianDeterminant));
+	
+	for(ii=0; ii < goiP->numvarparams ; ii+=1){
+		temp = abs(*(goiP->limits + *(goiP->varparams+ii) + goiP->numvarparams)-(*(goiP->limits + *(goiP->varparams+ii))));
+		temp /= 0.5*abs(*(goiP->limits + *(goiP->varparams+ii) + goiP->numvarparams)+(*(goiP->limits + *(goiP->varparams+ii))));
+		goiP->V_logBayes /= pow(temp, goiP->numvarparams);
+	}
 	
 	if(err = matrixInversion(goiP->covarianceMatrix, goiP->numvarparams)) goto done;
 	
