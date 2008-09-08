@@ -197,6 +197,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		SetOperationNumVar("V_npnts", (int)(goi.unMaskedPoints));
 		SetOperationNumVar("V_nterms", (int)WavePoints(p->coefs));
 		SetOperationNumVar("V_nheld", (int)(WavePoints(p->coefs) - goi.numvarparams));
+		SetOperationNumVar("V_logBayes", goi.V_logBayes);
 	}		
 	
 	strcpy(cmd,"");
