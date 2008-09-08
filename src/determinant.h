@@ -52,5 +52,6 @@
 //
 //==============================================================================
 
-
+#include <stdlib.h>
+#include <math.h>
 double Determinant(double **a,int n);
