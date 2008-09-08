@@ -233,6 +233,9 @@ struct GenCurveFitInternals{
 	double chi2;
 	//number of fititerations done
 	long V_numfititers;
+	
+	//logarithm of the Bayes Posterior probability
+	double V_logBayes;
 
 	//a full copy of the y data being fitted
 	double *dataObsFull;

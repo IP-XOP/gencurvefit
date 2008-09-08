@@ -11,12 +11,14 @@
  */
 #include "XOPStandardHeaders.h"
 #include "GenCurveFit.h"
+#include "Determinant.h"
 
 #define TINY 1.0e-20
 
 int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	int err;
 	double **derivativeMatrix = NULL;
+	double hessianDeterminant = 0;
 	int ii,jj;
 	
 	err = 0;
@@ -32,6 +34,10 @@ int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr g
 	if(err = updatePartialDerivative(derivativeMatrix, p, goiP)) goto done;
 	
 	if(err = updateAlpha(goiP->covarianceMatrix, derivativeMatrix, goiP)) goto done;
+	
+	hessianDeterminant = Determinant(goiP->covarianceMatrix,goiP->numvarparams);
+	goiP->V_logBayes = exp(-0.5 * (*(goiP->chi2Array)) / (double)(goiP->unMaskedPoints - goiP->numvarparams)) * pow(4*3.14159,(double) goiP->numvarparams);
+	goiP->V_logBayes /= (sqrt(hessianDeterminant));
 	
 	if(err = matrixInversion(goiP->covarianceMatrix, goiP->numvarparams)) goto done;
 	
