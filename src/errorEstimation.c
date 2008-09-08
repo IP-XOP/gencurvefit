@@ -15,13 +15,27 @@
 
 #define TINY 1.0e-20
 
+double factorial(double num){
+	int ii;
+	double result = 0;
+	
+	if( num<70){
+		result = 1;
+		for(ii = 1 ; ii < num+1 ; ii+=1){
+			result *= (double)ii;
+		}
+	} else {
+		result = sqrt(2 * 3.14159 * num) * pow(num/2.71828,num);
+	}
+	return result;
+}
+
 int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	int err;
 	double **derivativeMatrix = NULL;
 	double hessianDeterminant = 0;
 	int ii,jj;
 	double temp;
-	
 	err = 0;
 	
 	if(goiP->covarianceMatrix == NULL){
@@ -37,14 +51,15 @@ int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr g
 	if(err = updateAlpha(goiP->covarianceMatrix, derivativeMatrix, goiP)) goto done;
 	
 	hessianDeterminant = Determinant(goiP->covarianceMatrix,goiP->numvarparams);
-	goiP->V_logBayes = exp(-0.5 * (*(goiP->chi2Array)) / (double)(goiP->unMaskedPoints - goiP->numvarparams)) * pow(4*3.14159,(double) goiP->numvarparams);
+	goiP->V_logBayes = factorial((double)goiP->numvarparams) * exp(-0.5 * (*(goiP->chi2Array)) / (double)(goiP->unMaskedPoints - goiP->numvarparams)) * pow(4*3.14159,(double) goiP->numvarparams);
 	goiP->V_logBayes /= (sqrt(hessianDeterminant));
 	
 	for(ii=0; ii < goiP->numvarparams ; ii+=1){
-		temp = abs(*(goiP->limits + *(goiP->varparams+ii) + goiP->numvarparams)-(*(goiP->limits + *(goiP->varparams+ii))));
-		temp /= 0.5*abs(*(goiP->limits + *(goiP->varparams+ii) + goiP->numvarparams)+(*(goiP->limits + *(goiP->varparams+ii))));
+		temp = fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)-*(goiP->limits + *(goiP->varparams+ii)));
+		temp /= 0.5*fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)+(*(goiP->limits + *(goiP->varparams+ii))));
 		goiP->V_logBayes /= pow(temp, goiP->numvarparams);
 	}
+	goiP->V_logBayes = log(goiP->V_logBayes);
 	
 	if(err = matrixInversion(goiP->covarianceMatrix, goiP->numvarparams)) goto done;
 	
