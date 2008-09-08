@@ -57,7 +57,7 @@ int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr g
 	for(ii=0; ii < goiP->numvarparams ; ii+=1){
 		temp = fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)-*(goiP->limits + *(goiP->varparams+ii)));
 		temp /= 0.5*fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)+(*(goiP->limits + *(goiP->varparams+ii))));
-		goiP->V_logBayes /= pow(temp, goiP->numvarparams);
+		goiP->V_logBayes /= temp;//pow(temp, goiP->numvarparams);
 	}
 	goiP->V_logBayes = log(goiP->V_logBayes);
 	
