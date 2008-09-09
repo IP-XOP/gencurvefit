@@ -51,13 +51,13 @@ int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr g
 	if(err = updateAlpha(goiP->covarianceMatrix, derivativeMatrix, goiP)) goto done;
 	
 	hessianDeterminant = Determinant(goiP->covarianceMatrix,goiP->numvarparams);
-	goiP->V_logBayes = exp(-0.5 * (*(goiP->chi2Array)) / (double)(goiP->unMaskedPoints - goiP->numvarparams)) * pow(4*3.14159,(double) goiP->numvarparams) ;//* factorial((double)goiP->numvarparams);
+	goiP->V_logBayes = exp(-0.5 * (*(goiP->chi2Array)) / (double)(goiP->unMaskedPoints - goiP->numvarparams));// * pow(4*3.14159,(double) goiP->numvarparams) ;//* factorial((double)goiP->numvarparams);
 	goiP->V_logBayes = goiP->V_logBayes / (sqrt(hessianDeterminant));
-	for(ii=0; ii < goiP->numvarparams ; ii+=1){
-		temp = fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)-*(goiP->limits + *(goiP->varparams+ii)));
-		temp = temp / (0.5 * fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)+(*(goiP->limits + *(goiP->varparams+ii)))));
-		goiP->V_logBayes = goiP->V_logBayes / temp;
-	}
+//	for(ii=0; ii < goiP->numvarparams ; ii+=1){
+//		temp = fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)-*(goiP->limits + *(goiP->varparams+ii)));
+//		temp = temp / (0.5 * fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)+(*(goiP->limits + *(goiP->varparams+ii)))));
+//		goiP->V_logBayes = goiP->V_logBayes / temp;
+//	}
 	goiP->V_logBayes = log(goiP->V_logBayes);
 	
 	if(err = matrixInversion(goiP->covarianceMatrix, goiP->numvarparams)) goto done;
