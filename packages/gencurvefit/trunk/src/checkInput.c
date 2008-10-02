@@ -58,7 +58,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 					if(p->STRCFlag_sp == NULL){
 						err = NULL_STRUCTURE;
 						goto done;
-					}
+					}					
 					if (p->STRCFlag_sp->version != kfitfuncStructVersion) { 
 						err = INCOMPATIBLE_STRUCT_VERSION; 
 						goto done; 

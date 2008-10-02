@@ -48,16 +48,30 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #define SUBRANGE_SPECIFIED_ASX 32 + FIRST_XOP_ERR
 #define NULL_STRUCTURE 33 + FIRST_XOP_ERR
 #define NEED_STRC 34 + FIRST_XOP_ERR
-
-
+/*
+Structure fitfuncStruct   
+Wave w
+wave y
+wave x[50]
+ 
+int16 numVarMD
+wave ffsWaves[50]
+wave ffsTextWaves[10]
+variable ffsvar[5]
+string ffsstr[5]
+nvar ffsnvars[5]
+svar ffssvars[5]
+funcref allatoncefitfunction ffsfuncrefs[10]
+uint32 ffsversion    // Structure version. 
+EndStructure 
+*/
 #include "XOPStructureAlignmentTwoByte.h" 
 struct fitfuncStruct { 
  waveHndl w;
  waveHndl yy;
  waveHndl xx[MAX_MDFIT_SIZE];
- double numVarMD;
- 
- unsigned long version;     // Structure version. 
+ short numVarMD;
+
  waveHndl otherNumWaves[50];
  waveHndl otherTextWaves[10];
  
@@ -68,6 +82,7 @@ struct fitfuncStruct {
  SVARRec svars[5];
  void* funcRef[10];
  
+  unsigned long version;     // Structure version. 
 
 }; 
 typedef struct fitfuncStruct fitfuncStruct; 
