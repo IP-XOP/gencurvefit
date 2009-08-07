@@ -122,10 +122,11 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 			value[0] = 0;
 			if(err2 = MDSetNumericWavePointValue(goi.W_sigma,indices,value)){err = err2;goto done;};					 
 		}
+		
 		goi.covarianceMatrix = (double**)malloc2d(goi.numvarparams,goi.numvarparams,sizeof(double));
 		if(goi.covarianceMatrix == NULL){ err = NOMEM; goto done;}
 		
-		if(!(err2 = getCovarianceMatrix(p, &goi))){
+		if(p->MATFlagEncountered && (!(err2 = getCovarianceMatrix(p, &goi)))){
 			//set the error wave
 			for(ii=0; ii<goi.numvarparams ; ii+=1){
 				indices[0] = *(goi.varparams+ii);
@@ -637,7 +638,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	}
 	//initialise the bprime vector
 	goiP->gen_bprime = (double*)malloc(goiP->numvarparams*sizeof(double));
-	if(goiP->gen_trial == NULL){
+	if(goiP->gen_bprime == NULL){
 		err = NOMEM;
 		goto done;
 	}
