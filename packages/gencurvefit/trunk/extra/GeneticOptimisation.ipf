@@ -480,8 +480,8 @@ End
 			weighting_Radio= 2
 			break
 	endswitch
-	CheckBox weighting_check0_tab1,value= weighting_Radio==1
-	CheckBox weighting_check1_tab1,value= weighting_Radio==2
+	CheckBox weighting_check0_tab1,value= weighting_Radio==1,win=gencurvefitpanel
+	CheckBox weighting_check1_tab1,value= weighting_Radio==2,win=gencurvefitpanel
 End
 
 
@@ -985,7 +985,7 @@ Function Gen_doFitButtonProc(ba) : ButtonControl
 				if(err!=-1)
 					removefromgraph/w=$(winname(0,1)) $output
 				endif
-				print cmd
+				cmdToHistory(cmd)
 				execute cmd
 				gen_savestatus()
 				
@@ -997,6 +997,18 @@ Function Gen_doFitButtonProc(ba) : ButtonControl
 	return 0
 End
 
+Function cmdToHistory(cmd)	// returns 0 if Macintosh, 1 if Windows
+	string cmd
+	String platform= UpperStr(igorinfo(2))
+	strswitch(platform)
+		case "MACINTOSH":
+			print num2char(-91) + cmd
+		break
+		case "WINDOWS":
+			print num2char(-107)+cmd
+		break
+	endswitch
+End
 
  Function gen_cursors_buttonproc(ba) : ButtonControl
 	STRUCT WMButtonAction &ba
@@ -2236,11 +2248,11 @@ Static Function GEN_checkinitiallimits(GEN_limits,GEN_b)
 			doalert 0, warning
 			ok=1
 			break
-		elseif(parameter<lowlimit || parameter > upperlimit)
-			warning = "parameter: " + num2istr(GEN_parnumber[ii]) + " is outside one of the limits"
-			doalert 0, warning
-			ok=1
-			break
+//		elseif(parameter<lowlimit || parameter > upperlimit)
+//			warning = "parameter: " + num2istr(GEN_parnumber[ii]) + " is outside one of the limits"
+//			doalert 0, warning
+//			ok=1
+//			break
 		else
 			ok=0
 		endif
@@ -2609,4 +2621,104 @@ Function GEN_setlimitwaveGENcurvefit(coefs,holdstring,numvarparam)
 	GEN_UsereditAdjust("boundarywave")
     
 	Dowindow/K boundarywave
+End
+
+Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB])
+	String fn
+	Wave w, yy, xx, ee
+	string holdstring
+	variable Iters, cursA, cursB
+	//the first fit is always on the pristine data
+	
+	string cDF = getdatafolder(1)
+	variable ii,jj,kk, summ, err = 0
+
+	newdatafolder/o root:packages
+	newdatafolder/o root:packages:motofit
+	newdatafolder/o root:packages:motofit:old_genoptimise
+
+	try
+		//get initialisation parameters for genetic optimisation
+		struct GEN_optimisation gen
+		gen.GEN_Callfolder = cDF
+		GEN_optimise#GEN_Searchparams(gen)
+	
+		//get limits
+		GEN_setlimitsforGENcurvefit(w, holdstring, cDF)
+		Wave limits = root:packages:motofit:old_genoptimise:GENcurvefitlimits
+	
+		//make the montecarlo waves that you will actually fit
+		duplicate/o yy, root:packages:motofit:old_genoptimise:y_montecarlo
+		duplicate/o xx, root:packages:motofit:old_genoptimise:x_montecarlo
+		duplicate/o ee, root:packages:motofit:old_genoptimise:e_montecarlo
+		Wave y_montecarlo = root:packages:motofit:old_genoptimise:y_montecarlo
+		Wave x_montecarlo = root:packages:motofit:old_genoptimise:x_montecarlo
+		Wave e_montecarlo = root:packages:motofit:old_genoptimise:e_montecarlo
+		
+		//make a wave to put the montecarlo iterations in
+		make/o/d/n=(Iters, dimsize(w, 0)) M_montecarlo
+		make/o/d/n=(iters) W_chisq
+		
+		//take care of cursors
+		if(paramisdefault(cursA))
+			cursA = 0
+		endif
+		if(paramisdefault(cursB))
+			cursB = dimsize(yy, 0)-1
+		endif
+
+		//now lets do the montecarlo fitting
+		variable timed = datetime
+		for(ii=0 ; ii<Iters ; ii+=1)
+			if(ii>0)
+				y_montecarlo[] = yy[p]
+			else
+				y_montecarlo[] = yy[p] + gnoise(ee[p])
+			endif	
+//			Gencurvefit/q/n/X=x_montecarlo/K={gen.GEN_generations, gen.GEN_popsize,gen.k_m, gen.GEN_recombination}/TOL=(gen.GEN_V_fittol) $fn, y_montecarlo[cursA,cursB], w, holdstring, limits
+			Gencurvefit/q/n/X=x_montecarlo/I=1/W=e_montecarlo/K={gen.GEN_generations, gen.GEN_popsize,gen.k_m, gen.GEN_recombination}/TOL=(gen.GEN_V_fittol) $fn, y_montecarlo[cursA,cursB], w, holdstring, limits
+			M_montecarlo[ii][] = w[q]
+			W_chisq[ii] = V_chisq
+			print "montecarlo ", ii, " done - total time = ", datetime-timed
+		endfor
+		print "overall time took: ", datetime - timed , " seconds"
+	
+		//now work out correlation matrix and errors.
+		//see Heinrich et al., Langmuir, 25(7), 4219-4229
+		make/n=(dimsize(w, 0))/o W_sigma954, means, stdevs
+		make/n=(dimsize(w,0), dimsize(w, 0))/o M_correlation
+		M_correlation = NaN
+	
+		for(ii = 0 ; ii<dimsize(w, 0) ; ii+=1)
+			make/o/d/n=(Iters) goes
+			goes = M_montecarlo[p][ii]
+			Wavestats/alph=0.045501/M=2/q/w goes
+			Wave M_wavestats
+			W_sigma954[ii] = M_wavestats[25]- M_wavestats[24]
+			means[ii] = M_wavestats[3]
+			stdevs[ii] = M_wavestats[4]
+			if(stringmatch(holdstring[ii], "1"))
+				W_sigma954[ii] = NaN
+			endif
+		endfor
+		for(ii=0 ; ii< dimsize(w, 0) ; ii+=1)
+			for(jj= ii ; jj<dimsize(w,0) ; jj+=1)
+				if(ii==jj || stringmatch(holdstring[ii], "1") || stringmatch(holdstring[jj], "1"))
+					M_correlation[ii][jj]=NaN
+				else			
+					summ = 0
+					for(kk = 0 ; kk < Iters ; kk+=1)
+						summ += (M_montecarlo[kk][ii]-means[ii])*(M_montecarlo[kk][jj]-means[jj]) 
+					endfor
+					M_correlation[ii][jj] = summ / (Iters-1) / (stdevs[ii] * stdevs[jj])
+				endif  
+				M_correlation[jj][ii] = M_correlation[ii][jj]
+			endfor
+		endfor
+	catch
+		err = 1	
+	endtry
+	killwaves/z M_wavestats, goes, means, stdevs, fit_y_montecarlo
+	setdatafolder $cDF
+	return err
 End
