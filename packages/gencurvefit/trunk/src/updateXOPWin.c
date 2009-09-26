@@ -1,3 +1,9 @@
+// SVN date:    $Date$
+// SVN author:  $Author$
+// SVN rev.:    $Revision$
+// SVN URL:     $HeadURL$
+// SVN ID:      $Id$
+
 #include "XOPStandardHeaders.h"			// Include ANSI headers, Mac headers, IgorXOP.h, XOP.h and XOPSupport.h
 /*	This is the XOP window class name. It must not conflict with other window
 	class names. Therefore, use your XOP's name and make sure that your XOP's

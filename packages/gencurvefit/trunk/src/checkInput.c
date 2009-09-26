@@ -1,5 +1,8 @@
-#include "XOPStandardHeaders.h"
-#include "GenCurvefit.h"
+// SVN date:    $Date$
+// SVN author:  $Author$
+// SVN rev.:    $Revision$
+// SVN URL:     $HeadURL$
+// SVN ID:      $Id$
 
 /*
  *  checkInput.c
@@ -9,6 +12,10 @@
  *  Copyright 2008 __MyCompanyName__. All rights reserved.
  *
  */
+
+#include "XOPStandardHeaders.h"
+#include "GenCurvefit.h"
+
 
 /*
  this function checks the input from all the parameters IGOR gives it.
