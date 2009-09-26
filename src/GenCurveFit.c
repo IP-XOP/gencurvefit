@@ -1,3 +1,9 @@
+// SVN date:    $Date$
+// SVN author:  $Author$
+// SVN rev.:    $Revision$
+// SVN URL:     $HeadURL$
+// SVN ID:      $Id$
+
 /*	GenCurveFit.c -- An XOP for curvefitting via Differential Evolution.
  See:
  Wormington, et. al., "Characterisation of structures from X-ray Scattering

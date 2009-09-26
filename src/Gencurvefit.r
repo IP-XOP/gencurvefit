@@ -1,3 +1,9 @@
+// SVN date:    $Date$
+// SVN author:  $Author$
+// SVN rev.:    $Revision$
+// SVN URL:     $HeadURL$
+// SVN ID:      $Id$
+
 /*
 GenCurveFit.c -- An XOP for curvefitting via Differential Evolution.
 @copyright: Andrew Nelson and the Australian Nuclear Science and Technology Organisation 2007.
@@ -7,7 +13,7 @@ GenCurveFit.c -- An XOP for curvefitting via Differential Evolution.
 resource 'vers' (1) {						// XOP version info.
 	0x01, 0x20, release, 0x00, 0,			// version bytes and country integer.
 	"1.",
-	"1, © andyfaff@gmail.com all rights reserved."
+	"1, ï¿½ andyfaff@gmail.com all rights reserved."
 };
 
 resource 'vers' (2) {						// Igor version info.

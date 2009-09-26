@@ -1,3 +1,9 @@
+// SVN date:    $Date$
+// SVN author:  $Author$
+// SVN rev.:    $Revision$
+// SVN URL:     $HeadURL$
+// SVN ID:      $Id$
+
 #include "XOPStandardHeaders.h"			// Include ANSI headers, Mac headers, IgorXOP.h, XOP.h and XOPSupport.h
 
 static ControlHandle theControl = NULL;

@@ -1,3 +1,9 @@
+// SVN date:    $Date$
+// SVN author:  $Author$
+// SVN rev.:    $Revision$
+// SVN URL:     $HeadURL$
+// SVN ID:      $Id$
+
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
 // Used by XOP1.rc
