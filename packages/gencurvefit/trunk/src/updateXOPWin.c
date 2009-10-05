@@ -15,7 +15,7 @@ static char* gXOPWindowClassName = "UpdateGenCurveFit";
 	Print a message in the hwnd window
 */
 void
-DisplayWindowXOP1Message(XOP_WINDOW_REF hwnd, int numcoefs, double* coefs, double chi2,char* fitfunc,long fititers)
+DisplayWindowXOP1Message(XOP_WINDOW_REF hwnd, int numcoefs, double* coefs, double chi2,char* fitfunc,long fititers, float convergenceNumber)
 {
 	HDC hdc;
 	HBRUSH hBrush;
