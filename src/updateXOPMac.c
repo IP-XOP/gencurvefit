@@ -25,6 +25,7 @@ struct displayData{
 	double chi2;
 	const char *fitfunc;
 	long fititers;
+	float convergenceNumber;
 };
 typedef struct displayData displayData;
 
@@ -34,7 +35,7 @@ static displayData *theDisplayData = NULL;
 //the HiView for the text container in the progress window.
 static HIViewRef theHIView = NULL;
 
-void DisplayWindowXOP1Message(WindowPtr theWindow,int numcoefs, const double* coefs, double chi2, const char* fitfunc,long fititers)
+void DisplayWindowXOP1Message(WindowPtr theWindow,int numcoefs, const double* coefs, double chi2, const char* fitfunc,long fititers, const float convergenceNumber)
 {	
 	OSStatus err;
 	theDisplayData = (displayData*)malloc(sizeof(displayData));
@@ -47,7 +48,7 @@ void DisplayWindowXOP1Message(WindowPtr theWindow,int numcoefs, const double* co
 	theDisplayData->chi2 = chi2;
 	theDisplayData->fitfunc = fitfunc;
 	theDisplayData->fititers = fititers;
-	
+	theDisplayData->convergenceNumber = convergenceNumber;
 	err = HIViewSetNeedsDisplay (theHIView, true);	
 }
 
@@ -110,6 +111,11 @@ OSStatus MyDrawEventHandler (EventHandlerCallRef myHandler, EventRef event, void
 		err2 = snprintf(message, MSG_LEN, "Chi2: %-6.4g", theDisplayData->chi2);
 		CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
 
+		posx += 2*space;
+		err2 = snprintf(message, MSG_LEN, "Convergence (fit stops when >1): %-6.4g", theDisplayData->convergenceNumber);
+		CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
+		
+		posx = bounds.origin.x;
 		posy -= vertspace;
 		strncpy(message, "Coefficients", MSG_LEN);
 		CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 

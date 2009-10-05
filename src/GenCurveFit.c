@@ -1698,7 +1698,7 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 	
 	//Display the coefficients so far.
 	if(!p->NFlagEncountered){
-		DisplayWindowXOP1Message(gTheWindow, WavePoints(p->coefs), goiP->gen_coefsCopy, *(goiP->chi2Array), goiP->fi.name, goiP->V_numfititers);
+		DisplayWindowXOP1Message(gTheWindow, WavePoints(p->coefs), goiP->gen_coefsCopy, *(goiP->chi2Array), goiP->fi.name, goiP->V_numfititers, goiP->convergenceNumber);
 	}
 	
 	if(p->DUMPFlagEncountered){
@@ -1718,7 +1718,13 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 		for(ii=0 ; ii<goiP->totalpopsize ; ii+=1){
 			// perhaps the user wants to abort the fit using gui panel?
 			if(!p->NFlagEncountered){
-				DisplayWindowXOP1Message(gTheWindow, WavePoints(p->coefs), goiP->gen_coefsCopy, *(goiP->chi2Array), goiP->fi.name, goiP->V_numfititers);
+				DisplayWindowXOP1Message(gTheWindow, 
+										 WavePoints(p->coefs),
+										 goiP->gen_coefsCopy,
+										 *(goiP->chi2Array),
+										 goiP->fi.name, 
+										 goiP->V_numfititers,
+										 goiP->convergenceNumber);
 				if(Abort_the_fit){
 					err = FIT_ABORTED;
 					goto done;
@@ -1746,7 +1752,15 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 				goto done;
 			if(err = insertVaryingParams(goiP, p))
 				goto done;
-			if(err = calcModel(&goiP->fi,goiP->GenCurveFitCoefs,goiP->dataCalc,goiP->dataTemp,goiP->xcalc,goiP->independentVariable,goiP->numVarMD,goiP->isAAO,goiP->sp))
+			if(err = calcModel(&goiP->fi,
+							   goiP->GenCurveFitCoefs,
+							   goiP->dataCalc,
+							   goiP->dataTemp,
+							   goiP->xcalc,
+							   goiP->independentVariable,
+							   goiP->numVarMD,
+							   goiP->isAAO,
+							   goiP->sp))
 				goto done;
 			switch(goiP->METH){//which cost function
 				case 0:
@@ -1774,32 +1788,39 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 					if(err = setPopVectorFromPVector(goiP,goiP->gen_pvector, goiP->numvarparams,0))
 						goto done;
 					/*
+					work out the fractional decrease in chi2
+					 */
+					wavStats = getWaveStats(goiP->chi2Array,goiP->totalpopsize,1);
+					
+					/*
+					 update the best chi2 if you've just found a better fit (but not yet reached termination)
+					 */
+					*(goiP->chi2Array) = chi2trial;
+					
+					/*
 					 if you're in update mode then update fit curve and the coefficients
 					 */
 					if(!p->NFlagEncountered){
 						//DisplayWindowXOP1Message calls code in updateXOP<x>.c
 						//this gives a window that gives the user the current chi2 value
 						//and the number of iterations.
+						goiP->convergenceNumber = (float)p->TOLFlag_tol / ((float)wavStats.V_stdev/(float)wavStats.V_avg);
 						DisplayWindowXOP1Message(gTheWindow, 
 												 WavePoints(p->coefs), 
 												 goiP->gen_coefsCopy,
 												 *(goiP->chi2Array), 
 												 goiP->fi.name,
-												 goiP->V_numfititers);
+												 goiP->V_numfititers,
+												 goiP->convergenceNumber
+						);
 						
 						if(err = ReturnFit(goiP, p))
 							goto done;
 					}
-					/*
-					 if the fractional decrease in chi2 is less than the tolerance then abort the fit
-					 */
-					wavStats = getWaveStats(goiP->chi2Array,goiP->totalpopsize,1);
 					
 					/*
-					 update the best chi2 if you've just found a better fit (but not yet reached termination
+					 if the fractional decrease is less than the tolerance abort the fit.
 					 */
-					*(goiP->chi2Array) = chi2trial;
-					
 					if( wavStats.V_stdev/wavStats.V_avg < p->TOLFlag_tol){	//if the fractional decrease is less and 0.5% stop.
 						if(p->DUMPFlagEncountered){
 							for(mm=0 ; mm < goiP->totalpopsize ; mm+=1){

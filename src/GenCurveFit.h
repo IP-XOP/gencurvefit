@@ -301,6 +301,10 @@ struct GenCurveFitInternals{
 	
 	//utility arrays, size of full dataset
 	double *temp;
+	
+	//a number that says if the fit is converging, only of use for tracking progress
+	//not used anywhere else
+	float convergenceNumber;
 
 	//the current datafolder needs to be stored, so we have a place to put temporary waves.
 	//dataCalc, xcalc,GenCurveFitCoefs are temporary waves created so that we can call a function.
@@ -407,7 +411,7 @@ int dumpRecordToWave(GenCurveFitInternalsPtr goiP,	MemoryStruct *dumpRecord);
 	Functions contained in updateXOP<x>.c
 */
 void DrawXOPWindow(XOP_WINDOW_REF w);
-void DisplayWindowXOP1Message(XOP_WINDOW_REF w, int numcoefs, double* coefs, double chi2,char* fitfunc,long fititers);
+void DisplayWindowXOP1Message(XOP_WINDOW_REF w, int numcoefs, double* coefs, double chi2,char* fitfunc,long fititers, float convergenceNumber);
 XOP_WINDOW_REF CreateXOPWindow(void);
 void DestroyXOPWindow(XOP_WINDOW_REF w);
 
