@@ -44,8 +44,8 @@ RegisterOperations(void)		// Register any operations with Igor.
 	return 0;
 }
 
-/*	XOPEntry()
 
+/*	XOPEntry()
 This is the entry point from the host application to the XOP for all
 messages after the INIT message.
 */

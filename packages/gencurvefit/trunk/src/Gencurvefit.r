@@ -109,16 +109,6 @@ resource 'XOPI' (1100) {
 	XOP_TOOLKIT_VERSION,					// XOP Toolkit version.
 };
 
-resource 'WIND' (1100) {					/* WindowXOP1 window */
-	{50, 300, 300, 795},
-	noGrowDocProc,
-	visible,
-	goAway,
-	0x0,
-	"GenCurveFit",
-	noAutoCenter							// Added 980303 because Apple changed the Rez templates.
-};
-
 resource 'XOPC' (1100) {
 	{
 		"GenCurveFit",								// Name of operation.

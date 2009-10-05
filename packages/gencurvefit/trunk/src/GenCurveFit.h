@@ -411,11 +411,6 @@ void DisplayWindowXOP1Message(XOP_WINDOW_REF w, int numcoefs, double* coefs, dou
 XOP_WINDOW_REF CreateXOPWindow(void);
 void DestroyXOPWindow(XOP_WINDOW_REF w);
 
-#ifdef _MACINTOSH_			// [
-	void XOPWindowClickMac(WindowPtr, EventRecord* );
-	int ManuallyCheckButton( WindowPtr );
-#endif						// _MACINTOSH_ ]
-
 #ifdef _WINDOWS_			// [
 	int CreateXOPWindowClass(void);
 #endif	
