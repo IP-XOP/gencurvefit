@@ -61,7 +61,7 @@ OSStatus MyDrawEventHandler (EventHandlerCallRef myHandler, EventRef event, void
 	
 	int err2, posx, posy, fsize = 12;
 	char message[MSG_LEN + 1];
-	int vertspace = 20, space = 85, ii, jj;	
+	int vertspace = 20, space = 105, ii, jj;	
 
     status = GetEventParameter (event,
 								kEventParamCGContextRef,
