@@ -28,6 +28,8 @@
 //gTheWindow is a window created to show the latest position of the fit
 XOP_WINDOW_REF gTheWindow = NULL;
 
+//a variable which sees if the fit is to be aborted.
+int Abort_the_fit = 0;
 
 /*
  ExecuteGenCurveFit performs the genetic curvefitting routines
@@ -56,8 +58,8 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	char varname[MAX_OBJ_NAME+1];
 	long dimensionSizes[MAX_DIMENSIONS];
 	double t1,t2;
-	long lt1=0;
-	char note[200],note_buffer1[MAX_WAVE_NAME+1],note_buffer2[MAX_WAVE_NAME+1],cmd[MAXCMDLEN+1];
+	long lt1 = 0;
+	char note[200], note_buffer1[MAX_WAVE_NAME+1], note_buffer2[MAX_WAVE_NAME+1], cmd[MAXCMDLEN+1];
 	int output,ii,jj,isDisplayed;
 	
 	memset(&goi, 0, sizeof(goi));
@@ -65,8 +67,10 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	if( igorVersion < 503 )
 		return REQUIRES_IGOR_500;
 	
-	strcpy(cmd,"");
-	strcpy(varname, "V_Fiterror");
+	//reset the abort condition
+	Abort_the_fit = 0;
+	
+	strncpy(varname, "V_Fiterror", MAX_OBJ_NAME);
 	if(FetchNumVar(varname, &t1, &t2)!=-1){
 		if(!err){
 			lt1 = 0;
@@ -120,7 +124,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		//make an error wave
 		dimensionSizes[0] = goi.totalnumparams;
 		dimensionSizes[1] = 0;
-		if(err2 = MDMakeWave(&goi.W_sigma,"W_sigma",goi.cDF,dimensionSizes,NT_FP64, 1)){err = err2;goto done;}
+		if(err2 = MDMakeWave(&goi.W_sigma, "W_sigma",goi.cDF,dimensionSizes,NT_FP64, 1)){err = err2;goto done;}
 		
 		//set the error wave to zero
 		for(ii=0; ii<goi.totalnumparams; ii+=1){
@@ -146,7 +150,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 				dimensionSizes[0] = goi.totalnumparams;
 				dimensionSizes[1] = goi.totalnumparams;
 				dimensionSizes[2] = 0;
-				if(err2 = MDMakeWave(&goi.M_covariance,"M_Covar",goi.cDF,dimensionSizes,NT_FP64, 1)){err = err2;goto done;};
+				if(err2 = MDMakeWave(&goi.M_covariance, "M_Covar", goi.cDF,dimensionSizes, NT_FP64, 1)){err = err2; goto done;};
 				for(ii=0; ii<goi.totalnumparams; ii+=1){
 					for(jj=0 ; jj<goi.totalnumparams; jj+=1){
 						indices[0] = ii;
@@ -172,17 +176,16 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		if(isDisplayed && goi.numVarMD == 1){
 			if(err2 = isWaveDisplayed(goi.OUT_data,&isDisplayed)){err = err2;goto done;};
 			if(!isDisplayed){
-				strcpy(cmd,"");
-				strcpy(cmd,"appendtograph/w=$(winname(0,1)) ");
+				strncpy(cmd, "appendtograph/w=$(winname(0,1)) ", MAXCMDLEN);
 				WaveName(goi.OUT_data,&note_buffer1[0]);
-				strcat(cmd,&note_buffer1[0]);
+				strncat(cmd, &note_buffer1[0], MAXCMDLEN - strlen(note_buffer1));
 				
 				if(p->DFlagEncountered && p->XFlagEncountered){
 					WaveName(p->XFlag_xx,&note_buffer2[0]);
-					strcat(cmd," vs ");
-					strcat(cmd,&note_buffer2[0]);
+					strncat(cmd, " vs ", MAXCMDLEN - strlen(cmd) - strlen(" vs "));
+					strncat(cmd, note_buffer2, MAXCMDLEN - strlen(cmd) - strlen(note_buffer2) );
 				}
-				if(err2 = XOPSilentCommand(&cmd[0])){err = err2;goto done;}
+				if(err2 = XOPSilentCommand(&cmd[0])){err = err2; goto done;}
 			}
 		}
 	}
@@ -223,23 +226,23 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 */
 	if(!p->QFlagEncountered && (!err || err == FIT_ABORTED) && lt1==0 ){
 		if(!err)
-		{output = sprintf(note,"_______________________________\rGenetic Optimisation Successful\r");XOPNotice(note);}
+			{output = snprintf(note, 199, "_______________________________\rGenetic Optimisation Successful\r");XOPNotice(note);}
 		if(err == FIT_ABORTED)
-		{output = sprintf(note,"_______________________________\rGenetic Optimisation ABORTED\r");XOPNotice(note);}
-		WaveName(p->dataWave.waveH,note_buffer1);
+			{output = snprintf(note, 199, "_______________________________\rGenetic Optimisation ABORTED\r");XOPNotice(note);}
+		WaveName(p->dataWave.waveH, note_buffer1);
 		
-		output = sprintf(note,"Fitting: %s to %s\r",note_buffer1,goi.fi.name);XOPNotice(note);
-		output = sprintf(note,"V_fitIters = %d; V_Chisq = %g; V_npnts= %d; V_nterms= %d; V_nheld= %d\r",goi.V_numfititers,*(goi.chi2Array),goi.unMaskedPoints,WavePoints(p->coefs),WavePoints(p->coefs) - goi.numvarparams);
+		output = snprintf(note, 199, "Fitting: %s to %s\r",note_buffer1,goi.fi.name);XOPNotice(note);
+		output = snprintf(note, 199, "V_fitIters = %li; V_Chisq = %g; V_npnts= %li; V_nterms= %li; V_nheld= %li\r",goi.V_numfititers,*(goi.chi2Array),goi.unMaskedPoints,WavePoints(p->coefs),WavePoints(p->coefs) - goi.numvarparams);
 		XOPNotice(note);
-		for(ii=0;ii<WavePoints(p->coefs);ii+=1){
+		for(ii=0; ii<WavePoints(p->coefs); ii+=1){
 			indices[0] = ii;
 			indices[1] = 0;
 			if(err = MDGetNumericWavePointValue(goi.W_sigma,indices,value))
 				goto done;
-			output = sprintf(note,"\tw[%d]\t=\t%g   +/-   %g\r",ii,*(goi.gen_coefsCopy+ii),value[0]);
+			output = snprintf(note, 199, "\tw[%d]\t=\t%g   +/-   %g\r",ii,*(goi.gen_coefsCopy+ii),value[0]);
 			XOPNotice(note);
 		}
-		output = sprintf(note,"_______________________________\r");XOPNotice(note);
+		output = snprintf(note, 199, "_______________________________\r");XOPNotice(note);
 	}
 	/*
 	 freeAllocMem frees all the internal data structures which have had memory allocated to them.
@@ -598,7 +601,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	
 	if(goiP->isAAO){
 		for(ii=0 ; ii<goiP->numVarMD ; ii+=1){
-			sprintf(letter,"%i",ii);
+			sprintf(letter,"%li",ii);
 			strcpy(xwavename,"GenCurveFit_xcalc");
 			strcat(&xwavename[0],&letter[0]);
 			if(err = MDMakeWave(&goiP->xcalc[ii],xwavename,goiP->cDF,dimensionSizes,NT_FP64, 1))
@@ -610,7 +613,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	dimensionSizes[0] = goiP->dataPoints;
 	for(ii=0 ; ii<goiP->numVarMD ; ii+=1){
 		strcpy(letter,"");
-		sprintf(letter,"%i",ii);		
+		sprintf(letter,"%li",ii);		
 		strcpy(xwavename,"GenCurveFit_fullExtentOfData0");
 		strcat(&xwavename[0],&letter[0]);
 		if(err = MDMakeWave(&goiP->fullExtentOfData[ii],xwavename,goiP->cDF,dimensionSizes,NT_FP64, 1))
@@ -631,7 +634,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 		goto done;
 	}
 	//initialise Chi2array
-	goiP->chi2Array = (double*)malloc(goiP->totalpopsize*sizeof(double));
+	goiP->chi2Array = (double*)malloc(goiP->totalpopsize * sizeof(double));
 	if(goiP->chi2Array == NULL){
 		err = NOMEM;
 		goto done;
@@ -918,10 +921,8 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	for(ii=0; ii<goiP->totalpopsize ; ii+=1){
 		//perhaps the user wants to abort the fit straightaway, this GUI button does that.
 		if(!p->NFlagEncountered){
-#ifdef _MACINTOSH_
-			if (ManuallyCheckButton( gTheWindow ))
+			if (Abort_the_fit)
 				return FIT_ABORTED;
-#endif				
 		}
 		//cmd-dot or abort button
 		if(CheckAbort(timeOutTicks) == -1){
@@ -1697,8 +1698,7 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 	
 	//Display the coefficients so far.
 	if(!p->NFlagEncountered){
-		DisplayWindowXOP1Message(gTheWindow,WavePoints(p->coefs),goiP->gen_coefsCopy,*(goiP->chi2Array),goiP->fi.name,goiP->V_numfititers);
-		ShowAndActivateXOPWindow(gTheWindow);
+		DisplayWindowXOP1Message(gTheWindow, WavePoints(p->coefs), goiP->gen_coefsCopy, *(goiP->chi2Array), goiP->fi.name, goiP->V_numfititers);
 	}
 	
 	if(p->DUMPFlagEncountered){
@@ -1718,12 +1718,11 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 		for(ii=0 ; ii<goiP->totalpopsize ; ii+=1){
 			// perhaps the user wants to abort the fit using gui panel?
 			if(!p->NFlagEncountered){
-#ifdef _MACINTOSH_
-				if (ManuallyCheckButton( gTheWindow )){
+				DisplayWindowXOP1Message(gTheWindow, WavePoints(p->coefs), goiP->gen_coefsCopy, *(goiP->chi2Array), goiP->fi.name, goiP->V_numfititers);
+				if(Abort_the_fit){
 					err = FIT_ABORTED;
 					goto done;
 				}
-#endif				
 			}	
 			//cmd-dot or abort button
 			if(CheckAbort(0)==-1){
@@ -1781,9 +1780,14 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 						//DisplayWindowXOP1Message calls code in updateXOP<x>.c
 						//this gives a window that gives the user the current chi2 value
 						//and the number of iterations.
-						DisplayWindowXOP1Message(gTheWindow,WavePoints(p->coefs),goiP->gen_coefsCopy,*(goiP->chi2Array),goiP->fi.name,goiP->V_numfititers);
+						DisplayWindowXOP1Message(gTheWindow, 
+												 WavePoints(p->coefs), 
+												 goiP->gen_coefsCopy,
+												 *(goiP->chi2Array), 
+												 goiP->fi.name,
+												 goiP->V_numfititers);
 						
-						if(err = ReturnFit(goiP,p))
+						if(err = ReturnFit(goiP, p))
 							goto done;
 					}
 					/*
@@ -2091,31 +2095,17 @@ WindowMessage(void){
 #ifdef _MACINTOSH_			// [
 		case UPDATE:
 		{
-			WindowPtr wPtr;
-			wPtr = (WindowPtr)item0;
-			BeginUpdate(wPtr);
-			EndUpdate(wPtr);
 		}
-			break;
-			
+			break;			
 		case ACTIVATE:
 		{
-			WindowPtr wPtr;
-			wPtr = (WindowPtr)item0;
 		}
-			break;
-			
+			break;			
 		case CLICK:
 		{
-			//			WindowPtr wPtr;
-			//			EventRecord* ePtr;
-			//			wPtr = (WindowPtr)item0;
-			//			ePtr = (EventRecord*)GetXOPItem(1);
-			//			XOPWindowClickMac(wPtr, ePtr);
 		}
 			break;
-#endif						// _MACINTOSH_ ]
-			
+#endif						// _MACINTOSH_ ]			
 		case CLOSE:
 			HideAndDeactivateXOPWindow(gTheWindow);
 			break;

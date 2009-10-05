@@ -41,7 +41,7 @@ int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr g
 	double **derivativeMatrix = NULL;
 	double hessianDeterminant = 0;
 	int ii,jj;
-	double temp;
+//	double temp;
 	err = 0;
 	
 	if(goiP->covarianceMatrix == NULL){
