@@ -5,14 +5,17 @@
 // SVN ID:      $Id$
 
 #include "XOPStandardHeaders.h"			// Include ANSI headers, Mac headers, IgorXOP.h, XOP.h and XOPSupport.h
+
+//Carbon headers required for NIB/HiView windows
 #include <Carbon/Carbon.h>
 
 //constants for NIB HiViews.
+//these fields/signatures should be the same as those given to the 
+//UI items in Interface Builder
 #define kMyHIViewSignature 'pViw'// the HiView window signature
 #define kMyHIViewFieldID 123	//the HiView window ID
 #define kMyHIViewButtonSignature 'pBut'  //the HiView Button signature
 #define kMyHIViewButtonID 124   //the HiView Button ID
-
 
 #define MSG_LEN 254
 
@@ -29,27 +32,31 @@ struct displayData{
 };
 typedef struct displayData displayData;
 
-//a pointer to hold the data to display
-static displayData *theDisplayData = NULL;
-
-//the HiView for the text container in the progress window.
-static HIViewRef theHIView = NULL;
+//a pointer to a structure to hold the data to display
+static displayData theDisplayData;
 
 void DisplayWindowXOP1Message(WindowPtr theWindow,int numcoefs, const double* coefs, double chi2, const char* fitfunc,long fititers, const float convergenceNumber)
 {	
 	OSStatus err;
-	theDisplayData = (displayData*)malloc(sizeof(displayData));
-	if(!theDisplayData)
-		return;
+	HIViewRef theHIView;	//drawing window
+	static const HIViewID myHIViewID = { kMyHIViewSignature, kMyHIViewFieldID };
+
+	//stick all the data to be drawn in a structure
+	memset(&theDisplayData, 0, sizeof(theDisplayData));
 	
-	theDisplayData->theWindow = theWindow;
-	theDisplayData->numcoefs = numcoefs;
-	theDisplayData->coefs = coefs;
-	theDisplayData->chi2 = chi2;
-	theDisplayData->fitfunc = fitfunc;
-	theDisplayData->fititers = fititers;
-	theDisplayData->convergenceNumber = convergenceNumber;
-	err = HIViewSetNeedsDisplay (theHIView, true);	
+	theDisplayData.theWindow = theWindow;
+	theDisplayData.numcoefs = numcoefs;
+	theDisplayData.coefs = coefs;
+	theDisplayData.chi2 = chi2;
+	theDisplayData.fitfunc = fitfunc;
+	theDisplayData.fititers = fititers;
+	theDisplayData.convergenceNumber = convergenceNumber;
+
+	//get a HiView for the window we created
+	HIViewFindByID (HIViewGetRoot(theWindow), myHIViewID, &theHIView);
+	//so we can then force the HIView to re-draw
+	err = HIViewSetNeedsDisplay (theHIView, true);
+	
 }
 
 OSStatus MyDrawEventHandler (EventHandlerCallRef myHandler, EventRef event, void *userData){
@@ -57,7 +64,7 @@ OSStatus MyDrawEventHandler (EventHandlerCallRef myHandler, EventRef event, void
     CGContextRef myContext;
     HIRect      bounds;
 	
-	extern displayData *theDisplayData;
+	extern displayData theDisplayData;
 	float w, h;
 	
 	int err2, posx, posy, fsize = 12;
@@ -92,47 +99,46 @@ OSStatus MyDrawEventHandler (EventHandlerCallRef myHandler, EventRef event, void
     CGContextSetRGBFillColor (myContext, 0, 0, 0, 1); // 6
 	CGContextSetRGBStrokeColor (myContext, 0, 0, 0, 1); // 7
 	
-	if(theDisplayData){
-		posx = bounds.origin.x;
-		posy = bounds.size.height - fsize;
-		
+
+	posx = bounds.origin.x;
+	posy = bounds.size.height - fsize;
+	
+	if(theDisplayData.fitfunc){
 		strncpy(message, "Fitting to: ", MSG_LEN);
-		strncat(message, theDisplayData->fitfunc, MSG_LEN - strlen(message));
+		strncat(message, theDisplayData.fitfunc, MSG_LEN - strlen(message));
 		CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
-		
-		//print out the number of iterations and the Chi2 value
-		posx = bounds.origin.x;
-		posy -= vertspace;
-		
-		err2 = snprintf(message, MSG_LEN, "Iterations: %li", theDisplayData->fititers);
-		CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
-
-		posy -= vertspace;
-		err2 = snprintf(message, MSG_LEN, "Chi2: %-6.4g", theDisplayData->chi2);
-		CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
-
-		posx += 2*space;
-		err2 = snprintf(message, MSG_LEN, "Convergence (fit stops when >1): %-6.4g", theDisplayData->convergenceNumber);
-		CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
-		
-		posx = bounds.origin.x;
-		posy -= vertspace;
-		strncpy(message, "Coefficients", MSG_LEN);
-		CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
-
-		//now print out the first 25 coefficients.  In order to get grid like behaviour there's
-		//a lot of moving about.
-		for(jj=0 ; (jj<(int)ceil((double)(theDisplayData->numcoefs)/5) && jj<6) ; jj+=1){
-			posy -= vertspace;
-			for(ii=0 ; (ii<5 && ii < ((theDisplayData->numcoefs)-(jj*5))) ; ii+=1){
-				posx = bounds.origin.x + ii*space;
-				err2 = snprintf(message, MSG_LEN, "%-6.4g", *(theDisplayData->coefs + ii + (jj*5)));
-				CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
-			}
-		}
-		
 	}
-
+	//print out the number of iterations and the Chi2 value
+	posx = bounds.origin.x;
+	posy -= vertspace;
+	
+	err2 = snprintf(message, MSG_LEN, "Iterations: %li", theDisplayData.fititers);
+	CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
+	
+	posy -= vertspace;
+	err2 = snprintf(message, MSG_LEN, "Chi2: %-6.4g", theDisplayData.chi2);
+	CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
+	
+	posx += 2*space;
+	err2 = snprintf(message, MSG_LEN, "Convergence (fit stops when >1): %-6.4g", theDisplayData.convergenceNumber);
+	CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
+	
+	posx = bounds.origin.x;
+	posy -= vertspace;
+	strncpy(message, "Coefficients", MSG_LEN);
+	CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
+	
+	//now print out the first 25 coefficients.  In order to get grid like behaviour there's
+	//a lot of moving about.
+	for(jj=0 ; theDisplayData.coefs && (jj<(int)ceil((double)(theDisplayData.numcoefs)/5) && jj<6) ; jj+=1){
+		posy -= vertspace;
+		for(ii=0 ; (ii<5 && ii < ((theDisplayData.numcoefs)-(jj*5))) ; ii+=1){
+			posx = bounds.origin.x + ii*space;
+			err2 = snprintf(message, MSG_LEN, "%-6.4g", *(theDisplayData.coefs + ii + (jj*5)));
+			CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
+		}
+	}
+	
 CantGetGraphicsContext:	
 CantGetBoundingRectangle:
     return status;
@@ -148,10 +154,10 @@ OSStatus MyButtonHandler (EventHandlerCallRef myHandler, EventRef event, void *u
 
 WindowPtr CreateXOPWindow(void){
 	WindowPtr theWindow = NULL;
-	extern HIViewRef theHIView;	//drawing window
 	IBNibRef nibRef;
     OSStatus err;
-
+	HIViewRef theHIView;
+	
 	//HiViewRef for the "Abort" push button
 	ControlRef theHIViewButton;
 
