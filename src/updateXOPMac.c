@@ -32,7 +32,8 @@ struct displayData{
 };
 typedef struct displayData displayData;
 
-//a pointer to a structure to hold the data to display
+//a global variable to hold the data to display
+//this is necessary because we can't send it to the event handler directly.
 static displayData theDisplayData;
 
 void DisplayWindowXOP1Message(WindowPtr theWindow,int numcoefs, const double* coefs, double chi2, const char* fitfunc,long fititers, const float convergenceNumber)
@@ -54,23 +55,27 @@ void DisplayWindowXOP1Message(WindowPtr theWindow,int numcoefs, const double* co
 
 	//get a HiView for the window we created
 	HIViewFindByID (HIViewGetRoot(theWindow), myHIViewID, &theHIView);
+
 	//so we can then force the HIView to re-draw
 	err = HIViewSetNeedsDisplay (theHIView, true);
 	
 }
 
+//an event handler for redraw events on the window
 OSStatus MyDrawEventHandler (EventHandlerCallRef myHandler, EventRef event, void *userData){
     OSStatus status = noErr;
     CGContextRef myContext;
     HIRect      bounds;
 	
+	//the data to be displayed
 	extern displayData theDisplayData;
 	float w, h;
-	
 	int err2, posx, posy, fsize = 12;
 	char message[MSG_LEN + 1];
+	//spacings to layout the text
 	int vertspace = 20, space = 105, ii, jj;	
 
+	//get the graphics context for drawing on.
     status = GetEventParameter (event,
 								kEventParamCGContextRef,
 								typeCGContextRef,
@@ -81,15 +86,21 @@ OSStatus MyDrawEventHandler (EventHandlerCallRef myHandler, EventRef event, void
 	
     require_noerr(status, CantGetGraphicsContext);
 	
+	//the bounds of the rectangle for drawing on
     HIViewGetBounds ((HIViewRef) userData, &bounds);
     require_noerr(status, CantGetBoundingRectangle);
 	
+	//height and width of the HIView window
 	w = bounds.size.width;
 	h = bounds.size.height;
 	
+	//the HIView coordinate system is reversed for y,
+	//compared to the normal Quartz2D graphics system
+	//this code reverses it.
 	CGContextTranslateCTM (myContext, 0, bounds.size.height);
 	CGContextScaleCTM (myContext, 1.0, -1.0);
 	
+	//set up the text to draw: font, colour, etc.
     CGContextSelectFont (myContext, 
 						 "Helvetica-Bold",
 						 fsize,
@@ -99,11 +110,14 @@ OSStatus MyDrawEventHandler (EventHandlerCallRef myHandler, EventRef event, void
     CGContextSetRGBFillColor (myContext, 0, 0, 0, 1); // 6
 	CGContextSetRGBStrokeColor (myContext, 0, 0, 0, 1); // 7
 	
-
+	//we want to start drawing at the top of the box.
 	posx = bounds.origin.x;
 	posy = bounds.size.height - fsize;
 	
+	//now print out the data we want to display in the box.
+	
 	if(theDisplayData.fitfunc){
+		//can't use strncpy/strncat on strings that don't exist.
 		strncpy(message, "Fitting to: ", MSG_LEN);
 		strncat(message, theDisplayData.fitfunc, MSG_LEN - strlen(message));
 		CGContextShowTextAtPoint (myContext, posx, posy, message, strlen(message) ); 
@@ -144,6 +158,8 @@ CantGetBoundingRectangle:
     return status;
 }
 
+//This event handles all the button presses for the abort button in the window.
+//All it does is set a global variable which signals the main fitting routine to stop.
 OSStatus MyButtonHandler (EventHandlerCallRef myHandler, EventRef event, void *userData){
 	OSStatus err = 0;
 	extern int Abort_the_fit;
@@ -151,7 +167,10 @@ OSStatus MyButtonHandler (EventHandlerCallRef myHandler, EventRef event, void *u
 	return err;
 }
 
-
+//create the XOP window from the NIB file.
+//note that the Info.plist file of the XOP has a key called "Bundle Identifier".
+//This key must be the same as the string in the CFBundleGetBundleWithIdentifier function call,
+//otherwise the NIB doesn't load.
 WindowPtr CreateXOPWindow(void){
 	WindowPtr theWindow = NULL;
 	IBNibRef nibRef;
@@ -165,14 +184,16 @@ WindowPtr CreateXOPWindow(void){
 	static const HIViewID myHIViewID = { kMyHIViewSignature, kMyHIViewFieldID };
 	static const EventTypeSpec myHIViewButtonSpec[] = {kEventClassControl, kEventControlHit };
 	static const ControlID myHIViewButtonID = { kMyHIViewButtonSignature, kMyHIViewButtonID };
-		
 	
 	// Create a Nib reference passing the name of the nib file (without the .nib extension)
     // CreateNibReference only searches into the application bundle.
 	CFBundleRef xop_bundle = CFBundleGetBundleWithIdentifier(CFSTR("gencurvefit"));
+	//the window in the NIB file must be the same as the 2nd argument ("main" in this case).
 	err= CreateNibReferenceWithCFBundle ( xop_bundle, CFSTR("main"), &nibRef);
     require_noerr( err, done );	
 
+	//create a window from the NIB reference.  
+	//the window in the NIB file must be the same as the 2nd argument ("main" in this case).
 	err = CreateWindowFromNib(nibRef, CFSTR("main"), &theWindow);
     require_noerr(err, done );	
 
@@ -192,7 +213,6 @@ WindowPtr CreateXOPWindow(void){
 	
 	// Get the button control
 	err = GetControlByID( theWindow, &myHIViewButtonID, &theHIViewButton );
-	//err = HIViewFindByID(HIViewGetRoot(theWindow),myHIViewButtonID, &theHIViewButton);
 	require_noerr(err, done );								   	
 
 	err = InstallControlEventHandler( theHIViewButton,
@@ -201,7 +221,6 @@ WindowPtr CreateXOPWindow(void){
 									 myHIViewButtonSpec,
 									 (void*) theHIViewButton,
 									 NULL);
-
     require_noerr(err, done );
 
 	//display the window, even if there is nothing in it.
