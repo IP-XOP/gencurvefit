@@ -72,11 +72,11 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	
 	strncpy(varname, "V_Fiterror", MAX_OBJ_NAME);
 	if(FetchNumVar(varname, &t1, &t2)!=-1){
-		if(!err){
+		if(!err)
 			lt1 = 0;
-		} else {
+		else 
 			lt1 = 1;
-		}
+
 		err = 0;
 		if(err2 = SetIgorIntVar(varname, lt1, 1)){err = err2;goto done;};
 	}	
@@ -85,11 +85,11 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 Genetic Optimisation uses a lot of random numbers, we are seeding the generator here.
 	 If you want to seed the generator we can 
 	 */
-	if(p->SEEDFlagEncountered){
+	if(p->SEEDFlagEncountered)
 		srand( (unsigned int)p->SEEDFlag_seed );
-	} else {
+	else 
 		srand( (unsigned)time( NULL ) );
-	}
+	
 	/*
 	 checkInput checks the input that IGOR sends to the XOP.  If everything is correct it returns 0, 
 	 else it returns an error.  Errors can be caused by, e.g. different x and y wave lengths, etc.
@@ -103,7 +103,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 several times to set aside memory for all this.  If this procedure works without a hitch then the function
 	 returns 0.
 	 */
-	if(err = init_GenCurveFitInternals(p,&goi))
+	if(err = init_GenCurveFitInternals(p, &goi))
 		goto done;
 	
 	/*
@@ -118,30 +118,35 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 If the data is displayed in the top graph append the fitcurve to the top graph
 	 */
 	if(err == 0 || err == FIT_ABORTED){
-		if(err2 = ReturnFit( &goi,  p)) {err = err2;goto done;}
+		if(err2 = ReturnFit( &goi,  p))
+			{err = err2;goto done;}
 		
 		//return an error wave
 		//make an error wave
 		dimensionSizes[0] = goi.totalnumparams;
 		dimensionSizes[1] = 0;
-		if(err2 = MDMakeWave(&goi.W_sigma, "W_sigma",goi.cDF,dimensionSizes,NT_FP64, 1)){err = err2;goto done;}
+		if(err2 = MDMakeWave(&goi.W_sigma, "W_sigma",goi.cDF,dimensionSizes,NT_FP64, 1))
+			{err = err2;goto done;}
 		
 		//set the error wave to zero
 		for(ii=0; ii<goi.totalnumparams; ii+=1){
 			indices[0] = ii;
 			value[0] = 0;
-			if(err2 = MDSetNumericWavePointValue(goi.W_sigma,indices,value)){err = err2;goto done;};					 
+			if(err2 = MDSetNumericWavePointValue(goi.W_sigma,indices,value))
+				{err = err2;goto done;};					 
 		}
 		
-		goi.covarianceMatrix = (double**)malloc2d(goi.numvarparams,goi.numvarparams,sizeof(double));
-		if(goi.covarianceMatrix == NULL){ err = NOMEM; goto done;}
+		goi.covarianceMatrix = (double**)malloc2d(goi.numvarparams, goi.numvarparams, sizeof(double));
+		if(goi.covarianceMatrix == NULL)
+			{ err = NOMEM; goto done;}
 		
 		if(p->MATFlagEncountered && (!(err2 = getCovarianceMatrix(p, &goi)))){
 			//set the error wave
 			for(ii=0; ii<goi.numvarparams ; ii+=1){
 				indices[0] = *(goi.varparams+ii);
 				value[0] = sqrt(goi.covarianceMatrix[ii][ii]);
-				if(err2 = MDSetNumericWavePointValue(goi.W_sigma,indices,value)){err = err2;goto done;};
+				if(err2 = MDSetNumericWavePointValue(goi.W_sigma,indices,value))
+					{err = err2;goto done;};
 			}					 
 			WaveHandleModified(goi.W_sigma);
 			
@@ -150,13 +155,15 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 				dimensionSizes[0] = goi.totalnumparams;
 				dimensionSizes[1] = goi.totalnumparams;
 				dimensionSizes[2] = 0;
-				if(err2 = MDMakeWave(&goi.M_covariance, "M_Covar", goi.cDF,dimensionSizes, NT_FP64, 1)){err = err2; goto done;};
+				if(err2 = MDMakeWave(&goi.M_covariance, "M_Covar", goi.cDF,dimensionSizes, NT_FP64, 1))
+					{err = err2; goto done;};
 				for(ii=0; ii<goi.totalnumparams; ii+=1){
 					for(jj=0 ; jj<goi.totalnumparams; jj+=1){
 						indices[0] = ii;
 						indices[1] = jj;
 						value[0] = 0;
-						if(err2 = MDSetNumericWavePointValue(goi.M_covariance,indices,value)){err = err2;goto done;};
+						if(err2 = MDSetNumericWavePointValue(goi.M_covariance,indices,value))
+							{err = err2;goto done;};
 					}
 				}
 				for(ii=0; ii<goi.numvarparams ; ii+=1){
@@ -164,7 +171,8 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 						indices[0] = *(goi.varparams+ii);
 						indices[1] = *(goi.varparams+jj);
 						value[0] = goi.covarianceMatrix[ii][jj];
-						if(err2 = MDSetNumericWavePointValue(goi.M_covariance,indices,value)){err = err2;goto done;};
+						if(err2 = MDSetNumericWavePointValue(goi.M_covariance,indices,value))
+							{err = err2;goto done;};
 					}
 				}
 				WaveHandleModified(goi.M_covariance);
@@ -172,9 +180,11 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		}
 		
 		
-		if(err2 = isWaveDisplayed(p->dataWave.waveH,&isDisplayed)){err = err2;goto done;};
+		if(err2 = isWaveDisplayed(p->dataWave.waveH, &isDisplayed))
+			{err = err2;goto done;};
 		if(isDisplayed && goi.numVarMD == 1){
-			if(err2 = isWaveDisplayed(goi.OUT_data,&isDisplayed)){err = err2;goto done;};
+			if(err2 = isWaveDisplayed(goi.OUT_data, &isDisplayed))
+				{err = err2;goto done;};
 			if(!isDisplayed){
 				strncpy(cmd, "appendtograph/w=$(winname(0,1)) ", MAXCMDLEN);
 				WaveName(goi.OUT_data,&note_buffer1[0]);
@@ -185,7 +195,8 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 					strncat(cmd, " vs ", MAXCMDLEN - strlen(cmd) - strlen(" vs "));
 					strncat(cmd, note_buffer2, MAXCMDLEN - strlen(cmd) - strlen(note_buffer2) );
 				}
-				if(err2 = XOPSilentCommand(&cmd[0])){err = err2; goto done;}
+				if(err2 = XOPSilentCommand(&cmd[0]))
+					{err = err2; goto done;}
 			}
 		}
 	}
@@ -210,7 +221,6 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		SetOperationNumVar("V_logBayes", goi.V_logBayes);
 	}		
 	
-	strcpy(cmd,"");
 	strcpy(varname, "V_Fiterror");
 	if(FetchNumVar(varname, &t1, &t2)!=-1){
 		if(!err){
@@ -219,7 +229,8 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 			lt1 = 1;
 		}
 		err = 0;
-		if(err2 = SetIgorIntVar(varname, lt1, 1)){err = err2;goto done;}
+		if(err2 = SetIgorIntVar(varname, lt1, 1))
+			{err = err2;goto done;}
 	}
 	/*
 	 This section puts a copy of the fit parameters into the history area, unless one sets quiet mode.
@@ -242,17 +253,18 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 			output = snprintf(note, 199, "\tw[%d]\t=\t%g   +/-   %g\r",ii,*(goi.gen_coefsCopy+ii),value[0]);
 			XOPNotice(note);
 		}
-		output = snprintf(note, 199, "_______________________________\r");XOPNotice(note);
+		output = snprintf(note, 199, "_______________________________\r");
+		XOPNotice(note);
 	}
 	/*
 	 freeAllocMem frees all the internal data structures which have had memory allocated to them.
 	 this is ultra essential for no memory leaks.
 	 */
 done:
+
 	freeAllocMem(&goi);
 	return err;
 }
-
 
 
 int
