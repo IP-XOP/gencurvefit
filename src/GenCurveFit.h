@@ -240,6 +240,8 @@ struct GenCurveFitInternals{
 	//an array which holds the coefficients ready to be sent to IGOR.
 	double *gen_coefsCopy;
 	//an array used in setting up an individual genetic guess.
+	double *gen_bestfitsofar;
+	//the best fit coefficients so far.
 	double *gen_bprime;
 	//an individual genetic guess.
 	double *gen_trial;
@@ -304,7 +306,7 @@ struct GenCurveFitInternals{
 	
 	//a number that says if the fit is converging, only of use for tracking progress
 	//not used anywhere else
-	float convergenceNumber;
+	double convergenceNumber;
 
 	//the current datafolder needs to be stored, so we have a place to put temporary waves.
 	//dataCalc, xcalc,GenCurveFitCoefs are temporary waves created so that we can call a function.
@@ -378,7 +380,7 @@ static int randomInteger(int upper);
 static double randomDouble(double lower, double upper);
 int calcModel(FunctionInfo*, waveHndl, waveHndl, double*, waveHndl[MAX_MDFIT_SIZE], double*,int,int,fitfuncStruct*);
 static int calcModelXY(FunctionInfo*, waveHndl , waveHndl , waveHndl[MAX_MDFIT_SIZE] , int ,int ,fitfuncStruct*);
-static int insertVaryingParams(GenCurveFitInternalsPtr , GenCurveFitRuntimeParamsPtr );
+static int insertVaryingParams(GenCurveFitInternalsPtr , GenCurveFitRuntimeParamsPtr);
 static int setPvectorFromPop(GenCurveFitInternalsPtr , int );
 static int findmin(double* , int );
 static int findmax(double* , int );

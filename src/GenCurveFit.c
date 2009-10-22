@@ -62,6 +62,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	char note[200], note_buffer1[MAX_WAVE_NAME+1], note_buffer2[MAX_WAVE_NAME+1], cmd[MAXCMDLEN+1];
 	int output,ii,jj,isDisplayed;
 	
+	//initialise all the internal data structures to NULL
 	memset(&goi, 0, sizeof(goi));
 	
 	if( igorVersion < 503 )
@@ -76,7 +77,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 			lt1 = 0;
 		else 
 			lt1 = 1;
-
+		
 		err = 0;
 		if(err2 = SetIgorIntVar(varname, lt1, 1)){err = err2;goto done;};
 	}	
@@ -119,26 +120,26 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 */
 	if(err == 0 || err == FIT_ABORTED){
 		if(err2 = ReturnFit( &goi,  p))
-			{err = err2;goto done;}
+		{err = err2;goto done;}
 		
 		//return an error wave
 		//make an error wave
 		dimensionSizes[0] = goi.totalnumparams;
 		dimensionSizes[1] = 0;
 		if(err2 = MDMakeWave(&goi.W_sigma, "W_sigma",goi.cDF,dimensionSizes,NT_FP64, 1))
-			{err = err2;goto done;}
+		{err = err2;goto done;}
 		
 		//set the error wave to zero
 		for(ii=0; ii<goi.totalnumparams; ii+=1){
 			indices[0] = ii;
 			value[0] = 0;
 			if(err2 = MDSetNumericWavePointValue(goi.W_sigma,indices,value))
-				{err = err2;goto done;};					 
+			{err = err2;goto done;};					 
 		}
 		
 		goi.covarianceMatrix = (double**)malloc2d(goi.numvarparams, goi.numvarparams, sizeof(double));
 		if(goi.covarianceMatrix == NULL)
-			{ err = NOMEM; goto done;}
+		{ err = NOMEM; goto done;}
 		
 		if(p->MATFlagEncountered && (!(err2 = getCovarianceMatrix(p, &goi)))){
 			//set the error wave
@@ -146,7 +147,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 				indices[0] = *(goi.varparams+ii);
 				value[0] = sqrt(goi.covarianceMatrix[ii][ii]);
 				if(err2 = MDSetNumericWavePointValue(goi.W_sigma,indices,value))
-					{err = err2;goto done;};
+				{err = err2;goto done;};
 			}					 
 			WaveHandleModified(goi.W_sigma);
 			
@@ -156,14 +157,14 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 				dimensionSizes[1] = goi.totalnumparams;
 				dimensionSizes[2] = 0;
 				if(err2 = MDMakeWave(&goi.M_covariance, "M_Covar", goi.cDF,dimensionSizes, NT_FP64, 1))
-					{err = err2; goto done;};
+				{err = err2; goto done;};
 				for(ii=0; ii<goi.totalnumparams; ii+=1){
 					for(jj=0 ; jj<goi.totalnumparams; jj+=1){
 						indices[0] = ii;
 						indices[1] = jj;
 						value[0] = 0;
 						if(err2 = MDSetNumericWavePointValue(goi.M_covariance,indices,value))
-							{err = err2;goto done;};
+						{err = err2;goto done;};
 					}
 				}
 				for(ii=0; ii<goi.numvarparams ; ii+=1){
@@ -172,7 +173,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 						indices[1] = *(goi.varparams+jj);
 						value[0] = goi.covarianceMatrix[ii][jj];
 						if(err2 = MDSetNumericWavePointValue(goi.M_covariance,indices,value))
-							{err = err2;goto done;};
+						{err = err2;goto done;};
 					}
 				}
 				WaveHandleModified(goi.M_covariance);
@@ -181,10 +182,10 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		
 		
 		if(err2 = isWaveDisplayed(p->dataWave.waveH, &isDisplayed))
-			{err = err2;goto done;};
+		{err = err2;goto done;};
 		if(isDisplayed && goi.numVarMD == 1){
 			if(err2 = isWaveDisplayed(goi.OUT_data, &isDisplayed))
-				{err = err2;goto done;};
+			{err = err2;goto done;};
 			if(!isDisplayed){
 				strncpy(cmd, "appendtograph/w=$(winname(0,1)) ", MAXCMDLEN);
 				WaveName(goi.OUT_data,&note_buffer1[0]);
@@ -196,7 +197,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 					strncat(cmd, note_buffer2, MAXCMDLEN - strlen(cmd) - strlen(note_buffer2) );
 				}
 				if(err2 = XOPSilentCommand(&cmd[0]))
-					{err = err2; goto done;}
+				{err = err2; goto done;}
 			}
 		}
 	}
@@ -230,16 +231,16 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		}
 		err = 0;
 		if(err2 = SetIgorIntVar(varname, lt1, 1))
-			{err = err2;goto done;}
+		{err = err2;goto done;}
 	}
 	/*
 	 This section puts a copy of the fit parameters into the history area, unless one sets quiet mode.
 	 */
 	if(!p->QFlagEncountered && (!err || err == FIT_ABORTED) && lt1==0 ){
 		if(!err)
-			{output = snprintf(note, 199, "_______________________________\rGenetic Optimisation Successful\r");XOPNotice(note);}
+		{output = snprintf(note, 199, "_______________________________\rGenetic Optimisation Successful\r");XOPNotice(note);}
 		if(err == FIT_ABORTED)
-			{output = snprintf(note, 199, "_______________________________\rGenetic Optimisation ABORTED\r");XOPNotice(note);}
+		{output = snprintf(note, 199, "_______________________________\rGenetic Optimisation ABORTED\r");XOPNotice(note);}
 		WaveName(p->dataWave.waveH, note_buffer1);
 		
 		output = snprintf(note, 199, "Fitting: %s to %s\r",note_buffer1,goi.fi.name);XOPNotice(note);
@@ -261,7 +262,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 this is ultra essential for no memory leaks.
 	 */
 done:
-
+	
 	freeAllocMem(&goi);
 	return err;
 }
@@ -395,14 +396,14 @@ calcChi2(double* dataObs, double* dataTemp, double* dataSig, long len, double* c
 				*chi2 += abserr*abserr;
 			}
 			break;
-			case 0:
+		case 0:
 			for(ii=0 ; ii<len ; ii+=1){
 				abserr = (*(dataObs+ii)-*(dataTemp+ii));
 				abserr *= (*(dataSig+ii));
 				*chi2 += abserr*abserr;
 			}		
 			break;
-			case 1:
+		case 1:
 			for(ii=0 ; ii<len ; ii+=1){
 				abserr = (*(dataObs+ii)-*(dataTemp+ii));
 				abserr /= (*(dataSig+ii));
@@ -679,6 +680,16 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	if(err = MDGetDPDataFromNumericWave(p->coefs, goiP->gen_coefsCopy))
 		goto done;
 	
+	//initialise space for the best fit so far
+	goiP->gen_bestfitsofar = (double*)malloc(WavePoints(p->coefs)*sizeof(double));
+	if(goiP->gen_bestfitsofar == NULL){
+		err = NOMEM;
+		goto done;
+	}
+	//put the starting coefficients into the best fit so far
+	if(err = MDGetDPDataFromNumericWave(p->coefs, goiP->gen_bestfitsofar))
+		goto done;
+	
 	//initialise space for an array containing the unmasked fitpoint ydata 
 	goiP->dataObs = (double*)malloc(goiP->unMaskedPoints * sizeof(double));
 	if (goiP->dataObs == NULL){
@@ -952,11 +963,11 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 				if(err = calcChi2(goiP->dataObs,goiP->dataTemp,goiP->dataSig,goiP->unMaskedPoints,&chi2,goiP->weighttype))
 					goto done;
 				break;
-				case 1:
+			case 1:
 				if(err = calcRobust(goiP->dataObs,goiP->dataTemp,goiP->dataSig,goiP->unMaskedPoints,&chi2,goiP->weighttype))
 					goto done;
 				break;
-				default:
+			default:
 				break;
 		}
 		*(goiP->chi2Array+ii)= chi2;
@@ -968,6 +979,11 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	if(err = swapPopVector(goiP,goiP->totalpopsize,0,wavStats.V_minloc))
 		goto done;
 	
+	if(err = setPvectorFromPop(goiP, 0))
+		goto done;
+	if(err = insertVaryingParams(goiP, p))
+		goto done;
+	memcpy(goiP->gen_bestfitsofar, goiP->gen_coefsCopy, sizeof(double) * goiP->totalnumparams);
 	
 done:
 	if(holdstr != NULL)
@@ -993,6 +1009,8 @@ freeAllocMem(GenCurveFitInternalsPtr goiP){
 		free(goiP->gen_populationvector);
 	if(goiP->gen_coefsCopy!=NULL)
 		free(goiP->gen_coefsCopy);
+	if(goiP->gen_bestfitsofar!=NULL)
+		free(goiP->gen_bestfitsofar);
 	if(goiP->gen_bprime!=NULL)
 		free(goiP->gen_bprime);
 	if(goiP->gen_trial!=NULL)
@@ -1045,7 +1063,6 @@ freeAllocMem(GenCurveFitInternalsPtr goiP){
 	}
 }
 
-
 static void
 checkLimits(GenCurveFitInternalsPtr goiP,GenCurveFitRuntimeParamsPtr p){
 	int ii;
@@ -1085,10 +1102,10 @@ static int
 insertVaryingParams(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 	int err=0,ii;
 	
-	for(ii=0 ; ii< goiP->numvarparams; ii+=1){
+	for(ii=0 ; ii< goiP->numvarparams; ii+=1)
 		*(goiP->gen_coefsCopy+*(goiP->varparams+ii)) =  *(goiP->gen_pvector+ii);
-	}
-	err = MDStoreDPDataInNumericWave(goiP->GenCurveFitCoefs,goiP->gen_coefsCopy);
+	
+	err = MDStoreDPDataInNumericWave(goiP->GenCurveFitCoefs, goiP->gen_coefsCopy);
 	return err;
 }
 
@@ -1175,19 +1192,19 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 					goto done;
 				*(outputPtr+ii) = result;
 			}
-
+			
 			// copy the output array into an output wave
-//			if(err = MDStoreDPDataInNumericWave(output,outputPtr))
-//				goto done;
+			//			if(err = MDStoreDPDataInNumericWave(output,outputPtr))
+			//				goto done;
 			
 			if (err = MDAccessNumericWaveData(output, kMDWaveAccessMode0, &dataOffset)) 
 				goto done; 
 			hState = MoveLockHandle(output); // Lock handle so data won’t move.
-			memcpy((*output) + dataOffset , outputPtr,numfitpoints*sizeof(double));
+			memcpy((*output) + dataOffset , outputPtr, numfitpoints*sizeof(double));
 			HSetState((Handle)output, hState);
-
+			
 			break;
-			case 1:
+		case 1:
 			allParameters.waveC = coefs;
 			allParameters.waveY = output;
 			requiredParameterTypes[0] = WAVE_TYPE;
@@ -1211,17 +1228,17 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 				err = USER_CHANGED_FITWAVE;
 				goto done;
 			}
-
+			
 			// get the output wave and put it into the output array
-//			if(err = MDGetDPDataFromNumericWave(output,outputPtr))
-//				goto done;			
+			//			if(err = MDGetDPDataFromNumericWave(output,outputPtr))
+			//				goto done;			
 			if (err = MDAccessNumericWaveData(output, kMDWaveAccessMode0, &dataOffset)) 
 				goto done; 
 			hState = MoveLockHandle(output); // Lock handle so data won’t move.
 			memcpy(outputPtr , (*output) + dataOffset,numfitpoints*sizeof(double));
 			HSetState((Handle)output, hState);
 			break;
-			case 2:
+		case 2:
 			if(sp == NULL){
 				err = NULL_STRUCTURE;
 				goto done;
@@ -1255,15 +1272,15 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 				goto done;
 			}
 			// get the output wave and put it into the output array
-//			if(err = MDGetDPDataFromNumericWave(output,outputPtr))
-//				goto done;
+			//			if(err = MDGetDPDataFromNumericWave(output,outputPtr))
+			//				goto done;
 			if (err = MDAccessNumericWaveData(output, kMDWaveAccessMode0, &dataOffset)) 
 				goto done; 
 			hState = MoveLockHandle(output); // Lock handle so data won’t move.
 			memcpy(outputPtr , (*output) + dataOffset,numfitpoints*sizeof(double));
 			HSetState((Handle)output, hState);
 			break;
-			default:
+		default:
 			err = UNSPECIFIED_ERROR;
 			goto done;
 			break;
@@ -1357,7 +1374,7 @@ calcModelXY(FunctionInfo* fip, waveHndl coefs, waveHndl output, waveHndl xx[MAX_
 			if(err = MDStoreDPDataInNumericWave(output,tempY))
 				goto done;
 			break;
-			case 1:
+		case 1:
 			allParameters.waveC = coefs;
 			allParameters.waveY = output;
 			requiredParameterTypes[0] = WAVE_TYPE;
@@ -1383,7 +1400,7 @@ calcModelXY(FunctionInfo* fip, waveHndl coefs, waveHndl output, waveHndl xx[MAX_
 				goto done;
 			}
 			break;
-			case 2:
+		case 2:
 			if(sp == NULL){
 				err = NULL_STRUCTURE;
 				goto done;
@@ -1417,7 +1434,7 @@ calcModelXY(FunctionInfo* fip, waveHndl coefs, waveHndl output, waveHndl xx[MAX_
 				goto done;
 			}
 			break;
-			default:
+		default:
 			err = UNSPECIFIED_ERROR;
 			goto done;
 			break;
@@ -1726,22 +1743,27 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 	for(kk=1; kk<=p->KFlag_iterations ; kk+=1){
 		goiP->V_numfititers = kk;
 		
+		if(!p->NFlagEncountered){
+			if(err = setPvectorFromPop(goiP, 0))
+				return err;
+			if(err = insertVaryingParams(goiP, p))
+				return err;
+			DisplayWindowXOP1Message(gTheWindow, 
+									 WavePoints(p->coefs),
+									 goiP->gen_bestfitsofar,
+									 *(goiP->chi2Array),
+									 goiP->fi.name, 
+									 goiP->V_numfititers,
+									 goiP->convergenceNumber);
+		}	
 		//iterate over all the individual members of the population
 		for(ii=0 ; ii<goiP->totalpopsize ; ii+=1){
 			// perhaps the user wants to abort the fit using gui panel?
-			if(!p->NFlagEncountered){
-				DisplayWindowXOP1Message(gTheWindow, 
-										 WavePoints(p->coefs),
-										 goiP->gen_coefsCopy,
-										 *(goiP->chi2Array),
-										 goiP->fi.name, 
-										 goiP->V_numfititers,
-										 goiP->convergenceNumber);
-				if(Abort_the_fit){
-					err = FIT_ABORTED;
-					goto done;
-				}
-			}	
+			if(Abort_the_fit){
+				err = FIT_ABORTED;
+				goto done;
+			}
+			
 			//cmd-dot or abort button
 			if(CheckAbort(0)==-1){
 				err = FIT_ABORTED;
@@ -1779,17 +1801,17 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 					if(err = calcChi2(goiP->dataObs, goiP->dataTemp, goiP->dataSig, goiP->unMaskedPoints, &chi2trial,goiP->weighttype))
 						goto done;
 					break;
-					case 1:
+				case 1:
 					if(err = calcRobust(goiP->dataObs, goiP->dataTemp, goiP->dataSig, goiP->unMaskedPoints, &chi2trial,goiP->weighttype))
 						goto done;
 					break;
-					default:
+				default:
 					break;
 			}
 			/*
 			 if the chi2 of the trial vector is less than the current populationvector then replace it
 			 */
-			if(chi2trial<chi2pvector){
+			if(chi2trial < chi2pvector){
 				if(err = setPopVectorFromPVector(goiP,goiP->gen_pvector, goiP->numvarparams,currentpvector))
 					goto done;
 				*(goiP->chi2Array+ii) = chi2trial;
@@ -1800,9 +1822,14 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 					if(err = setPopVectorFromPVector(goiP,goiP->gen_pvector, goiP->numvarparams,0))
 						goto done;
 					/*
-					work out the fractional decrease in chi2
+					 work out the fractional decrease in chi2
 					 */
 					wavStats = getWaveStats(goiP->chi2Array,goiP->totalpopsize,1);
+					
+					/*
+					 put a copy of the best fit so far into an array.
+					 */
+					memcpy(goiP->gen_bestfitsofar, goiP->gen_coefsCopy, sizeof(double) * goiP->totalnumparams);
 					
 					/*
 					 update the best chi2 if you've just found a better fit (but not yet reached termination)
@@ -1816,15 +1843,15 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 						//DisplayWindowXOP1Message calls code in updateXOP<x>.c
 						//this gives a window that gives the user the current chi2 value
 						//and the number of iterations.
-						goiP->convergenceNumber = (float)p->TOLFlag_tol / ((float)wavStats.V_stdev/(float)wavStats.V_avg);
+						goiP->convergenceNumber = p->TOLFlag_tol / (wavStats.V_stdev/ wavStats.V_avg);
 						DisplayWindowXOP1Message(gTheWindow, 
 												 WavePoints(p->coefs), 
-												 goiP->gen_coefsCopy,
+												 goiP->gen_bestfitsofar,
 												 *(goiP->chi2Array), 
 												 goiP->fi.name,
 												 goiP->V_numfititers,
 												 goiP->convergenceNumber
-						);
+												 );
 						
 						if(err = ReturnFit(goiP, p))
 							goto done;
@@ -1858,7 +1885,7 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 			}
 		}
 	}
-
+	
 done:
 	if(dumpRecord.memory){
 		err = dumpRecordToWave(goiP,&dumpRecord);
@@ -1901,11 +1928,7 @@ static int
 ReturnFit(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 	int err = 0;
 	
-	if(err = setPvectorFromPop(goiP,0))
-		return err;
-	if(err = insertVaryingParams(goiP, p))
-		return err;
-	if(err = MDStoreDPDataInNumericWave(p->coefs,goiP->gen_coefsCopy))
+	if(err = MDStoreDPDataInNumericWave(p->coefs, goiP->gen_bestfitsofar))
 		return err;
 	WaveHandleModified(p->coefs);
 	
@@ -1919,7 +1942,7 @@ ReturnFit(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 					return err;
 			}
 			break;
-			default:
+		default:
 			if(err = calcModelXY(&goiP->fi,p->coefs,goiP->OUT_data,goiP->fullExtentOfData,goiP->numVarMD, goiP->isAAO,goiP->sp))
 				return err;
 			break;
@@ -2172,7 +2195,7 @@ static waveStats getWaveStats(double *sort, long length,int moment){
 			retval.V_maxloc = maxpos;
 			retval.V_minloc = minpos;
 			break;
-			case 1:
+		case 1:
 			for(ii=0;ii<length;ii+=1){
 				nx += (*(sort+ii));
 				nx2 += *(sort+ii)*(*(sort+ii));
