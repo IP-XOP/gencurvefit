@@ -28,7 +28,7 @@ struct displayData{
 	double chi2;
 	const char *fitfunc;
 	long fititers;
-	float convergenceNumber;
+	double convergenceNumber;
 };
 typedef struct displayData displayData;
 
@@ -36,7 +36,7 @@ typedef struct displayData displayData;
 //this is necessary because we can't send it to the event handler directly.
 static displayData theDisplayData;
 
-void DisplayWindowXOP1Message(WindowPtr theWindow,int numcoefs, const double* coefs, double chi2, const char* fitfunc,long fititers, const float convergenceNumber)
+void DisplayWindowXOP1Message(WindowPtr theWindow,int numcoefs, const double* coefs, double chi2, const char* fitfunc,long fititers, double convergenceNumber)
 {	
 	OSStatus err;
 	HIViewRef theHIView;	//drawing window
