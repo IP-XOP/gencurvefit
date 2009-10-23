@@ -15,6 +15,10 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #include <stdlib.h>
 #include "memutils.h"
 
+#ifdef _WINDOWS_
+#define snprintf sprintf_s
+#endif
+
 //maximum dimension of fit
 #define MAX_MDFIT_SIZE 50
 #define kfitfuncStructVersion 1000 

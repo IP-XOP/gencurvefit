@@ -223,6 +223,9 @@ WindowPtr CreateXOPWindow(void){
 									 NULL);
     require_noerr(err, done );
 
+	//perhaps this means that the window will get messages?
+	SetWindowKind(theWindow, XOPRefNum());
+	
 	//display the window, even if there is nothing in it.
 	ShowWindow(theWindow);
 done:
