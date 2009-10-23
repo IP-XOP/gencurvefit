@@ -23,6 +23,8 @@
  */
 #include "XOPStandardHeaders.h"
 #include "GenCurveFit.h"
+#include "updateXOP.h"
+#include "errorEstimation.h"
 
 
 //gTheWindow is a window created to show the latest position of the fit

@@ -1,4 +1,4 @@
-#include "GenCurveFit.h"
+
 
 /*
  functions contained in errorEstimation.c

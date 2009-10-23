@@ -18,6 +18,7 @@
 #include "XOPStandardHeaders.h"
 #include "GenCurveFit.h"
 #include "Determinant.h"
+#include "errorEstimation.h"
 
 #define TINY 1.0e-20
 

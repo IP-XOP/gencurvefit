@@ -14,6 +14,7 @@
  */
 #include "XOPStandardHeaders.h"
 #include "GenCurveFit.h"
+#include "updateXOP.h"
 
 static int
 RegisterGenCurveFit(void)
