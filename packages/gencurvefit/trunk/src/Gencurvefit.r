@@ -88,6 +88,16 @@ resource 'STR#' (1100) {					/* custom error messages */
 	"Wrong Index for cost function.",
 	//[32]
 	"Subrange limited to point specification (you specified xscaling) - remember to sort wave.",
+	//[33]
+	"Null structure specified in GenCurvefit.",
+	//[34]
+	"GenCurvefit requires a proper structure in the fitfunction.",
+	//[35]
+	"The costfunction should be of the form cost(params, y_obs, y_calc, s_obs)",
+	//[36]
+	"The costfunction should return a double precision number",
+	//[37]
+	"Do not change the length of the waves in the cost function",
 	}
 };
 

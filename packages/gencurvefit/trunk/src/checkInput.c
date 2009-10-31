@@ -458,7 +458,36 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 				break;
 		}
 	} else {
+		//default is least squares
 		goiP->METH = 0;
+	}
+	
+	// the user specifies a costfunction
+	if (p->MINFFlagEncountered) {
+		//couldn't get function information
+		if(err = GetFunctionInfo(p->MINFFlag_minfun, &goiP->minf))
+			goto done;
+			
+			// function is not proper fitfunc
+		if(goiP->minf.totalNumParameters != 4){
+			err = INVALID_COST_FUNCTION;
+			goto done;
+		}
+			
+			//fit function always has to return a number, not complex or text, even if its all-at-once.
+		if(goiP->minf.returnType != NT_FP64){
+			err = COSTFUNC_DOESNT_RETURN_NUMBER;
+			goto done;
+		}
+		requiredParameterTypes[0] = WAVE_TYPE;
+		requiredParameterTypes[1] = WAVE_TYPE;
+		requiredParameterTypes[2] = WAVE_TYPE;
+		requiredParameterTypes[3] = WAVE_TYPE;
+		if(err = CheckFunctionForm(&goiP->minf, 4, requiredParameterTypes, &badParameterNumber, NT_FP64)){
+			err = INVALID_COST_FUNCTION;
+			goto done;
+		}
+		goiP->METH = 2;
 	}
 	
 	//a holdstring is used to work out which parameters are being fitted.  i.e. "0001000111".
