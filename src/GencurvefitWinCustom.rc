@@ -78,7 +78,16 @@ BEGIN
 	"Wrong Index for cost function.\0",
     //[32]	
 	"Subrange limited to point specification (you specified xscaling) - remember to sort wave.\0",
-
+	//[33]
+	"Null structure specified in GenCurvefit.\0",
+	//[34]
+	"GenCurvefit requires a proper structure in the fitfunction.\0",
+	//[35]
+	"The costfunction should be of the form cost(params, y_obs, y_calc, s_obs)\0",
+	//[36]
+	"The costfunction should return a double precision number\0",
+	//[37]
+	"Do not change the length of the waves in the cost function\0",
 	// You can add error messages here.
 
 	0,								// NOTE: 0 required to terminate the resource.

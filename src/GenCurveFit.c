@@ -371,7 +371,7 @@ calcMaxLikelihood(double* dataObs, double* dataTemp, double* dataSig, long len, 
 
 /*
  calcChi2 calculates chi2 for the fit
- yobs		-	array containing the experimental data
+ dataObs		-	array containing the experimental data
  dataTemp		-	array containing theoretical model
  ysig		-	array containing the weighting
  len			-	the number of fit points
@@ -381,7 +381,7 @@ calcMaxLikelihood(double* dataObs, double* dataTemp, double* dataSig, long len, 
  returns errorcode otherwise
  */
 static int
-calcChi2(double* dataObs, double* dataTemp, double* dataSig, long len, double* chi2, int weighttype){
+calcChi2(const double* dataObs, const double * dataTemp, const double* dataSig, long len, double* chi2, int weighttype){
 	
 	int err = 0;
 	long ii;
@@ -419,7 +419,7 @@ calcChi2(double* dataObs, double* dataTemp, double* dataSig, long len, double* c
 
 /*
  calcRobust calculates absolute errors for the fit
- yobs		-	array containing the experimental data
+ dataObs		-	array containing the experimental data
  dataTemp		-	array containing theoretical model
  ysig		-	array containing the weighting
  len			-	the number of fit points
@@ -429,7 +429,7 @@ calcChi2(double* dataObs, double* dataTemp, double* dataSig, long len, double* c
  returns errorcode otherwise
  */
 static int
-calcRobust(double* dataObs, double* dataTemp, double* dataSig, long len, double* chi2, int weighttype){
+calcRobust(const double* dataObs, const double* dataTemp, const double* dataSig, long len, double* chi2, const int weighttype){
 	
 	int err = 0;
 	long ii;
@@ -454,7 +454,76 @@ calcRobust(double* dataObs, double* dataTemp, double* dataSig, long len, double*
 	return err;
 }
 
+/*
+ calcUserCostFunc calculates absolute errors for the fit
+ minf		- user specified cost function
+ yobs		-	wave to be sent to user cost function, contains observed data
+ dataObs		-	array containing the original data
+ dataCalc		-	wave containing the calculated model
+ sobs			-	wave to be sent to user cost function, contains weight values
+ dataSig		-	array containing the original weight values
+ unMaskedPoints -	the number of data points being fitted
+ gen_coefscopy  -	wave containing the parameters for that guess
+ *chi2		-	the calculated chi2 value
+ returns 0 if no error
+ returns errorcode otherwise
+ */
+int calcUserCostFunc(FunctionInfo minf, 
+					 waveHndl yobs,
+					 const double *dataObs,
+					 waveHndl dataCalc,
+					 waveHndl sobs,
+					 const double *dataSig,
+					 long unMaskedPoints,
+					 waveHndl GenCoefsCopy,
+					 double *costVal){
+	int err = 0;
+	costFunc userCostFunc;
+	long dataOffset;
+	int hState; 
+	long numparams;
+	double ret;
 
+	numparams = WavePoints(GenCoefsCopy);
+	userCostFunc.coefs = GenCoefsCopy;
+	userCostFunc.yobs = yobs;
+	userCostFunc.ycalc = dataCalc;
+	userCostFunc.sobs = sobs;
+	
+	//copy the original data into the yobs wave created for the purpose
+	//some sneaky users probably try to change it.
+	if (err = MDAccessNumericWaveData(yobs, kMDWaveAccessMode0, &dataOffset)) 
+		goto done; 
+	hState = MoveLockHandle(yobs); // Lock handle so data won’t move.
+	memcpy((*yobs) + dataOffset, dataObs, unMaskedPoints*sizeof(double));
+	HSetState((Handle)yobs, hState);
+	
+	//copy the original data into the yobs wave created for the purpose
+	//some sneaky users probably try to change it.
+	if (err = MDAccessNumericWaveData(sobs, kMDWaveAccessMode0, &dataOffset)) 
+		goto done; 
+	hState = MoveLockHandle(sobs); // Lock handle so data won’t move.
+	memcpy((*sobs) + dataOffset, dataSig, unMaskedPoints*sizeof(double));
+	HSetState((Handle)sobs, hState);
+
+	if(err = CallFunction(&minf, (void*) &userCostFunc, &ret))
+		goto done;
+
+	if(WavePoints(yobs) != unMaskedPoints || WavePoints(sobs) != unMaskedPoints || WavePoints(GenCoefsCopy)!= numparams){
+		err = COSTFUNC_WAVES_CHANGED;
+		goto done;
+	}
+	*costVal = ret;
+	
+	if(IsNaN64(&ret) || IsINF64(&ret)){
+		err = COSTFUNC_DOESNT_RETURN_NUMBER;
+		goto done;
+	}
+
+	
+done:
+	return err;
+}
 
 
 
@@ -607,11 +676,15 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 		goto done;
 	}
 	
-	//now make the dataCalcwave in the current datafolder
+	//now make the dataCalcwave and a copy of the original (unmasked) data+errors in the current datafolder
 	dimensionSizes[0] = goiP->unMaskedPoints;
 	dimensionSizes[1] = 0;
 	dimensionSizes[2] = 0;
 	if(err = MDMakeWave(&goiP->dataCalc,"GenCurveFit_dataCalc",goiP->cDF,dimensionSizes,NT_FP64, 1))
+		goto done;
+	if(err = MDMakeWave(&goiP->yobs,"GenCurveFit_yobs",goiP->cDF,dimensionSizes,NT_FP64, 1))
+		goto done;
+	if(err = MDMakeWave(&goiP->sobs,"GenCurveFit_sobs",goiP->cDF,dimensionSizes,NT_FP64, 1))
 		goto done;
 	
 	if(goiP->isAAO){
@@ -707,6 +780,9 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 			jj+=1;
 		}
 	}
+	//copy those unmasked points into a dedicated wave
+	if(err = MDStoreDPDataInNumericWave(goiP->yobs, goiP->dataObs))
+	   goto done;
 	
 	//initialise array space for putting the calculated model in 
 	goiP->dataTemp = (double*)malloc(goiP->unMaskedPoints * sizeof(double));
@@ -749,6 +825,9 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 			*(goiP->dataSig+ii)=1;
 		}
 	}
+	//copy those unmasked weighting points into a dedicated wave
+	if(err = MDStoreDPDataInNumericWave(goiP->sobs, goiP->dataSig))
+	   goto done;
 	
 	//initialise array space for x values
 	goiP->independentVariable = (double*)malloc(goiP->unMaskedPoints*goiP->numVarMD*sizeof(double));
@@ -958,7 +1037,15 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 			goto done;
 		if(err = insertVaryingParams(goiP, p))
 			goto done;
-		if(err = calcModel(&goiP->fi,goiP->GenCurveFitCoefs,goiP->dataCalc,goiP->dataTemp,goiP->xcalc,goiP->independentVariable,goiP->numVarMD,goiP->isAAO,goiP->sp))
+		if(err = calcModel(&goiP->fi,
+						   goiP->GenCurveFitCoefs,
+						   goiP->dataCalc,
+						   goiP->dataTemp,
+						   goiP->xcalc,
+						   goiP->independentVariable,
+						   goiP->numVarMD,
+						   goiP->isAAO,
+						   goiP->sp))
 			goto done;
 		switch(goiP->METH){//which cost function
 			case 0:
@@ -967,6 +1054,18 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 				break;
 			case 1:
 				if(err = calcRobust(goiP->dataObs,goiP->dataTemp,goiP->dataSig,goiP->unMaskedPoints,&chi2,goiP->weighttype))
+					goto done;
+				break;
+			case 2:
+				if(err = calcUserCostFunc(goiP->minf, 
+										  goiP->yobs,
+										  goiP->dataObs,
+										  goiP->dataCalc,
+										  goiP->sobs,
+										  goiP->dataSig,
+										  goiP->unMaskedPoints,
+										  goiP->GenCurveFitCoefs,
+										  &chi2))
 					goto done;
 				break;
 			default:
@@ -1046,6 +1145,12 @@ freeAllocMem(GenCurveFitInternalsPtr goiP){
 	exists = FetchWaveFromDataFolder(goiP->cDF,"GenCurveFit_dataCalc");
 	if(exists != NULL)
 		err = KillWave(goiP->dataCalc);
+	exists = FetchWaveFromDataFolder(goiP->cDF,"GenCurveFit_yobs");
+	if(exists != NULL)
+		err = KillWave(goiP->yobs);
+	exists = FetchWaveFromDataFolder(goiP->cDF,"GenCurveFit_sobs");
+	if(exists != NULL)
+		err = KillWave(goiP->sobs);
 	
 	for(ii=0 ; ii<goiP->numVarMD ; ii+=1){
 		if(goiP->xcalc[ii] != NULL)
@@ -1147,7 +1252,7 @@ int
 calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr, waveHndl xx[MAX_MDFIT_SIZE], double* xpnts, int ndims,int isAAO,	fitfuncStruct* sp){
 	int err = 0, ii,jj;
 	int requiredParameterTypes[MAX_MDFIT_SIZE+2];
-	int badParameterNumber;
+//	int badParameterNumber;
 	allFitFunc allParameters;
 	fitFunc parameters;
 	
@@ -1180,10 +1285,10 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 			}
 			parameters.waveH = coefs;
 			requiredParameterTypes[0] = WAVE_TYPE;
-			for(ii=0 ; ii<ndims ; ii+=1)
-				requiredParameterTypes[ii+1] = NT_FP64;
-			if (err = CheckFunctionForm(fip, ndims+1 , requiredParameterTypes,&badParameterNumber, NT_FP64))
-				goto done;
+//			for(ii=0 ; ii<ndims ; ii+=1)
+//				requiredParameterTypes[ii+1] = NT_FP64;
+//			if (err = CheckFunctionForm(fip, ndims+1 , requiredParameterTypes,&badParameterNumber, NT_FP64))
+//				goto done;
 			
 			for(ii=0 ; ii<numfitpoints ; ii+=1){
 				for(jj=0 ; jj<ndims ; jj+=1){
@@ -1220,8 +1325,8 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 				}
 				allParameters.waveX[ii] = xx[ii];
 			}
-			if (err = CheckFunctionForm(fip, ndims + 2, requiredParameterTypes,&badParameterNumber, -1))
-				goto done;
+//			if (err = CheckFunctionForm(fip, ndims + 2, requiredParameterTypes,&badParameterNumber, -1))
+//				goto done;
 			// call the users fit function and put the result in the output wave
 			if (err = CallFunction(fip, (void*)&allParameters, &result))
 				goto done;
@@ -1258,8 +1363,8 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 				((*sp).xx[ii]) = (xx[ii]);
 			}
 			
-			if (err = CheckFunctionForm(fip, 1, requiredParameterTypes,&badParameterNumber, -1))
-				goto done;
+//			if (err = CheckFunctionForm(fip, 1, requiredParameterTypes,&badParameterNumber, -1))
+//				goto done;
 			// call the users fit function and put the result in the output wave
 			if (err = CallFunction(fip, (fitfuncStruct*)&sp, &result))
 				goto done;
@@ -1806,6 +1911,18 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 				case 1:
 					if(err = calcRobust(goiP->dataObs, goiP->dataTemp, goiP->dataSig, goiP->unMaskedPoints, &chi2trial,goiP->weighttype))
 						goto done;
+					break;
+				case 2:
+					if(err = calcUserCostFunc(goiP->minf, 
+											  goiP->yobs,
+											  goiP->dataObs,
+											  goiP->dataCalc,
+											  goiP->sobs,
+											  goiP->dataSig,
+											  goiP->unMaskedPoints,
+											  goiP->GenCurveFitCoefs,
+											  &chi2trial))
+					   goto done;
 					break;
 				default:
 					break;

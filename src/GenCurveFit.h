@@ -58,6 +58,10 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #define SUBRANGE_SPECIFIED_ASX 32 + FIRST_XOP_ERR
 #define NULL_STRUCTURE 33 + FIRST_XOP_ERR
 #define NEED_STRC 34 + FIRST_XOP_ERR
+#define INVALID_COST_FUNCTION 35 + FIRST_XOP_ERR
+#define COSTFUNC_DOESNT_RETURN_NUMBER 36 + FIRST_XOP_ERR
+#define COSTFUNC_WAVES_CHANGED 37 + FIRST_XOP_ERR
+
 /*
 Structure fitfuncStruct   
 Wave w
@@ -102,6 +106,12 @@ typedef struct fitfuncStruct* fitfuncStructPtr;
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
 struct GenCurveFitRuntimeParams {
 	// Flag parameters.
+	
+	
+	// Parameters for /MINF flag group.
+	int MINFFlagEncountered;
+	char MINFFlag_minfun[MAX_OBJ_NAME+1];
+	int MINFFlagParamsSet[1];
 
 	// Parameters for /DUMP flag group.
 	int DUMPFlagEncountered;
@@ -252,8 +262,10 @@ struct GenCurveFitInternals{
 	//a utility array, same length as gen_trial.
 	double *gen_pvector;
 
-	//cost function for minimisation
+	//cost function indicator for minimisation
 	int METH;
+	FunctionInfo minf;
+
 	//an array which holds all the chi2 values for all the different guesses in the population vector.
 	double *chi2Array;
 	//the current chi2
@@ -317,15 +329,20 @@ struct GenCurveFitInternals{
 	
 	//a handle to the current data folder
 	DataFolderHandle cDF;
-	//a handle to the calculated data
+	//a handle to the calculated data. This is filled in calcModel.  This will have the same size as yobs and sobs.
 	waveHndl dataCalc;
-	//a handle to the xwave used to calculate the model (excluding masked points)
+	//wavehandles to the unmasked y_obs points, with errors, that you are fitting to.  This may be just a copy of the original data
+	waveHndl yobs;	//GenCurveFit_yobs
+	waveHndl sobs;	//GenCurveFit_sobs
+	
+	// a handle to the xwave used to calculate the model (excluding masked points).
+	// Only made for an all at once FF.
 	waveHndl xcalc[MAX_MDFIT_SIZE]; 
-	//the coefficients used to calculate the model
+	// the coefficients used to calculate the model
 	waveHndl GenCurveFitCoefs;
-	//the full range of xpoints being used (including masked points)
+	// the full range of xpoints being used (including masked points).
 	waveHndl fullExtentOfData[MAX_MDFIT_SIZE];
-	//a temporary wave handle.  This will be made if /D is specified and if the independent data is univariate
+	// a temporary wave handle.  This will be made if /D is specified and if the independent data is univariate
 	waveHndl tempWaveHndl_OUTx;
 	
 	//Wave Handles for the output, i.e. the fit waves.
@@ -372,6 +389,17 @@ typedef struct allFitFunc allFitFunc;
 typedef struct allFitFunc* allFitFuncPtr;
 #include "XOPStructureAlignmentReset.h" // Reset structure alignment.
 
+#include "XOPStructureAlignmentTwoByte.h" // Set structure alignment.
+struct costFunc { // Used to pass parameters to the function.
+	waveHndl coefs;
+	waveHndl yobs;
+	waveHndl ycalc;
+	waveHndl sobs;
+};
+typedef struct costFunc costFunc;
+typedef struct costFunc* costFuncPtr;
+#include "XOPStructureAlignmentReset.h" // Reset structure alignment.
+
 /*
 	Functions contained in Gencurvefit.c
 */
@@ -396,9 +424,10 @@ static int setPopVectorFromPVector(GenCurveFitInternalsPtr ,double* , int , int 
 static int optimiseloop(GenCurveFitInternalsPtr , GenCurveFitRuntimeParamsPtr );
 static int CleanUp(GenCurveFitInternalsPtr);
 static int ReturnFit(GenCurveFitInternalsPtr, GenCurveFitRuntimeParamsPtr);
-static int calcChi2(double*, double*, double*, long, double*,int);
+static int calcChi2(const double*, const double*, const double*, long, double*,int);
 static int calcMaxLikelihood(double* , double* , double* , long , double* , int );
-static int calcRobust(double* , double* , double* , long , double* , int );
+static int calcRobust(const double* , const double* , const double* , long , double* , int );
+static int calcUserCostFunc(FunctionInfo minf, waveHndl yobs, const double *dataObs, waveHndl dataCalc, waveHndl sobs, const double *dataSig, long unMaskedPoints, waveHndl gen_coefsCopy, double *chi2);
 static int init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr, GenCurveFitInternalsPtr);
 int identicalWaves(waveHndl , waveHndl , int* );
 static int subtractTwoWaves(waveHndl, waveHndl   );
