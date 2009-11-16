@@ -253,7 +253,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 			indices[1] = 0;
 			if(err = MDGetNumericWavePointValue(goi.W_sigma,indices,value))
 				goto done;
-			output = snprintf(note, 199, "\tw[%d]\t=\t%g   +/-   %g\r",ii,*(goi.gen_coefsCopy+ii),value[0]);
+			output = snprintf(note, 199, "\tw[%d]\t=\t%g   +/-   %g\r",ii,*(goi.gen_bestfitsofar+ii),value[0]);
 			XOPNotice(note);
 		}
 		output = snprintf(note, 199, "_______________________________\r");
@@ -1465,8 +1465,6 @@ calcModelXY(FunctionInfo* fip, waveHndl coefs, waveHndl output, waveHndl xx[MAX_
 			requiredParameterTypes[0] = WAVE_TYPE;
 			for(ii=0 ; ii<ndims ; ii+=1)
 				requiredParameterTypes[ii+1] = NT_FP64;
-			if (err = CheckFunctionForm(fip, ndims+1 , requiredParameterTypes,&badParameterNumber, NT_FP64))
-				goto done;
 			
 			for(ii=0 ; ii<numfitpoints ; ii+=1){
 				for(jj=0 ; jj<ndims ; jj+=1){
@@ -1495,8 +1493,6 @@ calcModelXY(FunctionInfo* fip, waveHndl coefs, waveHndl output, waveHndl xx[MAX_
 				}
 				allParameters.waveX[ii] = xx[ii];
 			}
-			if (err = CheckFunctionForm(fip, ndims + 2, requiredParameterTypes,&badParameterNumber, -1))
-				goto done;
 			// call the users fit function and put the result in the output wave
 			if (err = CallFunction(fip, (void*)&allParameters, &result))
 				goto done;
@@ -1525,8 +1521,6 @@ calcModelXY(FunctionInfo* fip, waveHndl coefs, waveHndl output, waveHndl xx[MAX_
 				((*sp).xx[ii]) = (xx[ii]);
 			}
 			
-			if (err = CheckFunctionForm(fip, 1, requiredParameterTypes,&badParameterNumber, -1))
-				goto done;
 			// call the users fit function and put the result in the output wave
 			if (err = CallFunction(fip, (fitfuncStruct*)&sp	, &result))
 				goto done;
