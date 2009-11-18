@@ -438,8 +438,8 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	} else {
 		p->KFlag_iterations = 100.;
 		p->KFlag_popsize = 20.;
-		p->KFlag_km = 0.5;
-		p->KFlag_recomb = 0.7;
+		p->KFlag_km = 0.7;
+		p->KFlag_recomb = 0.5;
 	}
 	
 	//the cost function for minimisation is now specified.  
