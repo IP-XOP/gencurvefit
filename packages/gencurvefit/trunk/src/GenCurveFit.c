@@ -1182,7 +1182,8 @@ checkLimits(GenCurveFitInternalsPtr goiP,GenCurveFitRuntimeParamsPtr p){
 
 
 /*
- randomInteger returns an integer between 0 and upper inclusive
+ randomInteger returns an integer between 0 and upper EXclusive
+ i.e. you will never get upper returned.
  */
 static int
 randomInteger (int upper){
@@ -1192,11 +1193,11 @@ randomInteger (int upper){
 }
 
 /*
- randomDouble returns a double value between lower and upper
+ randomDouble returns a double value between lower <= x < upper OR [lower,upper)
  */
 static double
 randomDouble(double lower, double upper){
-	return lower + (upper-lower)*rand()/(((double)RAND_MAX + 1));
+	return lower + rand()/(((double)RAND_MAX + 1)/(upper-lower));
 }
 
 /*
@@ -1421,7 +1422,6 @@ static int
 calcModelXY(FunctionInfo* fip, waveHndl coefs, waveHndl output, waveHndl xx[MAX_MDFIT_SIZE], int ndims,int isAAO, fitfuncStruct *sp){
 	int err = 0, ii,jj;
 	int requiredParameterTypes[MAX_MDFIT_SIZE+2];
-	int badParameterNumber;
 	allFitFunc allParameters;
 	fitFunc parameters;
 	
@@ -1770,8 +1770,10 @@ createTrialVector(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p, i
 	}while(randomA == currentpvector);
 	do{
 		randomB = randomInteger(totalpopsize);
-	}while(randomB == currentpvector);
+	}while(randomB == currentpvector || randomB == randomA);
 	
+	//fillpos will be in the range 0<=pos <numvarparams
+	//or 0<=pos <=numvarparams-1
 	fillpos = randomInteger(numvarparams);
 	
 	for(ii=0 ; ii<numvarparams ; ii+=1){
@@ -1781,9 +1783,9 @@ createTrialVector(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p, i
 	
 	ii=0;
 	do{
-		if ((randomDouble(0,1) < recomb) || (ii == numvarparams)){
+		if ((randomDouble(0,1) <= recomb) || (ii == numvarparams-1))
 			*(goiP->gen_trial+fillpos) =  *(goiP->gen_bprime+fillpos);
-		}
+
 		fillpos ++;
 		fillpos = fillpos % numvarparams;
 		ii +=1;
