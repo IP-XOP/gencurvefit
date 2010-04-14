@@ -97,7 +97,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 checkInput checks the input that IGOR sends to the XOP.  If everything is correct it returns 0, 
 	 else it returns an error.  Errors can be caused by, e.g. different x and y wave lengths, etc.
 	 */
-	if(err = checkInput(p,&goi))
+	if(err = checkInput(p, &goi))
 		goto done;
 	
 	/*
@@ -570,6 +570,12 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	long temp;
 	waveStats wavStats;
 	
+	//do we want dynamic updates?
+	if(p->NFlagEncountered && (int) p->NFlag_noupdate == 0)
+		goiP->noupdate = 0;
+	else if(p->NFlagEncountered)
+		goiP->noupdate = 1;
+	
 	//initialise the chi2value
 	goiP->chi2 = -1;
 	
@@ -979,7 +985,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	}
 	
 	//if you are doing updates, then append fit output to the topgraph (if data is shown there)
-	if(!p->NFlagEncountered){
+	if(!goiP->noupdate){
 		//window for displaying output
 		gTheWindow = CreateXOPWindow();
 		if(gTheWindow == NULL){
@@ -1037,7 +1043,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	//initialise Chi2array
 	for(ii=0; ii<goiP->totalpopsize ; ii+=1){
 		//perhaps the user wants to abort the fit straightaway, this GUI button does that.
-		if(!p->NFlagEncountered){
+		if(!goiP->noupdate){
 			if (Abort_the_fit)
 				return FIT_ABORTED;
 		}
@@ -1842,7 +1848,7 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 	dumpRecord.size = 0;
 	
 	//Display the coefficients so far.
-	if(!p->NFlagEncountered){
+	if(!goiP->noupdate){
 		DisplayWindowXOP1Message(gTheWindow, WavePoints(p->coefs), goiP->gen_coefsCopy, *(goiP->chi2Array), goiP->fi.name, goiP->V_numfititers, goiP->convergenceNumber);
 	}
 	
@@ -1859,7 +1865,7 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 	for(kk=1; kk<=p->KFlag_iterations ; kk+=1){
 		goiP->V_numfititers = kk;
 		
-		if(!p->NFlagEncountered){
+		if(!goiP->noupdate){
 			if(err = setPvectorFromPop(goiP, 0))
 				return err;
 			if(err = insertVaryingParams(goiP, p))
@@ -1967,7 +1973,7 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 					/*
 					 if you're in update mode then update fit curve and the coefficients
 					 */
-					if(!p->NFlagEncountered){
+					if(!goiP->noupdate){
 						//DisplayWindowXOP1Message calls code in updateXOP<x>.c
 						//this gives a window that gives the user the current chi2 value
 						//and the number of iterations.
