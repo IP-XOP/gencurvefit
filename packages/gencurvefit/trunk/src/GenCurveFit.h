@@ -140,6 +140,9 @@ struct GenCurveFitRuntimeParams {
 
 	// Parameters for /N flag group.
 	int NFlagEncountered;
+	double NFlag_noupdate;
+	int NFlagParamsSet[1];
+	
 	// There are no fields for this group because it has no parameters.
 
 	// Parameters for /SEED flag group.
@@ -275,6 +278,8 @@ struct GenCurveFitInternals{
 	double chi2;
 	//number of fititerations done
 	long V_numfititers;
+	//perform dynamic updates
+	int noupdate;
 	
 	//logarithm of the Bayes Posterior probability
 	double V_logBayes;
