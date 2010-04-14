@@ -129,11 +129,14 @@ struct GenCurveFitRuntimeParams {
 
 	// Parameters for /MAT flag group.
 	int MATFlagEncountered;
+	double MATFlag_mat;
+	int MATFlagParamsSet[1];
 	// There are no fields for this group because it has no parameters.
 
 	// Parameters for /Q flag group.
 	int QFlagEncountered;
-	// There are no fields for this group because it has no parameters.
+	double QFlag_quiet;
+	int QFlagParamsSet[1];
 
 	// Parameters for /N flag group.
 	int NFlagEncountered;
