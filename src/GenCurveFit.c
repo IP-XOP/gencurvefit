@@ -62,7 +62,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	double t1,t2;
 	long lt1 = 0;
 	char note[200], note_buffer1[MAX_WAVE_NAME+1], note_buffer2[MAX_WAVE_NAME+1], cmd[MAXCMDLEN+1];
-	int output,ii,jj,isDisplayed;
+	int output,ii,jj,isDisplayed, quiet, generateCovariance;
 	
 	//initialise all the internal data structures to NULL
 	memset(&goi, 0, sizeof(goi));
@@ -139,11 +139,18 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 			{err = err2;goto done;};					 
 		}
 		
+		//do the errors
+		generateCovariance = 0;
+		if(p->MATFlagEncountered && (int) p->MATFlag_mat == 0)
+			generateCovariance = 0;
+		else if (p->MATFlagEncountered)
+			generateCovariance = 1;
+				
 		goi.covarianceMatrix = (double**)malloc2d(goi.numvarparams, goi.numvarparams, sizeof(double));
 		if(goi.covarianceMatrix == NULL)
 		{ err = NOMEM; goto done;}
 		
-		if(p->MATFlagEncountered && (!(err2 = getCovarianceMatrix(p, &goi)))){
+		if(generateCovariance && (!(err2 = getCovarianceMatrix(p, &goi)))){
 			//set the error wave
 			for(ii=0; ii<goi.numvarparams ; ii+=1){
 				indices[0] = *(goi.varparams+ii);
@@ -153,7 +160,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 			}					 
 			WaveHandleModified(goi.W_sigma);
 			
-			if(p->MATFlagEncountered){
+			if(generateCovariance){
 				//make the covariance matrix
 				dimensionSizes[0] = goi.totalnumparams;
 				dimensionSizes[1] = goi.totalnumparams;
@@ -238,11 +245,17 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	/*
 	 This section puts a copy of the fit parameters into the history area, unless one sets quiet mode.
 	 */
-	if(!p->QFlagEncountered && (!err || err == FIT_ABORTED) && lt1==0 ){
+	quiet == 0;
+	if(p->QFlagEncountered && (int)p->QFlag_quiet == 0)
+		quiet = 0;
+	else if (p->QFlagEncountered)
+		quiet = 1;
+	
+	if(!quiet && (!err || err == FIT_ABORTED) && lt1==0 ){		
 		if(!err)
-		{output = snprintf(note, 199, "_______________________________\rGenetic Optimisation Successful\r");XOPNotice(note);}
+			{output = snprintf(note, 199, "_______________________________\rGenetic Optimisation Successful\r");XOPNotice(note);}
 		if(err == FIT_ABORTED)
-		{output = snprintf(note, 199, "_______________________________\rGenetic Optimisation ABORTED\r");XOPNotice(note);}
+			{output = snprintf(note, 199, "_______________________________\rGenetic Optimisation ABORTED\r");XOPNotice(note);}
 		WaveName(p->dataWave.waveH, note_buffer1);
 		
 		output = snprintf(note, 199, "Fitting: %s to %s\r",note_buffer1,goi.fi.name);XOPNotice(note);
@@ -810,7 +823,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	 this section initialises the weightwave, except for those that are masked
 	 if there is no weightwave specified then set the weight wave to unity
 	 */
-	if(p->WFlagEncountered){
+	if(p->WFlagEncountered && p->WFlag_weighttype){
 		if (err = MDGetDPDataFromNumericWave(p->WFlag_weighttype, goiP->temp)) // Get copy.
 			goto done;
 		jj=0;
