@@ -224,14 +224,18 @@
 ---
 > 		Make/T/O/N=(DimSize(CoefWave, 0)) root:Packages:MotofitGF:NewGlobalFit:CoefNames
 > 		Wave/T CoefNames = root:Packages:MotofitGF:NewGlobalFit:CoefNames
-406c440,441
+405,406c439,441
+< 	
 < 	if (Options & NewGFOptionCALC_RESIDS)
 ---
+> 
 > 	//arjn
 > 	if (Options & MOTO_NewGFOptionCALC_RESIDS)
-411c446,453
+410,411c445,453
+< 
 < 	if (options & NewGFOptionFIT_GRAPH)	
 ---
+> 	
 > 	//arjn
 > 	if (WinType("GlobalFitGraph") != 0)
 > 		DoWindow/K GlobalFitGraph
@@ -306,10 +310,12 @@
 < 	SetDataFolder root:Packages:NewGlobalFit
 ---
 > 	SetDataFolder root:Packages:MotofitGF:NewGlobalFit
-547a590,591
+548c590,607
+< 			FuncFit/Q=(quiet)/H=(newGF_HoldString)/M=(covarianceArg) $funcname, MasterCoefs, Yw /X=$xwave/D=FitY/E=EP/R=$residWave/C=$cwavename/W=$weightName/I=(weightType)/NWOK
+---
 > 			switch (isLevORgen)
 > 				case 0:
-548a593,607
+> 					FuncFit/Q=(quiet)/H=(newGF_HoldString)/M=(covarianceArg) $funcname, MasterCoefs, Yw /X=$xwave/D=FitY/E=EP/R=$residWave/C=$cwavename/W=$weightName/I=(weightType)/NWOK
 > 					break
 > 				case 1:
 > 						if(strlen(newGF_HoldString)==0)
@@ -1560,8 +1566,9 @@
 < 	String resultDF = PopupWS_GetSelectionFullPath("NewGlobalFitPanel#NewGF_GlobalControlArea", "NewGF_ResultsDFSelector")
 ---
 > 	String resultDF = PopupWS_GetSelectionFullPath("MotoGlobalFitPanel#NewGF_GlobalControlArea", "NewGF_ResultsDFSelector")
-3413c3477,3484
+3413,3414c3477,3485
 < 	Variable err = DoNewGlobalFit(FitFuncNames, DataSets, LinkageMatrix, coefWave, CoefNames, ConstraintWave, curveFitOptions, FitCurvePoints, 1, maxIters=maxIters, resultWavePrefix=prefix, resultDF=resultDF)
+< 
 ---
 > 	if(cmpstr(ctrlname,"DoSimButton")==0)
 > 		MOTO_DoNewGlobalSim(FitFuncNames, DataSets, LinkageMatrix, coefWave, CoefNames, ConstraintWave, curveFitOptions, FitCurvePoints, 1)
@@ -1571,6 +1578,7 @@
 > 			SetCoefListFromWave(coefWave, 2, 0, 0)
 > 		endif
 > 	endif
+> 	
 3423a3495,3496
 > 	NVAR/z isLevORgen=root:packages:MotofitGF:NewGlobalFit:isLevORgen
 > 
@@ -2136,7 +2144,7 @@
 < Function NewGF_HelpButtonProc(ba) : ButtonControl
 ---
 > Function MOTO_NewGF_HelpButtonProc(ba) : ButtonControl
-5282a5355,5595
+5282a5355,5607
 > 
 > Function MOTO_DoNewGlobalSim(FitFuncNames, DataSets, CoefDataSetLinkage, CoefWave, CoefNames, ConstraintWave, Options, FitCurvePoints, DoAlertsOnError, [errorName])
 > 	Wave/T FitFuncNames		// a text wave containing a list of the fit functions to be used in this fit.
@@ -2332,6 +2340,18 @@
 > 		ModifyGraph rgb[2*i+1]=(colors[i][0],colors[i][1],colors[i][2])
 > 	endfor		
 > 	ModifyGraph gbRGB=(17476,17476,17476)
+> 	
+> 	if (options & MOTO_NewGFOptionLOG_DEST_WAVE)
+> 		WaveStats/Q/M=1 xW
+> 		if ( (V_min <= 0) || (V_max <= 0) )
+> 			// bad x range for log- cancel the option
+> 			options = options & ~MOTO_NewGFOptionLOG_DEST_WAVE
+> 		else
+> 			// the progress graph should have log X axis
+> 			ModifyGraph/W=GlobalFitGraph log(bottom)=1
+> 		endif
+> 	endif
+> 		
 > 	SetWindow GlobalFitGraph, hook = WC_WindowCoordinatesHook
 > 			
 > 	//residuals
