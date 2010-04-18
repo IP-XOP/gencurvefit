@@ -994,21 +994,21 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 		}
 		
 		if(goiP->numVarMD == 1){
-			if(err = isWaveDisplayed(p->dataWave.waveH,&toDisplay))
+			if(err = isWaveDisplayed(p->dataWave.waveH, &toDisplay))
 				goto done;
 			if(toDisplay){
-				if(err = isWaveDisplayed(goiP->OUT_data,&toDisplay))
+				if(err = isWaveDisplayed(goiP->OUT_data, &toDisplay))
 					goto done;
 				if(!toDisplay){
 					strcpy(cmd,"appendtograph/w=$(winname(0,1)) ");
-					WaveName(goiP->OUT_data,&datawavename[0]);
-					strcat(cmd,&datawavename[0]);
+					WaveName(goiP->OUT_data, &datawavename[0]);
+					strcat(cmd, &datawavename[0]);
 					
 					if(p->DFlagEncountered){
 						if(p->XFlagEncountered){
 							WaveName(p->XFlag_xx,&xwavename[0]);
 						} else {
-							WaveName(goiP->OUT_x[0],&xwavename[0]);
+							WaveName(goiP->OUT_x[0], &xwavename[0]);
 						}
 						strcat(cmd," vs ");
 						strcat(cmd,&xwavename[0]);
