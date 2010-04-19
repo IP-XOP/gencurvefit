@@ -141,10 +141,11 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		
 		//do the errors
 		generateCovariance = 0;
-		if(p->MATFlagEncountered && (int) p->MATFlag_mat == 0)
-			generateCovariance = 0;
-		else if (p->MATFlagEncountered)
+		if(p->MATFlagEncountered){
 			generateCovariance = 1;
+			if(p->MATFlagParamsSet[0] && (int) p->MATFlag_mat == 0)
+				generateCovariance = 0;
+		}
 				
 		goi.covarianceMatrix = (double**)malloc2d(goi.numvarparams, goi.numvarparams, sizeof(double));
 		if(goi.covarianceMatrix == NULL)
@@ -245,11 +246,12 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	/*
 	 This section puts a copy of the fit parameters into the history area, unless one sets quiet mode.
 	 */
-	quiet == 0;
-	if(p->QFlagEncountered && (int)p->QFlag_quiet == 0)
-		quiet = 0;
-	else if (p->QFlagEncountered)
+	quiet = 0;
+	if(p->QFlagEncountered){
 		quiet = 1;
+		if(p->QFlagParamsSet[0] && (int) p->QFlag_quiet == 0)
+			quiet = 0;
+	}
 	
 	if(!quiet && (!err || err == FIT_ABORTED) && lt1==0 ){		
 		if(!err)
@@ -571,10 +573,12 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	waveStats wavStats;
 	
 	//do we want dynamic updates?
-	if(p->NFlagEncountered && (int) p->NFlag_noupdate == 0)
-		goiP->noupdate = 0;
-	else if(p->NFlagEncountered)
+	goiP->noupdate = 0;
+	if(p->NFlagEncountered){
 		goiP->noupdate = 1;
+		if(p->NFlagParamsSet[0] && (int) p->NFlag_noupdate == 0)
+			goiP->noupdate = 0;
+	}
 	
 	//initialise the chi2value
 	goiP->chi2 = -1;
