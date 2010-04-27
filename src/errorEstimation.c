@@ -17,7 +17,6 @@
  */
 #include "XOPStandardHeaders.h"
 #include "GenCurveFit.h"
-#include "Determinant.h"
 #include "errorEstimation.h"
 
 #define TINY 1.0e-20
@@ -42,7 +41,7 @@ int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr g
 	double **derivativeMatrix = NULL;
 	double hessianDeterminant = 0;
 	int ii,jj;
-//	double temp;
+	//	double temp;
 	err = 0;
 	
 	if(goiP->covarianceMatrix == NULL){
@@ -56,43 +55,39 @@ int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr g
 	if(err = updatePartialDerivative(derivativeMatrix, p, goiP)) goto done;
 	
 	if(err = updateAlpha(goiP->covarianceMatrix, derivativeMatrix, goiP)) goto done;
-	
-	hessianDeterminant = Determinant(goiP->covarianceMatrix,goiP->numvarparams);
+
+	if(err = matrixInversion(goiP->covarianceMatrix, goiP->numvarparams, &hessianDeterminant)) goto done;
+
 	goiP->V_logBayes = exp(-0.5 * (*(goiP->chi2Array)) / (double)(goiP->unMaskedPoints - goiP->numvarparams));// * pow(4*3.14159,(double) goiP->numvarparams) ;//* factorial((double)goiP->numvarparams);
 	goiP->V_logBayes = goiP->V_logBayes / (sqrt(hessianDeterminant));
-//	for(ii=0; ii < goiP->numvarparams ; ii+=1){
-//		temp = fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)-*(goiP->limits + *(goiP->varparams+ii)));
-//		temp = temp / (0.5 * fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)+(*(goiP->limits + *(goiP->varparams+ii)))));
-//		goiP->V_logBayes = goiP->V_logBayes / temp;
-//	}
+	//	for(ii=0; ii < goiP->numvarparams ; ii+=1){
+	//		temp = fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)-*(goiP->limits + *(goiP->varparams+ii)));
+	//		temp = temp / (0.5 * fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)+(*(goiP->limits + *(goiP->varparams+ii)))));
+	//		goiP->V_logBayes = goiP->V_logBayes / temp;
+	//	}
 	goiP->V_logBayes = log(goiP->V_logBayes);
-	
-	if(err = matrixInversion(goiP->covarianceMatrix, goiP->numvarparams)) goto done;
-	
-	if(!p->WFlagEncountered){
-		for(ii=0; ii< goiP->numvarparams ; ii++){
-			for(jj=0 ; jj<goiP->numvarparams ; jj+=1){
-				goiP->covarianceMatrix[ii][jj] *= *(goiP->chi2Array)/(goiP->unMaskedPoints-goiP->numvarparams);
-			}
-		}	
-	}
-	
+		
+	if(!p->WFlagEncountered)
+		for(ii=0; ii< goiP->numvarparams ; ii++)
+			for(jj=0 ; jj<goiP->numvarparams ; jj+=1)
+				goiP->covarianceMatrix[ii][jj] *= *(goiP->chi2Array)/(goiP->unMaskedPoints - goiP->numvarparams);
+		
 done:
 	if(derivativeMatrix != NULL)
 		free(derivativeMatrix);
-
+	
 	return err;
 }
 
 /** Calculates the lower left elements for <code>this.alpha</code>. */
 int updateAlpha(double **alpha, double **derivativeMatrix, GenCurveFitInternalsPtr goiP) {
 	int err = 0, ii,jj;
-        for (ii = 0; ii < goiP->numvarparams; ii++) {
-            for (jj = 0; jj < ii+1 ; jj++) {
-                if(err = calculateAlphaElement(ii, jj, alpha, derivativeMatrix, goiP)) return err;
-            }
-        }
-     if(err = packAlphaSymmetric(alpha,goiP)) return err;
+	for (ii = 0; ii < goiP->numvarparams; ii++) {
+		for (jj = 0; jj < ii+1 ; jj++) {
+			if(err = calculateAlphaElement(ii, jj, alpha, derivativeMatrix, goiP)) return err;
+		}
+	}
+	if(err = packAlphaSymmetric(alpha,goiP)) return err;
 	return err;
 }
 
@@ -101,7 +96,7 @@ int calculateAlphaElement(int row, int col, double **alpha, double **derivativeM
 	int ii;
 	double result = 0;
 	double num = 0;
-
+	
 	for (ii = 0; ii < goiP->unMaskedPoints ; ii++) {
 		num = derivativeMatrix[row][ii]	* derivativeMatrix[col][ii];
 		switch(goiP->weighttype){
@@ -116,7 +111,7 @@ int calculateAlphaElement(int row, int col, double **alpha, double **derivativeM
 		}
 		result += num;
 	}
-
+	
 	alpha[row][col] = result;
 	return err;
 }
@@ -158,13 +153,13 @@ int partialDerivative(double** derivativeMatrix,int derivativeMatrixRow, GenCurv
 	if(err = MDSetNumericWavePointValue(goiP->GenCurveFitCoefs,indices,value)) return err;
 	
 	if(err = calcModel(&goiP->fi,goiP->GenCurveFitCoefs,goiP->dataCalc,*(derivativeMatrix+derivativeMatrixRow),goiP->xcalc,goiP->independentVariable,goiP->numVarMD,goiP->isAAO,goiP->sp))
-				return err;
-				
+		return err;
+	
 	value[0] = param - diff;	
 	if(err = MDSetNumericWavePointValue(goiP->GenCurveFitCoefs,indices,value)) return err;
 	
 	if(err = calcModel(&goiP->fi,goiP->GenCurveFitCoefs,goiP->dataCalc,goiP->dataTemp,goiP->xcalc,goiP->independentVariable,goiP->numVarMD,goiP->isAAO,goiP->sp))
-				return err;
+		return err;
 	
 	for(jj=0; jj<goiP->unMaskedPoints ; jj++){
 		derivativeMatrix[derivativeMatrixRow][jj] = (derivativeMatrix[derivativeMatrixRow][jj] - *(goiP->dataTemp+jj)) / (2*diff);
@@ -172,109 +167,59 @@ int partialDerivative(double** derivativeMatrix,int derivativeMatrixRow, GenCurv
 	
 	value[0] = param;	
 	if(err = MDSetNumericWavePointValue(goiP->GenCurveFitCoefs,indices,value)) return err;
-
+	
 	return err;
 }
 
-static int ludcmp(double **a, int n, int *indx, double *d){
-	int i, imax, j, k, err = 0;
-	double big, dum, sum, temp;
-	double *vv = NULL;
+
+//Cholesky Decomposition
+static int choldc (double **a, int N, double *p){
+	int err = 0;	
+	int ii, jj, kk;
+	double sum = 0;
 	
-	vv = (double*)malloc(sizeof(double)*n);
-	if(vv == NULL){
-		err = 0;
-		goto done;
-	}
 	
-	*d = 1.0;
-	
-	for(i=0 ; i<n ; i++){
-		big = 0.0;
-		for(j=0 ; j<n ; j++)
-			if((temp = fabs(a[i][j])) > big) big = temp;
-		if(big == 0.0){
-			err = UNSPECIFIED_ERROR;
-			goto done;
-		}
-		vv[i] = 1.0/big;	
-	} 
-	
-	for(j=0 ; j<n ; j++){
-		for(i=0 ; i<j ; i++){
-			sum = a[i][j];
-			for (k=0 ; k<i ; k++) sum -= a[i][k]*a[k][j];
-			a[i][j] = sum;
-		}
-		big = 0.0;
-		for(i=j ; i<n ; i++){
-			sum = a[i][j];
-			for(k=0; k<j ; k++) sum -= a[i][k]*a[k][j];
-			a[i][j] = sum;
-			if( (dum=vv[i]*fabs(sum)) >= big) {
-				big = dum;
-				imax = i;
-			}
-		}
-		if(j != imax){
-			for(k=0 ; k<n ; k++){
-				dum = a[imax][k];
-				a[imax][k] = a[j][k];
-				a[j][k] = dum;
-			}
-			*d = -(*d);
-			vv[imax] = vv[j];
-		}
-		indx[j] = imax;
-		if(a[j][j] == 0.0) a[j][j] = TINY;
-		
-		if(j != n-1){
-			dum = 1.0/(a[j][j]);
-			for(i=j+1; i<n ; i++) a[i][j] *=dum;
+	for(ii = 0; ii < N ; ii++){
+		for(jj = ii ; jj < N ; jj++){
+			for(sum = a[ii][jj] , kk = ii - 1 ; kk >= 0; kk--) sum -= a[ii][kk] * a[jj][kk];
+			if(ii == jj){
+				if(sum <= 0.0)
+					return UNSPECIFIED_ERROR;
+				p[ii] = sqrt(sum);
+			} else a[jj][ii] = sum/p[ii];
 		}
 	}
 	
 	
 done:
-if(vv != NULL)
-	free(vv);
-	
 	return err;
-	
 }
 
-static int lubksb(double **a, int n, int *indx, double b[]){
-	int i, ii=0, ip, j, err = 0;
-	double sum;
-	
-	for(i=1 ; i<=n ; i++){
-		ip = indx[i-1];
-		sum = b[ip];
-		b[ip] = b[i-1];
-		if(ii)
-			for(j=ii ; j<=i-1 ; j++) sum -= a[i-1][j-1]*b[j-1];
-		else if (sum) ii=i;
-		b[i-1] = sum;
+//Cholesky back substitution
+static void cholsl(const double **a, int N, const double *p, double *b, double *x){
+	int ii, kk;
+	double sum = 0;
+	for(ii = 0 ; ii < N ; ii++){
+		for(sum = b[ii], kk = ii-1 ; kk >=0 ; kk-- ) sum -=a[ii][kk] * x[kk];
+		x[ii] = sum/p[ii];
 	}
-	for(i=n ; i>=1 ; i--){
-		sum = b[i-1];
-		for(j=i+1 ; j<=n ; j++) sum -= a[i-1][j-1]*b[j-1];
-		b[i-1] = sum/a[i-1][i-1];
-	}	
-	return err;
+	for(ii = N-1 ; ii >= 0 ; ii--){
+		for(sum = x[ii], kk = ii+1 ; kk < N ; kk++ ) sum -=a[kk][ii] * x[kk];
+		x[ii] = sum/p[ii];
+	}
 }
 
-int matrixInversion(double **a, int N){
+int matrixInversion(double **a, int N, double *detA){
 	int err=0;
 	int i,j;
-	int *indx = NULL;
-	double *col = NULL;
+	double *x = NULL;
+	double *b = NULL;
+	double *p = NULL;
 	double **tempA = NULL;
-	double d;
+	*detA = 1;
 	
-	
-	indx = (int*)malloc(sizeof(int)*N);
-	if(indx == NULL){
+	x = (double*)malloc(sizeof(double) * N);
+	if(x == NULL){
 		err = NOMEM;
 		goto done;
 	}
@@ -284,35 +229,48 @@ int matrixInversion(double **a, int N){
 		err = NOMEM;
 		goto done;
 	}
-	for(i=0; i<N; i++){
-		for(j=0 ; j<N ; j++){
-			tempA[i][j] = a[i][j];
-		}	
-	}
+	memcpy(tempA, a, sizeof(double) * N * N);
 	
-	col = (double*)malloc(sizeof(double)*N);
-	if(col == NULL){
+	p = (double*)malloc(sizeof(double) * N);
+	if(p == NULL){
 		err = NOMEM;
 		goto done;
 	}
-
-	if(err = ludcmp(tempA,N,indx,&d)) goto done;
+	memset(p, N, sizeof(double));
 	
-	for(j=0 ; j<N ; j++){
-		for(i=0 ; i<N ; i++) col[i] = 0.0;
-		col[j] = 1.0;
-		if(err = lubksb(tempA,N,indx,col)) goto done;
-		for(i=0 ; i<N ; i++){
-		d = col[i];
-		  a[i][j] = col[i];
-		  };
+	b = (double*)malloc(sizeof(double) * N);
+	if(b == NULL){
+		err = NOMEM;
+		goto done;
 	}
+	
+	//perform the cholesky decomposition
+	if(err = choldc(tempA, N, p)) goto done;
+	
+	//now do the back substitution
+	for(j = 0 ; j < N ; j++){
+		memset(b, 0, sizeof(double));
+		b[j] = 1.0;
+		memset(x, 0, sizeof(double));
+		cholsl(tempA, N, p, b, x);
+		
+		for(i = 0 ; i < N ; i++)
+			a[i][j] = x[i];
+	}
+	
+	//the determinant of the original matrix is the square of the products of the elements in the cholesky diagonal
+	for(i = 0 ; i < N ; i+=1)
+		*detA *= tempA[i][i] * tempA[i][i];
+
+	
 done:
-	if(col!=NULL)
-		free(col);
-	if(indx!=NULL)
-		free(indx);
-	if(tempA!=NULL)
+	if(p)
+		free(p);
+	if(b)
+		free(b);
+	if(x)
+		free(x);
+	if(tempA)
 		free(tempA);
 	return err;
-	}
+}
