@@ -17,8 +17,7 @@
 #include "updateXOP.h"
 
 static int
-RegisterGenCurveFit(void)
-{
+RegisterGenCurveFit(void){
 	char* cmdTemplate;
 	char* runtimeNumVarList;
 	char* runtimeStrVarList;
