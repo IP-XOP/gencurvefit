@@ -495,7 +495,6 @@ int calcUserCostFunc(FunctionInfo minf,
 	int err = 0;
 	costFunc userCostFunc;
 	long dataOffset;
-	int hState; 
 	long numparams;
 	double ret;
 
@@ -509,17 +508,13 @@ int calcUserCostFunc(FunctionInfo minf,
 	//some sneaky users probably try to change it.
 	if (err = MDAccessNumericWaveData(yobs, kMDWaveAccessMode0, &dataOffset)) 
 		goto done; 
-	hState = MoveLockHandle(yobs); // Lock handle so data won’t move.
 	memcpy((*yobs) + dataOffset, dataObs, unMaskedPoints*sizeof(double));
-	HSetState((Handle)yobs, hState);
 	
 	//copy the original data into the yobs wave created for the purpose
 	//some sneaky users probably try to change it.
 	if (err = MDAccessNumericWaveData(sobs, kMDWaveAccessMode0, &dataOffset)) 
 		goto done; 
-	hState = MoveLockHandle(sobs); // Lock handle so data won’t move.
 	memcpy((*sobs) + dataOffset, dataSig, unMaskedPoints*sizeof(double));
-	HSetState((Handle)sobs, hState);
 
 	if(err = CallFunction(&minf, (void*) &userCostFunc, &ret))
 		goto done;
@@ -1282,7 +1277,6 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 	
 	//experimenting with faster wave access
 	long dataOffset; 
-	int hState; 
 	
 	double result;
 	long numfitpoints = WavePoints(output);
@@ -1309,19 +1303,20 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 			}
 			parameters.waveH = coefs;
 			requiredParameterTypes[0] = WAVE_TYPE;
-//			for(ii=0 ; ii<ndims ; ii+=1)
-//				requiredParameterTypes[ii+1] = NT_FP64;
-//			if (err = CheckFunctionForm(fip, ndims+1 , requiredParameterTypes,&badParameterNumber, NT_FP64))
-//				goto done;
-			
+/*
+			for(ii=0 ; ii<ndims ; ii+=1)
+				requiredParameterTypes[ii+1] = NT_FP64;
+			if (err = CheckFunctionForm(fip, ndims+1 , requiredParameterTypes,&badParameterNumber, NT_FP64))
+				goto done;
+*/			
 			for(ii=0 ; ii<numfitpoints ; ii+=1){
-				for(jj=0 ; jj<ndims ; jj+=1){
-					parameters.x[jj] = *(xpnts+(jj*numfitpoints)+ ii);
-				}
+				for(jj=0 ; jj<ndims ; jj+=1)
+					parameters.x[jj] = *(xpnts + (jj * numfitpoints) + ii);
+
 				// call the users fit function and put the result in the output array
-				if (err = CallFunction(fip, (void*)&parameters, &result))
+				if (err = CallFunction(fip, (void*) &parameters, &result))
 					goto done;
-				*(outputPtr+ii) = result;
+				*(outputPtr + ii) = result;
 			}
 			
 			// copy the output array into an output wave
@@ -1330,9 +1325,7 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 			
 			if (err = MDAccessNumericWaveData(output, kMDWaveAccessMode0, &dataOffset)) 
 				goto done; 
-			hState = MoveLockHandle(output); // Lock handle so data won’t move.
-			memcpy((*output) + dataOffset , outputPtr, numfitpoints*sizeof(double));
-			HSetState((Handle)output, hState);
+			memcpy((*output) + dataOffset , outputPtr, numfitpoints * sizeof(double));
 			
 			break;
 		case 1:
@@ -1365,9 +1358,7 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 			//				goto done;			
 			if (err = MDAccessNumericWaveData(output, kMDWaveAccessMode0, &dataOffset)) 
 				goto done; 
-			hState = MoveLockHandle(output); // Lock handle so data won’t move.
-			memcpy(outputPtr , (*output) + dataOffset,numfitpoints*sizeof(double));
-			HSetState((Handle)output, hState);
+			memcpy(outputPtr , (*output) + dataOffset, numfitpoints * sizeof(double));
 			break;
 		case 2:
 			if(sp == NULL){
@@ -1395,7 +1386,7 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 			//don't want any dangling references to waves
 			sp->yy = NULL;
 			sp->w = NULL;
-			memset(sp->xx,0,sizeof(sp->xx));
+			memset(sp->xx, 0, sizeof(sp->xx));
 			
 			// the user may have changed the number of points in the output wave
 			if(output == NULL || WavePoints(output) != numfitpoints){
@@ -1407,9 +1398,7 @@ calcModel(FunctionInfo *fip, waveHndl coefs, waveHndl output, double* outputPtr,
 			//				goto done;
 			if (err = MDAccessNumericWaveData(output, kMDWaveAccessMode0, &dataOffset)) 
 				goto done; 
-			hState = MoveLockHandle(output); // Lock handle so data won’t move.
-			memcpy(outputPtr , (*output) + dataOffset,numfitpoints*sizeof(double));
-			HSetState((Handle)output, hState);
+			memcpy(outputPtr , (*output) + dataOffset, numfitpoints * sizeof(double));
 			break;
 		default:
 			err = UNSPECIFIED_ERROR;
@@ -1550,7 +1539,7 @@ calcModelXY(FunctionInfo* fip, waveHndl coefs, waveHndl output, waveHndl xx[MAX_
 			//don't want any dangling references to waves
 			sp->yy = NULL;
 			sp->w = NULL;
-			memset(sp->xx,0,sizeof(sp->xx));
+			memset(sp->xx, 0, sizeof(sp->xx));
 			
 			// the user may have changed the number of points in the output wave
 			if(output == NULL || WavePoints(output) != numfitpoints){
@@ -1950,19 +1939,19 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 			 if the chi2 of the trial vector is less than the current populationvector then replace it
 			 */
 			if(chi2trial < chi2pvector){
-				if(err = setPopVectorFromPVector(goiP,goiP->gen_pvector, goiP->numvarparams,currentpvector))
+				if(err = setPopVectorFromPVector(goiP, goiP->gen_pvector, goiP->numvarparams,currentpvector))
 					goto done;
 				*(goiP->chi2Array+ii) = chi2trial;
 				/*
 				 if chi2 of the trial vector is less than that of the best fit, then replace the best fit vector
 				 */
-				if(chi2trial<*(goiP->chi2Array)){		//if this trial vector is better than the current best then replace it
-					if(err = setPopVectorFromPVector(goiP,goiP->gen_pvector, goiP->numvarparams,0))
+				if(chi2trial < *(goiP->chi2Array)){		//if this trial vector is better than the current best then replace it
+					if(err = setPopVectorFromPVector(goiP, goiP->gen_pvector, goiP->numvarparams,0))
 						goto done;
 					/*
 					 work out the fractional decrease in chi2
 					 */
-					wavStats = getWaveStats(goiP->chi2Array,goiP->totalpopsize,1);
+					wavStats = getWaveStats(goiP->chi2Array, goiP->totalpopsize, 1);
 					
 					/*
 					 put a copy of the best fit so far into an array.
@@ -2009,8 +1998,6 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 						}
 						goto done;
 					}
-					
-					
 				}
 			}
 		}
@@ -2042,12 +2029,12 @@ int dumpRecordToWave(GenCurveFitInternalsPtr goiP,	MemoryStruct *dumpRecord){
 	waveHndl dump;
 	long dimensionSizes[MAX_DIMENSIONS+1]; // Array of dimension sizes 
 	
-	memset(dimensionSizes,0,sizeof(dimensionSizes));
+	memset(dimensionSizes, 0, sizeof(dimensionSizes));
 	dimensionSizes[0] = goiP->numvarparams;
 	dimensionSizes[1] = goiP->totalpopsize;
 	dimensionSizes[2] = dumpRecord->size/(sizeof(double)*goiP->totalpopsize*goiP->numvarparams);
 	
-	if(err = MDMakeWave(&dump,"M_gencurvefitpopdump",goiP->cDF,dimensionSizes,NT_FP64,1))
+	if(err = MDMakeWave(&dump,"M_gencurvefitpopdump",goiP->cDF,dimensionSizes, NT_FP64, 1))
 		return err;
 	
 	if(err = MDStoreDPDataInNumericWave(dump, (double*)dumpRecord->memory))
