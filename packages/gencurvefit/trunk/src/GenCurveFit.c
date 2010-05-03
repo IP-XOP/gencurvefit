@@ -25,6 +25,7 @@
 #include "GenCurveFit.h"
 #include "updateXOP.h"
 #include "errorEstimation.h"
+#include "dSFMT.h"
 
 
 //gTheWindow is a window created to show the latest position of the fit
@@ -63,6 +64,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	long lt1 = 0;
 	char note[200], note_buffer1[MAX_WAVE_NAME+1], note_buffer2[MAX_WAVE_NAME+1], cmd[MAXCMDLEN+1];
 	int output,ii,jj,isDisplayed, quiet, generateCovariance;
+	uint32_t seed;
 	
 	//initialise all the internal data structures to NULL
 	memset(&goi, 0, sizeof(goi));
@@ -89,9 +91,11 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 If you want to seed the generator we can 
 	 */
 	if(p->SEEDFlagEncountered)
-		srand( (unsigned int)p->SEEDFlag_seed );
+		seed =  (uint32_t) p->SEEDFlag_seed;
 	else 
-		srand( (unsigned)time( NULL ) );
+		seed = (uint32_t) time(NULL);
+	randomInteger(0, seed, 1);
+	randomDouble(0, 0, seed , 1);
 	
 	/*
 	 checkInput checks the input that IGOR sends to the XOP.  If everything is correct it returns 0, 
@@ -1024,7 +1028,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 		for(jj=0 ; jj<goiP->numvarparams ; jj+=1){
 			bot = *(goiP->limits+*(goiP->varparams+jj));
 			top = *(goiP->limits+*(goiP->varparams+jj)+WavePoints(p->coefs));
-			goiP->gen_populationvector[ii][jj] = randomDouble(bot,top);
+			goiP->gen_populationvector[ii][jj] = randomDouble(bot,top, 0, 0);
 		}
 	}
 	
@@ -1193,10 +1197,9 @@ checkLimits(GenCurveFitInternalsPtr goiP,GenCurveFitRuntimeParamsPtr p){
 	int ii;
 	for(ii=0 ; ii<goiP->numvarparams ; ii+=1){
 		if(*(goiP->gen_trial+ii) < *(goiP->limits+*(goiP->varparams+ii)) || *(goiP->gen_trial+ii) > *(goiP->limits+*(goiP->varparams+ii)+WavePoints(p->coefs)))
-			*(goiP->gen_trial+ii) = randomDouble(*(goiP->limits+*(goiP->varparams+ii)),*(goiP->limits+*(goiP->varparams+ii)+WavePoints(p->coefs)));
+			*(goiP->gen_trial+ii) = randomDouble(*(goiP->limits+*(goiP->varparams+ii)),*(goiP->limits+*(goiP->varparams+ii)+WavePoints(p->coefs)), 0, 0);
 	}
 }
-
 
 
 /*
@@ -1204,18 +1207,58 @@ checkLimits(GenCurveFitInternalsPtr goiP,GenCurveFitRuntimeParamsPtr p){
  i.e. you will never get upper returned.
  */
 static int
-randomInteger (int upper){
-	int val;
-	while (upper <= (val = rand() / (RAND_MAX/upper)));
+randomInteger (int upper, uint32_t seed, short initialise){
+	static dsfmt_t generator;
+	static int dispensed = 0;
+	static double randomNumbers[1000];
+	double randomNumber = 0.0;
+	int val = 0;
+	
+	if(initialise){
+		dsfmt_init_gen_rand(&generator, seed);
+		dsfmt_fill_array_open_close(&generator, randomNumbers, 1000);
+		dispensed = 0;
+		return 0;
+	}
+	if(dispensed == 1000){
+		dsfmt_fill_array_open_close(&generator, randomNumbers, 1000);
+		dispensed = 0;
+	}
+	
+	randomNumber = (double)upper * randomNumbers[dispensed];
+	val = (int) randomNumber;
+	dispensed += 1;
+	
+//	while (upper <= (val = rand() / (RAND_MAX/upper)));
 	return val;
+
 }
 
 /*
- randomDouble returns a double value between lower <= x < upper OR [lower,upper)
+ randomDouble returns a double value between lower <= x <= upper OR [lower,upper]
  */
 static double
-randomDouble(double lower, double upper){
-	return lower + rand()/(((double)RAND_MAX + 1)/(upper-lower));
+randomDouble(double lower, double upper, uint32_t seed, short initialise){
+	static dsfmt_t generator;
+	static int dispensed = 0;
+	static double randomNumbers[1000];
+	double randomNumber = 0.0;
+	
+	if(initialise){
+		dsfmt_init_gen_rand(&generator, seed);
+		dsfmt_fill_array_open_open(&generator, randomNumbers, 1000);
+		dispensed = 0;
+		return 0.0;
+	}
+	if(dispensed == 1000){
+		dsfmt_fill_array_open_open(&generator, randomNumbers, 1000);
+		dispensed = 0;
+	}
+	
+	randomNumber = lower + randomNumbers[dispensed]*(upper-lower);
+	dispensed += 1;
+	return randomNumber;
+//	return lower + rand()/(((double)RAND_MAX + 1)/(upper-lower));
 }
 
 /*
@@ -1778,15 +1821,15 @@ createTrialVector(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p, i
 	numvarparams = goiP->numvarparams;
 	
 	do{
-		randomA = randomInteger(totalpopsize);
+		randomA = randomInteger(totalpopsize, 0, 0);
 	}while(randomA == currentpvector);
 	do{
-		randomB = randomInteger(totalpopsize);
+		randomB = randomInteger(totalpopsize, 0, 0);
 	}while(randomB == currentpvector || randomB == randomA);
 	
 	//fillpos will be in the range 0<=pos <numvarparams
 	//or 0<=pos <=numvarparams-1
-	fillpos = randomInteger(numvarparams);
+	fillpos = randomInteger(numvarparams, 0, 0);
 	
 	for(ii=0 ; ii<numvarparams ; ii+=1){
 		*(goiP->gen_bprime+ii) = goiP->gen_populationvector[0][ii] + km*(goiP->gen_populationvector[randomA][ii] - goiP->gen_populationvector[randomB][ii]);
@@ -1795,7 +1838,7 @@ createTrialVector(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p, i
 	
 	ii=0;
 	do{
-		if ((randomDouble(0,1) <= recomb) || (ii == numvarparams-1))
+		if ((randomDouble(0, 1, 0, 0) <= recomb) || (ii == numvarparams-1))
 			*(goiP->gen_trial+fillpos) =  *(goiP->gen_bprime+fillpos);
 
 		fillpos ++;
@@ -1816,7 +1859,7 @@ ensureConstraints(GenCurveFitInternalsPtr goiP,GenCurveFitRuntimeParamsPtr p){
 	
 	for(ii=0 ; ii < goiP->numvarparams ; ii+=1){
 		if(*(goiP->gen_trial+ii) <*(goiP->limits+*(goiP->varparams+ii)) || *(goiP->gen_trial+ii)>(*(goiP->limits+*(goiP->varparams+ii)+points))){
-			*(goiP->gen_trial+ii) = randomDouble(*(goiP->limits+*(goiP->varparams+ii)),(*(goiP->limits+*(goiP->varparams+ii)+points)));
+			*(goiP->gen_trial+ii) = randomDouble(*(goiP->limits+*(goiP->varparams+ii)),(*(goiP->limits+*(goiP->varparams+ii)+points)), 0, 0);
 		}
 	}
 }
