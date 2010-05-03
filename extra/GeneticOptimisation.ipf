@@ -2576,7 +2576,7 @@ Function GEN_setlimitsforGENcurvefit(coefs, holdstring, cDF [, limits])
 		variable/g iterations = 100
 	endif
 	if(!NVAR_exists(popsize))
-		variable/g popsize = 100
+		variable/g popsize = 10
 	endif
 	if(!NVAR_exists(recomb))
 		variable/g recomb = 0.5
@@ -2598,7 +2598,7 @@ Function GEN_setlimitsforGENcurvefit(coefs, holdstring, cDF [, limits])
 		endif
 	endfor
 	
-	make/o/n=(numbeingvaried, 4) limitsdialog_selwave
+	make/o/n=(numbeingvaried, 4) limitsdialog_selwave = 0
 	make/o/t/n=(numbeingvaried, 4) limitsdialog_listwave
 	setdimlabel 1, 0, Param_number, limitsdialog_listwave
 	setdimlabel 1, 1, coef_value, limitsdialog_listwave

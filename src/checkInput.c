@@ -620,9 +620,8 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		if (err = MDGetDPDataFromNumericWave(p->coefs, dpC)) { // Get copy.
 			goto done;
 		}
-		if (err = MDGetDPDataFromNumericWave(p->limitswave, dpL)) { // Get copy.
+		if (err = MDGetDPDataFromNumericWave(p->limitswave, dpL)) // Get copy.
 			goto done;
-		}
 		//get the holdstring
 		len = GetHandleSize(p->holdstring);
 		

@@ -14,6 +14,7 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #include <time.h>
 #include <stdlib.h>
 #include "memutils.h"
+#include "dSFMT.h"
 
 #ifdef _WINDOWS_
 #define snprintf sprintf_s
@@ -408,8 +409,8 @@ int checkInput(GenCurveFitRuntimeParamsPtr, GenCurveFitInternalsPtr);
 int checkNanInf(waveHndl);
 int checkZeros(waveHndl ,long* );
 static void freeAllocMem(GenCurveFitInternalsPtr goiP);
-static int randomInteger(int upper);
-static double randomDouble(double lower, double upper);
+static int randomInteger(int upper, uint32_t seed, short initialise);
+static double randomDouble(double lower, double upper, uint32_t seed, short initialise);
 int calcModel(FunctionInfo*, waveHndl, waveHndl, double*, waveHndl[MAX_MDFIT_SIZE], double*,int,int,fitfuncStruct*);
 static int calcModelXY(FunctionInfo*, waveHndl , waveHndl , waveHndl[MAX_MDFIT_SIZE] , int ,int ,fitfuncStruct*);
 static int insertVaryingParams(GenCurveFitInternalsPtr , GenCurveFitRuntimeParamsPtr);
