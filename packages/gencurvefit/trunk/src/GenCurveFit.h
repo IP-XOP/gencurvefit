@@ -79,7 +79,7 @@ funcref allatoncefitfunction ffsfuncrefs[10]
 uint32 ffsversion    // Structure version. 
 EndStructure 
 */
-#include "XOPStructureAlignmentTwoByte.h" 
+#pragma pack(2)
 struct fitfuncStruct { 
  waveHndl w;
  waveHndl yy;
@@ -101,9 +101,7 @@ struct fitfuncStruct {
 }; 
 typedef struct fitfuncStruct fitfuncStruct; 
 typedef struct fitfuncStruct* fitfuncStructPtr; 
-#include "XOPStructureAlignmentReset.h" 
 
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
 struct GenCurveFitRuntimeParams {
 	// Flag parameters.
 	
@@ -237,10 +235,8 @@ struct GenCurveFitRuntimeParams {
 };
 typedef struct GenCurveFitRuntimeParams GenCurveFitRuntimeParams;
 typedef struct GenCurveFitRuntimeParams* GenCurveFitRuntimeParamsPtr;
-#include "XOPStructureAlignmentReset.h"		// Reset structure alignment to default.
+#pragma pack()
 
-
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
 //this structure contains all the internal memory arrays necessary for the fit to proceed.
 struct GenCurveFitInternals{
 	
@@ -363,7 +359,6 @@ struct GenCurveFitInternals{
 };
 typedef struct GenCurveFitInternals GenCurveFitInternals;
 typedef struct GenCurveFitInternals* GenCurveFitInternalsPtr;
-#include "XOPStructureAlignmentReset.h"		// Reset structure alignment to default.
 
 /*
 	A structure to hold statistics of a wave
@@ -377,16 +372,14 @@ struct waveStats {
 typedef struct waveStats waveStats;
 typedef struct waveStats* waveStatsPtr;
 
-#include "XOPStructureAlignmentTwoByte.h" // Set structure alignment.
+#pragma pack(2)
 struct fitFunc { // Used to pass parameters to the function.
 	waveHndl waveH; // For the first function parameter.
 	double x[MAX_MDFIT_SIZE];
 };
 typedef struct fitFunc fitFunc;
 typedef struct fitFunc* fitFuncPtr;
-#include "XOPStructureAlignmentReset.h" // Reset structure alignment.
 
-#include "XOPStructureAlignmentTwoByte.h" // Set structure alignment.
 struct allFitFunc { // Used to pass parameters to the function.
 	waveHndl waveC; // For the coefficients.
 	waveHndl waveY;	// for filling up by the function
@@ -395,9 +388,7 @@ struct allFitFunc { // Used to pass parameters to the function.
 
 typedef struct allFitFunc allFitFunc;
 typedef struct allFitFunc* allFitFuncPtr;
-#include "XOPStructureAlignmentReset.h" // Reset structure alignment.
 
-#include "XOPStructureAlignmentTwoByte.h" // Set structure alignment.
 struct costFunc { // Used to pass parameters to the function.
 	waveHndl coefs;
 	waveHndl yobs;
@@ -406,7 +397,8 @@ struct costFunc { // Used to pass parameters to the function.
 };
 typedef struct costFunc costFunc;
 typedef struct costFunc* costFuncPtr;
-#include "XOPStructureAlignmentReset.h" // Reset structure alignment.
+
+#pragma pack()
 
 /*
 	Functions contained in Gencurvefit.c

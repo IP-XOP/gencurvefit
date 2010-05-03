@@ -171,43 +171,67 @@ int partialDerivative(double** derivativeMatrix,int derivativeMatrixRow, GenCurv
 	return err;
 }
 
+/*
+int matrixInversion(double **a, int N, double *detA){
+	int err=0;
+	int i,j;
+	int *indx = NULL;
+	double *col = NULL;
+	double **tempA = NULL;
+	double d;
+	*detA = 1;
 
-//Cholesky Decomposition
-static int choldc (double **a, int N, double *p){
-	int err = 0;	
-	int ii, jj, kk;
-	double sum = 0;
 	
 	
-	for(ii = 0; ii < N ; ii++){
-		for(jj = ii ; jj < N ; jj++){
-			for(sum = a[ii][jj] , kk = ii - 1 ; kk >= 0; kk--) sum -= a[ii][kk] * a[jj][kk];
-			if(ii == jj){
-				if(sum <= 0.0)
-					return UNSPECIFIED_ERROR;
-				p[ii] = sqrt(sum);
-			} else a[jj][ii] = sum/p[ii];
-		}
+	indx = (int*)malloc(sizeof(int)*N);
+	if(indx == NULL){
+		err = NOMEM;
+		goto done;
 	}
 	
+	tempA = (double**)malloc2d(N,N,sizeof(double));
+	if(tempA == NULL){
+		err = NOMEM;
+		goto done;
+	}
+	memcpy(tempA, a, sizeof(double) * N * N);
 	
+	col = (double*)malloc(sizeof(double)*N);
+	if(col == NULL){
+		err = NOMEM;
+		goto done;
+	}
+	
+	//perform the cholesky decomposition, purely to get the determinant
+	if(err = choldc(tempA, N, col)) goto done;
+	//the determinant of the original matrix is the square of the products of the elements in the cholesky diagonal
+	for(i = 0 ; i < N ; i+=1)
+		*detA *= tempA[i][i] * tempA[i][i];
+	memcpy(tempA, a, sizeof(double) * N * N);
+
+	
+	if(err = ludcmp(tempA,N,indx,&d)) goto done;
+	
+	for(j=0 ; j<N ; j++){
+		for(i=0 ; i<N ; i++) col[i] = 0.0;
+		col[j] = 1.0;
+		lubksb(tempA,N,indx,col);
+		for(i=0 ; i<N ; i++){
+			d = col[i];
+			a[i][j] = col[i];
+		};
+	}
 done:
+	if(col!=NULL)
+		free(col);
+	if(indx!=NULL)
+		free(indx);
+	if(tempA!=NULL)
+		free(tempA);
 	return err;
 }
+*/
 
-//Cholesky back substitution
-static void cholsl(const double **a, int N, const double *p, double *b, double *x){
-	int ii, kk;
-	double sum = 0;
-	for(ii = 0 ; ii < N ; ii++){
-		for(sum = b[ii], kk = ii-1 ; kk >=0 ; kk-- ) sum -=a[ii][kk] * x[kk];
-		x[ii] = sum/p[ii];
-	}
-	for(ii = N-1 ; ii >= 0 ; ii--){
-		for(sum = x[ii], kk = ii+1 ; kk < N ; kk++ ) sum -=a[kk][ii] * x[kk];
-		x[ii] = sum/p[ii];
-	}
-}
 
 int matrixInversion(double **a, int N, double *detA){
 	int err=0;
@@ -236,22 +260,24 @@ int matrixInversion(double **a, int N, double *detA){
 		err = NOMEM;
 		goto done;
 	}
-	memset(p, N, sizeof(double));
+	memset(p, 0, sizeof(double) * N);
 	
 	b = (double*)malloc(sizeof(double) * N);
 	if(b == NULL){
 		err = NOMEM;
 		goto done;
 	}
+	memset(b, 0, sizeof(double) * N);
+
 	
 	//perform the cholesky decomposition
 	if(err = choldc(tempA, N, p)) goto done;
 	
 	//now do the back substitution
 	for(j = 0 ; j < N ; j++){
-		memset(b, 0, sizeof(double));
+		memset(b, 0, sizeof(double) * N);
 		b[j] = 1.0;
-		memset(x, 0, sizeof(double));
+		memset(x, 0, sizeof(double) * N);
 		cholsl(tempA, N, p, b, x);
 		
 		for(i = 0 ; i < N ; i++)
@@ -261,7 +287,7 @@ int matrixInversion(double **a, int N, double *detA){
 	//the determinant of the original matrix is the square of the products of the elements in the cholesky diagonal
 	for(i = 0 ; i < N ; i+=1)
 		*detA *= tempA[i][i] * tempA[i][i];
-
+	
 	
 done:
 	if(p)
@@ -274,3 +300,129 @@ done:
 		free(tempA);
 	return err;
 }
+
+
+//Cholesky Decomposition
+static int choldc (double **a, int N, double *p){
+	int err = 0;	
+	int ii, jj, kk;
+	double sum = 0;
+	
+	
+	for(ii = 0; ii < N ; ii++){
+		for(jj = ii ; jj < N ; jj++){
+			for(sum = a[ii][jj] , kk = ii - 1 ; kk >= 0; kk--) sum -= a[ii][kk] * a[jj][kk];
+			if(ii == jj){
+				if(sum <= 0.0)
+					return UNSPECIFIED_ERROR;
+				p[ii] = sqrt(sum);
+			} else a[jj][ii] = sum/p[ii];
+		}
+	}
+	
+	
+done:
+	return err;
+}
+
+//Cholesky back substitution
+static void cholsl(double **a, int N, const double *p, double *b, double *x){
+	int ii, kk;
+	double sum = 0;
+	for(ii = 0 ; ii < N ; ii++){
+		for(sum = b[ii], kk = ii-1 ; kk >=0 ; kk-- ) sum -=a[ii][kk] * x[kk];
+		x[ii] = sum/p[ii];
+	}
+	for(ii = N-1 ; ii >= 0 ; ii--){
+		for(sum = x[ii], kk = ii+1 ; kk < N ; kk++ ) sum -=a[kk][ii] * x[kk];
+		x[ii] = sum/p[ii];
+	}
+}
+
+static int ludcmp(double **a, int n, int *indx, double *d){
+	int i, imax, j, k, err = 0;
+	double big, dum, sum, temp;
+	double *vv = NULL;
+	
+	vv = (double*)malloc(sizeof(double)*n);
+	if(vv == NULL){
+		err = 0;
+		goto done;
+	}
+	
+	*d = 1.0;
+	
+	for(i=0 ; i<n ; i++){
+		big = 0.0;
+		for(j=0 ; j<n ; j++)
+			if((temp = fabs(a[i][j])) > big) big = temp;
+		if(big == 0.0){
+			err = UNSPECIFIED_ERROR;
+			goto done;
+		}
+		vv[i] = 1.0/big;	
+	} 
+	
+	for(j=0 ; j<n ; j++){
+		for(i=0 ; i<j ; i++){
+			sum = a[i][j];
+			for (k=0 ; k<i ; k++) sum -= a[i][k]*a[k][j];
+			a[i][j] = sum;
+		}
+		big = 0.0;
+		for(i=j ; i<n ; i++){
+			sum = a[i][j];
+			for(k=0; k<j ; k++) sum -= a[i][k]*a[k][j];
+			a[i][j] = sum;
+			if( (dum=vv[i]*fabs(sum)) >= big) {
+				big = dum;
+				imax = i;
+			}
+		}
+		if(j != imax){
+			for(k=0 ; k<n ; k++){
+				dum = a[imax][k];
+				a[imax][k] = a[j][k];
+				a[j][k] = dum;
+			}
+			*d = -(*d);
+			vv[imax] = vv[j];
+		}
+		indx[j] = imax;
+		if(a[j][j] == 0.0) a[j][j] = TINY;
+		
+		if(j != n-1){
+			dum = 1.0/(a[j][j]);
+			for(i=j+1; i<n ; i++) a[i][j] *=dum;
+		}
+	}
+	
+	
+done:
+	if(vv != NULL)
+		free(vv);
+	
+	return err;
+	
+}
+
+static void lubksb(double **a, int n, int *indx, double b[]){
+	int i, ii=0, ip, j;
+	double sum;
+	
+	for(i=1 ; i<=n ; i++){
+		ip = indx[i-1];
+		sum = b[ip];
+		b[ip] = b[i-1];
+		if(ii)
+			for(j=ii ; j<=i-1 ; j++) sum -= a[i-1][j-1]*b[j-1];
+		else if (sum) ii=i;
+		b[i-1] = sum;
+	}
+	for(i=n ; i>=1 ; i--){
+		sum = b[i-1];
+		for(j=i+1 ; j<=n ; j++) sum -= a[i-1][j-1]*b[j-1];
+		b[i-1] = sum/a[i-1][i-1];
+	}	
+}
+
