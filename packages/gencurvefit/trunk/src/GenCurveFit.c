@@ -264,15 +264,39 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 			{output = snprintf(note, 199, "_______________________________\rGenetic Optimisation ABORTED\r");XOPNotice(note);}
 		WaveName(p->dataWave.waveH, note_buffer1);
 		
-		output = snprintf(note, 199, "Fitting: %s to %s\r",note_buffer1,goi.fi.name);XOPNotice(note);
-		output = snprintf(note, 199, "V_fitIters = %li; V_Chisq = %g; V_npnts= %li; V_nterms= %li; V_nheld= %li\r",goi.V_numfititers,*(goi.chi2Array),goi.unMaskedPoints,WavePoints(p->coefs),WavePoints(p->coefs) - goi.numvarparams);
+		output = snprintf(note, 
+						  199,
+						  "Fitting: %s to %s\r",
+						  note_buffer1,
+						  goi.fi.name);
+		
 		XOPNotice(note);
-		for(ii=0; ii<WavePoints(p->coefs); ii+=1){
+		
+		output = snprintf(note,
+						  199,
+						  "V_fitIters = %li; V_Chisq = %g; V_npnts= %li; V_nterms= %li; V_nheld= %li; V_logBayes = %g\r",
+						  goi.V_numfititers,
+						  *(goi.chi2Array),
+						  goi.unMaskedPoints,
+						  WavePoints(p->coefs),
+						  WavePoints(p->coefs) - goi.numvarparams,
+						  goi.V_logBayes);
+		
+		XOPNotice(note);
+		
+		for(ii = 0; ii < WavePoints(p->coefs) ; ii += 1){
 			indices[0] = ii;
 			indices[1] = 0;
-			if(err = MDGetNumericWavePointValue(goi.W_sigma,indices,value))
+			if(err = MDGetNumericWavePointValue(goi.W_sigma, indices, value))
 				goto done;
-			output = snprintf(note, 199, "\tw[%d]\t=\t%g   +/-   %g\r",ii,*(goi.gen_bestfitsofar+ii),value[0]);
+			
+			output = snprintf(note,
+							  199,
+							  "\tw[%d]\t=\t%g   +/-   %g\r",
+							  ii,
+							  *(goi.gen_bestfitsofar+ii),
+							  value[0]);
+			
 			XOPNotice(note);
 		}
 		output = snprintf(note, 199, "_______________________________\r");
@@ -296,13 +320,13 @@ checkNanInf(waveHndl wav){
 	//this is really important if you want to calculate Chi2.
 	int err = 0;
 	long ii;
-	double *dp=NULL;
+	double *dp = NULL;
 	long points;
-	if(wav==NULL)
+	if(wav == NULL)
 		return NON_EXISTENT_WAVE;
 	points = WavePoints(wav);
-	dp = (double*)malloc(sizeof(double)*WavePoints(wav));
-	if(dp==NULL)
+	dp = (double*) malloc(sizeof(double) * WavePoints(wav));
+	if(dp == NULL)
 		return NOMEM;
 	
 	if(err = MDGetDPDataFromNumericWave(wav,dp))
