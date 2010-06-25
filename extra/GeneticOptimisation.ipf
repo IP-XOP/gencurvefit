@@ -2593,7 +2593,7 @@ Function GEN_setlimitsforGENcurvefit(coefs, holdstring, cDF [, limits])
 	for(ii = 0 ; ii < strlen(holdstring) ; ii+=1)
 		if(stringmatch(holdstring[ii], "0"))
 			redimension/n=(dimsize(thosebeingvaried,0) + 1) thosebeingvaried
-			thosebeingvaried[ii] = ii
+			thosebeingvaried[numpnts(thosebeingvaried) - 1] = ii
 			numbeingvaried +=1
 		endif
 	endfor
