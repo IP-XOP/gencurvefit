@@ -1132,7 +1132,7 @@ end
 
 static Function InitNewGlobalFitGlobals()
 	
-	DFREF GFfolder = root:Packages:NewGlobalFit
+	DFREF GFfolder = root:Packages:motofitgf
 	if (DataFolderRefStatus(GFFolder) > 0)
 		return 0		// if the folder already exists, just use it so the set-up will be the same as before. This risks using a damaged folder...
 	endif
@@ -1739,14 +1739,14 @@ Function MOTO_SaveSetup(saveName)
 	String saveName
 	
 	DFREF SaveDF = GetDataFolderDFR()
-	SetDataFolder root:Packages:motofitgf
+	SetDataFolder root:Packages:motofitgf:
 	NewDataFolder/O/S NewGlobalFit_StoredSetups
 
 	DFREF targetDF = $saveName
 	if (DataFolderRefStatus(targetDF) > 0)
 		KillDataFolder targetDF
 	endif
-	DuplicateDataFolder ::motofitgf, $saveName
+	DuplicateDataFolder root:Packages:motofitgf:NewGlobalFit, $saveName
 	SetDataFolder $saveName
 	
 	ControlInfo/W=MotoGlobalFitPanel#NewGF_GlobalControlArea NewGF_ConstraintsCheckBox
@@ -1797,7 +1797,7 @@ end
 static Function NewGF_SaveSetupButtonProc(ctrlName) : ButtonControl
 	String ctrlName
 
-	SVAR NewGF_NewSetupName = root:Packages:motofitgf:NewGF_NewSetupName
+	SVAR NewGF_NewSetupName = root:Packages:motofitgf:NewGlobalFit:NewGF_NewSetupName
 	
 	DFREF SaveDF = GetDataFolderDFR()
 	SetDataFolder root:Packages:motofitgf
@@ -1835,7 +1835,7 @@ Function MOTO_RestoreSetup(savedSetupName)
 	String savedSetupName
 	
 	DFREF saveDF = GetDataFolderDFR()
-	DFREF savedSetupDF = root:Packages:motofitgf:NewGlobalFit_StoredSetups:$(savedSetupName)
+	DFREF savedSetupDF = root:Packages:motofitgf:NewGlobalFit:NewGlobalFit_StoredSetups:$(savedSetupName)
 	if (DataFolderRefStatus(savedSetupDF) == 0)
 		return -1
 	endif
@@ -1865,10 +1865,10 @@ Function MOTO_RestoreSetup(savedSetupName)
 	for (i = 0; i < nstr; i += 1)
 		String strname = StringFromList(i, strs)
 		SVAR ss = $strname
-		String/G root:Packages:NewGlobalFit:$strname = ss
+		String/G root:Packages:motofitgf:$strname = ss
 	endfor
 	
-	SetDataFolder root:Packages:NewGlobalFit
+	SetDataFolder root:Packages:motofitgf
 	NVAR DoConstraints
 	CheckBox NewGF_ConstraintsCheckBox,win=MotoGlobalFitPanel#NewGF_GlobalControlArea,value=DoConstraints
 	NVAR DoWeighting

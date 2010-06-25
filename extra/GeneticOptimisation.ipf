@@ -2621,8 +2621,8 @@ Function GEN_setlimitsforGENcurvefit(coefs, holdstring, cDF [, limits])
 		if(!waveexists(limits) || dimsize(limits, 0) != dimsize(coefs, 0))
 			make/o/n=(dimsize(coefs, 0), 2) root:packages:motofit:old_genoptimise:GENcurvefitlimits = 0
 			Wave/z limits =root:packages:motofit:old_genoptimise:GENcurvefitlimits
-			limits[][0] = coefs[thosebeingvaried[p]] < 0 ? 2* coefs[thosebeingvaried[p]] : 0
-			limits[][1] = coefs[thosebeingvaried[p]] > 0 ? 2* coefs[thosebeingvaried[p]] : 0		
+//				limits[][0] = coefs[thosebeingvaried[p]] < 0 ? 2* coefs[thosebeingvaried[p]] : 0
+//				limits[][1] = coefs[thosebeingvaried[p]] > 0 ? 2* coefs[thosebeingvaried[p]] : 0		
 		endif
 		
 		//thosebeingvaried may be the same as previous
