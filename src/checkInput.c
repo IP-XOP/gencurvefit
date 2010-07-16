@@ -118,6 +118,12 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		goto done;
 	}
 	
+	if(p->STGYFlagEncountered){
+		goiP->STGY = (int) p->STGYFlag_opt;
+		if(goiP->STGY < 0 || goiP->STGY > 10)
+			goiP->STGY = 0;
+	}
+	
 	if(p->LFlagEncountered){
 		if(IsNaN64(&p->LFlag_destLen) || IsINF64(&p->LFlag_destLen) || p->LFlag_destLen<1){
 			err = BAD_FLAG_NUM;
@@ -441,6 +447,8 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		p->KFlag_km = 0.7;
 		p->KFlag_recomb = 0.5;
 	}
+	goiP->recomb = p->KFlag_recomb;
+	goiP->k_m = p->KFlag_km;
 	
 	//the cost function for minimisation is now specified.  
 	if(p->METHFlagEncountered){

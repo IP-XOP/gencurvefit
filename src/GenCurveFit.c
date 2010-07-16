@@ -1841,40 +1841,260 @@ findmax(double* sort, int sortsize){
  */
 static void 
 createTrialVector(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p, int currentpvector){
-	int randomA,randomB,ii;
-	int fillpos,numvarparams,totalpopsize;
-	double km,recomb;
-	km = p->KFlag_km;
-	recomb = p->KFlag_recomb;
-	totalpopsize = goiP->totalpopsize;
-	numvarparams = goiP->numvarparams;
+	void (*theStrategy)(GenCurveFitInternalsPtr, int);
 	
-	do{
-		randomA = randomInteger(totalpopsize, 0, 0);
-	}while(randomA == currentpvector);
-	do{
-		randomB = randomInteger(totalpopsize, 0, 0);
-	}while(randomB == currentpvector || randomB == randomA);
-	
-	//fillpos will be in the range 0<=pos <numvarparams
-	//or 0<=pos <=numvarparams-1
-	fillpos = randomInteger(numvarparams, 0, 0);
-	
-	for(ii=0 ; ii<numvarparams ; ii+=1){
-		*(goiP->gen_bprime+ii) = goiP->gen_populationvector[0][ii] + km*(goiP->gen_populationvector[randomA][ii] - goiP->gen_populationvector[randomB][ii]);
-		*(goiP->gen_trial+ii) = goiP->gen_populationvector[currentpvector][ii];
+	switch(goiP->STGY){
+		case 0:
+			theStrategy = Best1Bin;
+			break;
+		case 1:
+			theStrategy = Best1Exp;
+			break;
+		case 2:
+			theStrategy = Rand1Exp;
+		case 3:
+			theStrategy = RandToBest1Exp;
+			break;
+		case 4:
+			theStrategy = Best2Exp;
+			break;
+		case 5:
+			theStrategy = Rand2Exp;
+			break;
+		case 6:
+			theStrategy = RandToBest1Bin;
+			break;
+		case 7:
+			theStrategy = Best2Bin;
+			break;
+		case 8:
+			theStrategy = Rand2Bin;
+			break;
+		default:
+			theStrategy = Best1Bin;
+			break;
 	}
 	
-	ii=0;
-	do{
-		if ((randomDouble(0, 1, 0, 0) <= recomb) || (ii == numvarparams-1))
-			*(goiP->gen_trial+fillpos) =  *(goiP->gen_bprime+fillpos);
-
-		fillpos ++;
-		fillpos = fillpos % numvarparams;
-		ii +=1;
-	}while(ii < numvarparams);
+	theStrategy(goiP, currentpvector);
 }
+
+void SelectSamples(int popsize, int candidate,int *r1,int *r2, int *r3,int *r4,int *r5){
+	if (r1){
+		do
+			*r1 = randomInteger(popsize, 0, 0);	
+		while (*r1 == candidate);
+	}
+	
+	if (r2)	{
+		do
+			*r2 = randomInteger(popsize, 0, 0);
+		while ((*r2 == candidate) || (*r2 == *r1));
+	}
+	
+	if (r3){
+		do
+			*r3 = randomInteger(popsize, 0, 0);
+		while ((*r3 == candidate) || (*r3 == *r2) || (*r3 == *r1));
+	}
+	
+	if (r4){
+		do
+			*r4 = randomInteger(popsize, 0, 0);
+		while ((*r4 == candidate) || (*r4 == *r3) || (*r4 == *r2) || (*r4 == *r1));
+	}
+	
+	if (r5){
+		do
+			*r5 = randomInteger(popsize, 0, 0);
+		while ((*r5 == candidate) || (*r5 == *r4) || (*r5 == *r3)
+			   || (*r5 == *r2) || (*r5 == *r1));
+	}
+	
+	return;
+}
+
+
+void Best1Bin(GenCurveFitInternalsPtr goiP, int candidate){
+	int r1, r2;
+	int n, i;
+	
+	SelectSamples(goiP->totalpopsize, candidate, &r1, &r2, NULL, NULL, NULL);
+	n = randomInteger(goiP->numvarparams, 0, 0);
+	
+	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
+	
+	for (i=0; i < goiP->numvarparams; i++) {
+		if ((randomDouble(0, 1, 0, 0) < goiP->recomb) || (i == (goiP->numvarparams - 1)))
+			*(goiP->gen_trial + n) = goiP->gen_populationvector[0][n]
+									+ goiP->k_m * (goiP->gen_populationvector[r1][n] - goiP->gen_populationvector[r2][n]);
+
+		n = (n + 1) % goiP->numvarparams;
+	}
+	return;
+}
+
+void Best1Exp(GenCurveFitInternalsPtr goiP, int candidate){
+	int r1, r2;
+	int n, i;
+	
+	SelectSamples(goiP->totalpopsize, candidate, &r1, &r2, NULL, NULL, NULL);
+	n = randomInteger(goiP->numvarparams, 0, 0);
+
+	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
+	
+	for (i=0 ; (randomDouble(0, 1, 0, 0) < goiP->recomb) && (i < goiP->numvarparams); i++){
+		*(goiP->gen_trial + n) = goiP->gen_populationvector[0][n]
+								+ goiP->k_m * (goiP->gen_populationvector[r1][n] - goiP->gen_populationvector[r2][n]);
+		
+		n = (n + 1) % goiP->numvarparams;
+	}
+	return;
+}
+
+void Rand1Exp(GenCurveFitInternalsPtr goiP, int candidate){
+	int r1, r2, r3;
+	int n, i;
+	
+	SelectSamples(goiP->totalpopsize, candidate,&r1,&r2,&r3, NULL, NULL);
+	n = randomInteger(goiP->numvarparams, 0, 0);
+	
+	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
+
+	for (i=0; (randomDouble(0, 1, 0, 0) < goiP->recomb) && (i < goiP->numvarparams); i++) {
+		*(goiP->gen_trial + n) = goiP->gen_populationvector[r1][n]
+		+ goiP->k_m * (goiP->gen_populationvector[r2][n] - goiP->gen_populationvector[r3][n]);
+
+		n = (n + 1) % goiP->numvarparams;
+	}
+	
+	return;
+}
+
+void RandToBest1Exp(GenCurveFitInternalsPtr goiP, int candidate){
+	int r1, r2;
+	int n,  i;
+	
+	SelectSamples(goiP->numvarparams, candidate,&r1,&r2, NULL, NULL, NULL);
+	n = randomInteger(goiP->numvarparams, 0, 0);
+	
+	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
+	
+	for (i=0; (randomDouble(0, 1, 0, 0) < goiP->recomb) && (i < goiP->numvarparams); i++) {
+		*(goiP->gen_trial + n) += goiP->k_m * (goiP->gen_populationvector[0][n] - *(goiP->gen_trial + n))
+		+ goiP->k_m * (goiP->gen_populationvector[r1][n]
+				   - goiP->gen_populationvector[r2][n]);
+		n = (n + 1) % goiP->numvarparams;
+	}
+	
+	return;
+}
+
+void Best2Exp(GenCurveFitInternalsPtr goiP, int candidate){
+	int r1, r2, r3, r4;
+	int n, i;
+	
+	SelectSamples(goiP->numvarparams, candidate,&r1,&r2,&r3,&r4, NULL);
+	n = randomInteger(goiP->numvarparams, 0, 0);
+	
+	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
+
+	for (i=0; (randomDouble(0, 1, 0, 0) < goiP->recomb) && (i < goiP->numvarparams); i++) {
+		*(goiP->gen_trial + n) = goiP->gen_populationvector[0][n] +
+		goiP->k_m * (goiP->gen_populationvector[r1][n]
+				 + goiP->gen_populationvector[r2][n]
+				 - goiP->gen_populationvector[r3][n]
+				 - goiP->gen_populationvector[r4][n]);
+		n = (n + 1) % goiP->numvarparams;
+	}
+	
+	return;
+}
+
+void Rand2Exp(GenCurveFitInternalsPtr goiP, int candidate){
+	int r1, r2, r3, r4, r5;
+	int n, i;
+	
+	SelectSamples(goiP->numvarparams, candidate,&r1,&r2,&r3,&r4,&r5);
+	n = randomInteger(goiP->numvarparams, 0, 0);
+	
+	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
+
+	for (i=0; (randomDouble(0, 1, 0, 0) < goiP->recomb) && (i < goiP->numvarparams); i++) {
+		*(goiP->gen_trial + n) = goiP->gen_populationvector[r1][n]
+		+ goiP->k_m * (goiP->gen_populationvector[r2][n]
+				   + goiP->gen_populationvector[r3][n]
+				   - goiP->gen_populationvector[r4][n]
+				   - goiP->gen_populationvector[r5][n]);
+		n = (n + 1) % goiP->numvarparams;
+	}
+	
+	return;
+}
+
+void RandToBest1Bin(GenCurveFitInternalsPtr goiP, int candidate){
+	int r1, r2;
+	int n, i;
+	
+	SelectSamples(goiP->numvarparams, candidate,&r1,&r2, NULL, NULL, NULL);
+	n = randomInteger(goiP->numvarparams, 0, 0);
+	
+	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
+	for (i=0; i < goiP->numvarparams; i++) 
+	{
+		if ((randomDouble(0, 1, 0, 0) < goiP->recomb) || (i  == (goiP->numvarparams - 1)))
+			*(goiP->gen_trial + n) += goiP->k_m * (goiP->gen_populationvector[0][n] - *(goiP->gen_trial + n))
+			+ goiP->k_m * (goiP->gen_populationvector[r1][n]
+					   - goiP->gen_populationvector[r2][n]);
+		n = (n + 1) % goiP->numvarparams;
+	}
+	
+	return;
+}
+
+void Best2Bin(GenCurveFitInternalsPtr goiP, int candidate){
+	int r1, r2, r3, r4;
+	int n, i;
+	
+	SelectSamples(goiP->numvarparams, candidate,&r1,&r2,&r3,&r4, NULL);
+	n = randomInteger(goiP->numvarparams, 0, 0);
+	
+	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
+	for (i=0; i < goiP->numvarparams; i++) 
+	{
+		if ((randomDouble(0, 1, 0, 0) < goiP->recomb) || (i  == (goiP->numvarparams - 1)))
+			*(goiP->gen_trial + n) = goiP->gen_populationvector[0][n]
+			+ goiP->k_m * (goiP->gen_populationvector[r1][n]
+					   + goiP->gen_populationvector[r2][n]
+					   - goiP->gen_populationvector[r3][n]
+					   - goiP->gen_populationvector[r4][n]);
+		n = (n + 1) % goiP->numvarparams;
+	}
+	
+	return;
+}
+
+void Rand2Bin(GenCurveFitInternalsPtr goiP, int candidate){
+	int r1, r2, r3, r4, r5;
+	int n, i;
+	
+	SelectSamples(goiP->numvarparams, candidate,&r1,&r2,&r3,&r4,&r5);
+	n = randomInteger(goiP->numvarparams, 0, 0);
+	
+	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
+	for (i=0; i < goiP->numvarparams; i++) 
+	{
+		if ((randomDouble(0, 1, 0, 0) < goiP->recomb) || (i  == (goiP->numvarparams - 1)))
+			*(goiP->gen_trial + n) = goiP->gen_populationvector[r1][n]
+			+ goiP->k_m * (goiP->gen_populationvector[r2][n]
+					   + goiP->gen_populationvector[r3][n]
+					   - goiP->gen_populationvector[r4][n]
+					   - goiP->gen_populationvector[r5][n]);
+		n = (n + 1) % goiP->numvarparams;
+	}
+	
+	return;
+}
+
 
 /*
  ensureConstraints takes the current trial vector and makes sure that all the individual 
