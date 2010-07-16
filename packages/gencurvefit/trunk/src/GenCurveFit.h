@@ -107,6 +107,11 @@ struct GenCurveFitRuntimeParams {
 	// Flag parameters.
 	
 	// Parameters for /OPT flag group.
+	int STGYFlagEncountered;
+	double STGYFlag_opt;
+	int STGYFlagParamsSet[1];
+	
+	// Parameters for /OPT flag group.
 	int TEMPFlagEncountered;
 	double TEMPFlag_opt;
 	int TEMPFlagParamsSet[1];
@@ -268,6 +273,11 @@ struct GenCurveFitInternals{
 	double *gen_trial;
 	//a utility array, same length as gen_trial.
 	double *gen_pvector;
+	double recomb;
+	double k_m;
+	
+	//strategy for minimisation
+	int STGY;
 
 	//cost function indicator for minimisation
 	int METH;
@@ -446,7 +456,17 @@ static waveStats getWaveStats(double*,long,int);
 static void checkLimits(GenCurveFitInternalsPtr,GenCurveFitRuntimeParamsPtr);
 int WindowMessage(void);
 int dumpRecordToWave(GenCurveFitInternalsPtr goiP,	MemoryStruct *dumpRecord);
-
+void DEStrategy(GenCurveFitInternalsPtr goiP, int candidate);
+void SelectSamples(int popsize, int candidate, int *r1, int *r2, int *r3,int *r4,int *r5);
+void Best1Bin(GenCurveFitInternalsPtr goiP, int candidate);
+void Best1Exp(GenCurveFitInternalsPtr goiP, int candidate);
+void Rand1Exp(GenCurveFitInternalsPtr goiP, int candidate);
+void RandToBest1Exp(GenCurveFitInternalsPtr goiP, int candidate);
+void Best2Exp(GenCurveFitInternalsPtr goiP, int candidate);
+void Rand2Exp(GenCurveFitInternalsPtr goiP, int candidate);
+void RandToBest1Bin(GenCurveFitInternalsPtr goiP, int candidate);
+void Best2Bin(GenCurveFitInternalsPtr goiP, int candidate);
+void Rand2Bin(GenCurveFitInternalsPtr goiP, int candidate);
 
 /* Prototypes */
 HOST_IMPORT void main(IORecHandle ioRecHandle);
