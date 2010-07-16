@@ -23,7 +23,7 @@ RegisterGenCurveFit(void){
 	char* runtimeStrVarList;
 
 	// NOTE: If you change this template, you must change the GenCurveFitRuntimeParams structure as well.
-	cmdTemplate = "GenCurveFit/MINF=name:minfun/DUMP/STRC=structure:{sp,fitfuncStruct}/opt=number:opt /MAT[=number:mat] /q[=number:quiet] /n[=number:noupdate] /SEED=number:seed /L=number:destLen /R[=Wave:resid] /meth=number:method /X={Wave:xx[,Wave[49]]}  /D=wave:outputwave /W=wave:weighttype /I=[number:weighttype] /M=wave:maskwave /k={number:iterations, number:popsize, number:km, number:recomb}/TOL=number:tol name:fitfun, waveRange:dataWave, wave:coefs, string:holdstring, wave:limitswave";
+	cmdTemplate = "GenCurveFit/TEMP=number:temp/MINF=name:minfun/DUMP/STRC=structure:{sp,fitfuncStruct}/opt=number:opt /MAT[=number:mat] /q[=number:quiet] /n[=number:noupdate] /SEED=number:seed /L=number:destLen /R[=Wave:resid] /meth=number:method /X={Wave:xx[,Wave[49]]}  /D=wave:outputwave /W=wave:weighttype /I=[number:weighttype] /M=wave:maskwave /k={number:iterations, number:popsize, number:km, number:recomb}/TOL=number:tol name:fitfun, waveRange:dataWave, wave:coefs, string:holdstring, wave:limitswave";
 	runtimeNumVarList = "V_Chisq;V_fitIters;V_npnts;V_nterms;V_nheld;V_logBayes";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(GenCurveFitRuntimeParams), (void*)ExecuteGenCurveFit, 0);

@@ -157,11 +157,11 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		
 		if(generateCovariance && (!(err2 = getCovarianceMatrix(p, &goi)))){
 			//set the error wave
-			for(ii=0; ii<goi.numvarparams ; ii+=1){
+			for(ii = 0; ii < goi.numvarparams ; ii += 1){
 				indices[0] = *(goi.varparams+ii);
 				value[0] = sqrt(goi.covarianceMatrix[ii][ii]);
-				if(err2 = MDSetNumericWavePointValue(goi.W_sigma,indices,value))
-				{err = err2;goto done;};
+				if(err2 = MDSetNumericWavePointValue(goi.W_sigma, indices, value))
+					{err = err2;goto done;};
 			}					 
 			WaveHandleModified(goi.W_sigma);
 			
@@ -170,26 +170,29 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 				dimensionSizes[0] = goi.totalnumparams;
 				dimensionSizes[1] = goi.totalnumparams;
 				dimensionSizes[2] = 0;
-				if(err2 = MDMakeWave(&goi.M_covariance, "M_Covar", goi.cDF,dimensionSizes, NT_FP64, 1))
-				{err = err2; goto done;};
-				for(ii=0; ii<goi.totalnumparams; ii+=1){
-					for(jj=0 ; jj<goi.totalnumparams; jj+=1){
+				if(err2 = MDMakeWave(&goi.M_covariance, "M_Covar", goi.cDF, dimensionSizes, NT_FP64, 1))
+					{err = err2; goto done;};
+			
+				for(ii = 0; ii < goi.totalnumparams; ii+=1){
+					for(jj = 0 ; jj < goi.totalnumparams; jj += 1){
 						indices[0] = ii;
 						indices[1] = jj;
 						value[0] = 0;
-						if(err2 = MDSetNumericWavePointValue(goi.M_covariance,indices,value))
-						{err = err2;goto done;};
+						if(err2 = MDSetNumericWavePointValue(goi.M_covariance, indices, value))
+							{err = err2;goto done;};  
 					}
 				}
-				for(ii=0; ii<goi.numvarparams ; ii+=1){
-					for(jj=0; jj<goi.numvarparams ; jj+=1){
-						indices[0] = *(goi.varparams+ii);
-						indices[1] = *(goi.varparams+jj);
+				
+				for(ii = 0; ii < goi.numvarparams ; ii += 1){
+					for(jj = 0; jj < goi.numvarparams ; jj += 1){
+						indices[0] = *(goi.varparams + ii);
+						indices[1] = *(goi.varparams + jj);
 						value[0] = goi.covarianceMatrix[ii][jj];
-						if(err2 = MDSetNumericWavePointValue(goi.M_covariance,indices,value))
-						{err = err2;goto done;};
+						if(err2 = MDSetNumericWavePointValue(goi.M_covariance, indices, value))
+							{err = err2;goto done;};
 					}
 				}
+				
 				WaveHandleModified(goi.M_covariance);
 			}
 		}
@@ -199,7 +202,8 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		{err = err2;goto done;};
 		if(isDisplayed && goi.numVarMD == 1){
 			if(err2 = isWaveDisplayed(goi.OUT_data, &isDisplayed))
-			{err = err2;goto done;};
+				{err = err2 ; goto done;};
+			
 			if(!isDisplayed){
 				strncpy(cmd, "appendtograph/w=$(winname(0,1)) ", MAXCMDLEN);
 				WaveName(goi.OUT_data,&note_buffer1[0]);
@@ -211,7 +215,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 					strncat(cmd, note_buffer2, MAXCMDLEN - strlen(cmd) - strlen(note_buffer2) );
 				}
 				if(err2 = XOPSilentCommand(&cmd[0]))
-				{err = err2; goto done;}
+					{err = err2; goto done;}
 			}
 		}
 	}
@@ -325,6 +329,7 @@ checkNanInf(waveHndl wav){
 	if(wav == NULL)
 		return NON_EXISTENT_WAVE;
 	points = WavePoints(wav);
+	
 	dp = (double*) malloc(sizeof(double) * WavePoints(wav));
 	if(dp == NULL)
 		return NOMEM;
@@ -332,13 +337,13 @@ checkNanInf(waveHndl wav){
 	if(err = MDGetDPDataFromNumericWave(wav,dp))
 		goto done;
 	
-	for(ii=0 ; ii<points ; ii+=1)
-		if((err=IsNaN64(dp+ii)) || (err=IsINF64(dp+ii))) break;
+	for(ii = 0 ; ii < points ; ii += 1)
+		if((err = IsNaN64(dp + ii)) || (err = IsINF64(dp + ii))) break;
 	
-	if(err>0)
+	if(err > 0)
 		err = INPUT_WAVES_CONTAINS_NANINF;
 done:
-	if(dp!=NULL)
+	if(dp != NULL)
 		free(dp);
 	return err;
 }
@@ -1900,6 +1905,7 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 	int err=0;
 	int currentpvector;
 	double chi2pvector,chi2trial;
+	int acceptMoveGrudgingly = 0;
 	waveStats wavStats;
 	
 	//an array for dumping the population at each iteration
@@ -1912,7 +1918,7 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 		DisplayWindowXOP1Message(gTheWindow, WavePoints(p->coefs), goiP->gen_coefsCopy, *(goiP->chi2Array), goiP->fi.name, goiP->V_numfititers, goiP->convergenceNumber);
 	}
 	
-	if(p->DUMPFlagEncountered){
+	if(p->DUMPFlagEncountered && (!p->TEMPFlagEncountered)){
 		for(mm=0 ; mm < goiP->totalpopsize ; mm+=1){
 			WriteMemoryCallback((goiP->gen_populationvector[mm]), sizeof(double), goiP->numvarparams, &dumpRecord);
 			if(dumpRecord.memory == NULL){
@@ -1939,7 +1945,7 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 									 goiP->convergenceNumber);
 		}	
 		//iterate over all the individual members of the population
-		for(ii=0 ; ii<goiP->totalpopsize ; ii+=1){
+		for(ii = 0 ; ii < goiP->totalpopsize ; ii += 1){
 			// perhaps the user wants to abort the fit using gui panel?
 			if(Abort_the_fit){
 				err = FIT_ABORTED;
@@ -1956,15 +1962,15 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 			//now set up the trial vector using a wave from the populationvector and bprime
 			//first set the pvector 
 			// create a mutated trial vector from the best fit and two random population members
-			createTrialVector(goiP,p,currentpvector);
+			createTrialVector(goiP, p, currentpvector);
 			// make sure the trial vector parameters lie between the user defined limits
 			ensureConstraints(goiP, p);
 			
-			chi2pvector = *(goiP->chi2Array+ii);
+			chi2pvector = *(goiP->chi2Array + ii);
 			/*
 			 find out the chi2 value of the trial vector		
 			 */
-			if(err = setPvector(goiP,goiP->gen_trial,goiP->numvarparams))
+			if(err = setPvector(goiP, goiP->gen_trial, goiP->numvarparams))
 				goto done;
 			if(err = insertVaryingParams(goiP, p))
 				goto done;
@@ -2002,11 +2008,28 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 				default:
 					break;
 			}
+			
+			/*
+			 if the /TEMP switch is specified then the user may want to accept the move, a la Monte Carlo.
+			*/
+			if(p->TEMPFlagEncountered && p->TEMPFlag_opt > 0){
+				if( exp(-chi2trial/chi2pvector / p->TEMPFlag_opt) < randomDouble(0, 1, 0, 0))
+					acceptMoveGrudgingly = 1;
+				else
+					acceptMoveGrudgingly = 0;
+				if(p->DUMPFlagEncountered && ii > 0){
+					WriteMemoryCallback(goiP->gen_pvector, sizeof(double), goiP->numvarparams, &dumpRecord);
+					if(dumpRecord.memory == NULL){
+						err = NOMEM; goto done;
+					}
+				}
+			}
+			
 			/*
 			 if the chi2 of the trial vector is less than the current populationvector then replace it
 			 */
-			if(chi2trial < chi2pvector){
-				if(err = setPopVectorFromPVector(goiP, goiP->gen_pvector, goiP->numvarparams,currentpvector))
+			if(chi2trial < chi2pvector || (acceptMoveGrudgingly && ii)){
+				if(err = setPopVectorFromPVector(goiP, goiP->gen_pvector, goiP->numvarparams, currentpvector))
 					goto done;
 				*(goiP->chi2Array+ii) = chi2trial;
 				/*
@@ -2068,7 +2091,7 @@ optimiseloop(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p){
 				}
 			}
 		}
-		if(p->DUMPFlagEncountered){
+		if(p->DUMPFlagEncountered && (!p->TEMPFlagEncountered)){
 			for(mm=0 ; mm < goiP->totalpopsize ; mm+=1){
 				WriteMemoryCallback((goiP->gen_populationvector[mm]), sizeof(double), goiP->numvarparams, &dumpRecord);
 				if(dumpRecord.memory == NULL){
@@ -2098,8 +2121,8 @@ int dumpRecordToWave(GenCurveFitInternalsPtr goiP,	MemoryStruct *dumpRecord){
 	
 	memset(dimensionSizes, 0, sizeof(dimensionSizes));
 	dimensionSizes[0] = goiP->numvarparams;
-	dimensionSizes[1] = goiP->totalpopsize;
-	dimensionSizes[2] = dumpRecord->size/(sizeof(double)*goiP->totalpopsize*goiP->numvarparams);
+	dimensionSizes[1] = dumpRecord->size / (sizeof(double) * goiP->numvarparams);
+//	dimensionSizes[2] = dumpRecord->size/(sizeof(double)*goiP->totalpopsize*goiP->numvarparams);
 	
 	if(err = MDMakeWave(&dump,"M_gencurvefitpopdump",goiP->cDF,dimensionSizes, NT_FP64, 1))
 		return err;

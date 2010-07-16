@@ -106,6 +106,10 @@ typedef struct fitfuncStruct* fitfuncStructPtr;
 struct GenCurveFitRuntimeParams {
 	// Flag parameters.
 	
+	// Parameters for /OPT flag group.
+	int TEMPFlagEncountered;
+	double TEMPFlag_opt;
+	int TEMPFlagParamsSet[1];
 	
 	// Parameters for /MINF flag group.
 	int MINFFlagEncountered;

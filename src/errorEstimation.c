@@ -268,7 +268,6 @@ int matrixInversion(double **a, int N, double *detA){
 		goto done;
 	}
 	memset(b, 0, sizeof(double) * N);
-
 	
 	//perform the cholesky decomposition
 	if(err = choldc(tempA, N, p)) goto done;
@@ -284,10 +283,15 @@ int matrixInversion(double **a, int N, double *detA){
 			a[i][j] = x[i];
 	}
 	
+	//make the covariance matrix symmetric
+	for(i=0 ; i < N ; i++)
+		for(j = N-1 ; j > i ; j--)
+			a[i][j] = a[j][i];
+		
+	
 	//the determinant of the original matrix is the square of the products of the elements in the cholesky diagonal
 	for(i = 0 ; i < N ; i+=1)
 		*detA *= tempA[i][i] * tempA[i][i];
-	
 	
 done:
 	if(p)
