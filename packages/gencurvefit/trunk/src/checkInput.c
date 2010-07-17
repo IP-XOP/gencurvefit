@@ -120,7 +120,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	
 	if(p->STGYFlagEncountered){
 		goiP->STGY = (int) p->STGYFlag_opt;
-		if(goiP->STGY < 0 || goiP->STGY > 10)
+		if(goiP->STGY < 0 || goiP->STGY > 8)
 			goiP->STGY = 0;
 	}
 	
