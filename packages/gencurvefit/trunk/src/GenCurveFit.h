@@ -467,6 +467,7 @@ void Rand2Exp(GenCurveFitInternalsPtr goiP, int candidate);
 void RandToBest1Bin(GenCurveFitInternalsPtr goiP, int candidate);
 void Best2Bin(GenCurveFitInternalsPtr goiP, int candidate);
 void Rand2Bin(GenCurveFitInternalsPtr goiP, int candidate);
+void Rand1Bin(GenCurveFitInternalsPtr goiP, int candidate);
 
 /* Prototypes */
 HOST_IMPORT void main(IORecHandle ioRecHandle);
