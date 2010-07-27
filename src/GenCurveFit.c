@@ -1974,7 +1974,7 @@ void RandToBest1Exp(GenCurveFitInternalsPtr goiP, int candidate){
 	int r1, r2;
 	int n,  i;
 	
-	SelectSamples(goiP->numvarparams, candidate,&r1,&r2, NULL, NULL, NULL);
+	SelectSamples(goiP->totalpopsize, candidate,&r1,&r2, NULL, NULL, NULL);
 	n = randomInteger(goiP->numvarparams, 0, 0);
 	
 	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
@@ -1993,7 +1993,7 @@ void Best2Exp(GenCurveFitInternalsPtr goiP, int candidate){
 	int r1, r2, r3, r4;
 	int n, i;
 	
-	SelectSamples(goiP->numvarparams, candidate,&r1,&r2,&r3,&r4, NULL);
+	SelectSamples(goiP->totalpopsize, candidate,&r1,&r2,&r3,&r4, NULL);
 	n = randomInteger(goiP->numvarparams, 0, 0);
 	
 	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
@@ -2014,7 +2014,7 @@ void Rand2Exp(GenCurveFitInternalsPtr goiP, int candidate){
 	int r1, r2, r3, r4, r5;
 	int n, i;
 	
-	SelectSamples(goiP->numvarparams, candidate,&r1,&r2,&r3,&r4,&r5);
+	SelectSamples(goiP->totalpopsize, candidate,&r1,&r2,&r3,&r4,&r5);
 	n = randomInteger(goiP->numvarparams, 0, 0);
 	
 	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
@@ -2035,7 +2035,7 @@ void RandToBest1Bin(GenCurveFitInternalsPtr goiP, int candidate){
 	int r1, r2;
 	int n, i;
 	
-	SelectSamples(goiP->numvarparams, candidate,&r1,&r2, NULL, NULL, NULL);
+	SelectSamples(goiP->totalpopsize, candidate,&r1,&r2, NULL, NULL, NULL);
 	n = randomInteger(goiP->numvarparams, 0, 0);
 	
 	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
@@ -2055,7 +2055,7 @@ void Best2Bin(GenCurveFitInternalsPtr goiP, int candidate){
 	int r1, r2, r3, r4;
 	int n, i;
 	
-	SelectSamples(goiP->numvarparams, candidate,&r1,&r2,&r3,&r4, NULL);
+	SelectSamples(goiP->totalpopsize, candidate,&r1,&r2,&r3,&r4, NULL);
 	n = randomInteger(goiP->numvarparams, 0, 0);
 	
 	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
@@ -2077,7 +2077,7 @@ void Rand2Bin(GenCurveFitInternalsPtr goiP, int candidate){
 	int r1, r2, r3, r4, r5;
 	int n, i;
 	
-	SelectSamples(goiP->numvarparams, candidate,&r1,&r2,&r3,&r4,&r5);
+	SelectSamples(goiP->totalpopsize, candidate,&r1,&r2,&r3,&r4,&r5);
 	n = randomInteger(goiP->numvarparams, 0, 0);
 	
 	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
