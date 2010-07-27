@@ -1870,6 +1870,9 @@ createTrialVector(GenCurveFitInternalsPtr goiP, GenCurveFitRuntimeParamsPtr p, i
 		case 8:
 			theStrategy = Rand2Bin;
 			break;
+		case 9:
+			theStrategy = Rand1Bin;
+			break;
 		default:
 			theStrategy = Best1Bin;
 			break;
@@ -2089,6 +2092,26 @@ void Rand2Bin(GenCurveFitInternalsPtr goiP, int candidate){
 					   + goiP->gen_populationvector[r3][n]
 					   - goiP->gen_populationvector[r4][n]
 					   - goiP->gen_populationvector[r5][n]);
+		n = (n + 1) % goiP->numvarparams;
+	}
+	
+	return;
+}
+
+void Rand1Bin(GenCurveFitInternalsPtr goiP, int candidate){
+	int r1, r2, r3;
+	int n, i;
+	
+	SelectSamples(goiP->totalpopsize, candidate,&r1,&r2,&r3,NULL, NULL);
+	n = randomInteger(goiP->numvarparams, 0, 0);
+
+	memcpy(goiP->gen_trial, *(goiP->gen_populationvector + candidate), goiP->numvarparams * sizeof(double));
+	
+	for (i=0; i < goiP->numvarparams; i++) {
+		if ((randomDouble(0, 1, 0, 0) < goiP->recomb) || (i  == (goiP->numvarparams - 1)))
+				*(goiP->gen_trial + n) =  goiP->gen_populationvector[r1][n]
+											+ goiP->k_m * (goiP->gen_populationvector[r2][n]
+														   - goiP->gen_populationvector[r3][n]);
 		n = (n + 1) % goiP->numvarparams;
 	}
 	
