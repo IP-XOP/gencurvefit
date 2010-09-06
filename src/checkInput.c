@@ -627,7 +627,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	}
 	
 	jj = 0;
-	for(ii = 0 ; ii < goiP->numvarparams ; ii++){
+	for(ii = 0 ; ii < goiP->totalnumparams ; ii++){
 		if(goiP->holdvector[ii] == 0){
 			goiP->varParams[jj] = ii;
 			jj++;

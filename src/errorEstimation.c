@@ -131,7 +131,8 @@ int updatePartialDerivative(double **derivativeMatrix, GenCurveFitInternalsPtr g
 	int err = 0;
 	int ii;
 	for(ii = 0 ; ii < goiP->numvarparams ; ii++){
-		if(err = partialDerivative(derivativeMatrix,ii, goiP,*(goiP->varParams+ii))) return err;
+		if(err = partialDerivative(derivativeMatrix,ii, goiP, goiP->varParams[ii]))
+			return err;
 	} 
 	return err;
 }
