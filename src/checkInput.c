@@ -32,9 +32,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	char *holdstr = NULL;
 	int requiredParameterTypes[MAX_MDFIT_SIZE+2];
 	int METH=0, ii=0, jj;
-	
-	double temp1, temp2;
-	
+		
 	/*
 	 get the current datafolder
 	 */
