@@ -7,13 +7,9 @@
 /*
  *  main.c
  *  GenCurvefit
- *
- *  Created by andrew on 25/04/08.
- *  Copyright 2008 __MyCompanyName__. All rights reserved.
- *
  */
 #include "XOPStandardHeaders.h"
-#include "GenCurveFit.h"
+#include "GenCurveFitXOP.h"
 #include "updateXOP.h"
 
 static int

@@ -16,7 +16,7 @@
  *
  */
 #include "XOPStandardHeaders.h"
-#include "GenCurveFit.h"
+#include "GenCurveFitXOP.h"
 #include "errorEstimation.h"
 
 #define TINY 1.0e-20
@@ -41,7 +41,6 @@ int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr g
 	double **derivativeMatrix = NULL;
 	double hessianDeterminant = 0;
 	int ii,jj;
-	//	double temp;
 	err = 0;
 	
 	if(goiP->covarianceMatrix == NULL){
@@ -49,16 +48,16 @@ int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr g
 		goto done;
 	}
 	
-	derivativeMatrix = (double**) malloc2d(goiP->numvarparams,goiP->unMaskedPoints,sizeof(double));
+	derivativeMatrix = (double**) malloc2d(goiP->numvarparams, goiP->unMaskedPoints, sizeof(double));
 	if(derivativeMatrix == NULL){	err = NOMEM;	goto done;}
 	
-	if(err = updatePartialDerivative(derivativeMatrix, p, goiP)) goto done;
+	if(err = updatePartialDerivative(derivativeMatrix, goiP)) goto done;
 	
 	if(err = updateAlpha(goiP->covarianceMatrix, derivativeMatrix, goiP)) goto done;
 
 	if(err = matrixInversion(goiP->covarianceMatrix, goiP->numvarparams, &hessianDeterminant)) goto done;
 
-	goiP->V_logBayes = exp(-0.5 * (*(goiP->chi2Array)) / (double)(goiP->unMaskedPoints - goiP->numvarparams));// * pow(4*3.14159,(double) goiP->numvarparams) ;//* factorial((double)goiP->numvarparams);
+	goiP->V_logBayes = exp(-0.5 * (goiP->cost) / (double)(goiP->unMaskedPoints - goiP->numvarparams));// * pow(4*3.14159,(double) goiP->numvarparams) ;//* factorial((double)goiP->numvarparams);
 	goiP->V_logBayes = goiP->V_logBayes / (sqrt(hessianDeterminant));
 	//	for(ii=0; ii < goiP->numvarparams ; ii+=1){
 	//		temp = fabs(*(goiP->limits + *(goiP->varparams+ii) + goiP->totalnumparams)-*(goiP->limits + *(goiP->varparams+ii)));
@@ -70,7 +69,7 @@ int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr g
 	if(!p->WFlagEncountered)
 		for(ii=0; ii< goiP->numvarparams ; ii++)
 			for(jj=0 ; jj<goiP->numvarparams ; jj+=1)
-				goiP->covarianceMatrix[ii][jj] *= *(goiP->chi2Array)/(goiP->unMaskedPoints - goiP->numvarparams);
+				goiP->covarianceMatrix[ii][jj] *= goiP->cost/(goiP->unMaskedPoints - goiP->numvarparams);
 		
 done:
 	if(derivativeMatrix != NULL)
@@ -81,13 +80,13 @@ done:
 
 /** Calculates the lower left elements for <code>this.alpha</code>. */
 int updateAlpha(double **alpha, double **derivativeMatrix, GenCurveFitInternalsPtr goiP) {
-	int err = 0, ii,jj;
+	int err = 0, ii, jj;
 	for (ii = 0; ii < goiP->numvarparams; ii++) {
 		for (jj = 0; jj < ii+1 ; jj++) {
 			if(err = calculateAlphaElement(ii, jj, alpha, derivativeMatrix, goiP)) return err;
 		}
 	}
-	if(err = packAlphaSymmetric(alpha,goiP)) return err;
+	if(err = packAlphaSymmetric(alpha, goiP)) return err;
 	return err;
 }
 
@@ -103,10 +102,10 @@ int calculateAlphaElement(int row, int col, double **alpha, double **derivativeM
 			case -1:
 				break;
 			case 0:
-				num *= ((*(goiP->dataSig+ii))*(*(goiP->dataSig+ii)));
+				num *= ((*(goiP->dataSig+ii)) * (*(goiP->dataSig+ii)));
 				break;
 			case 1:
-				num /= ((*(goiP->dataSig+ii))*(*(goiP->dataSig+ii)));
+				num /= ((*(goiP->dataSig+ii))  *(*(goiP->dataSig+ii)));
 				break;
 		}
 		result += num;
@@ -120,53 +119,44 @@ int calculateAlphaElement(int row, int col, double **alpha, double **derivativeM
 int packAlphaSymmetric(double** alpha,GenCurveFitInternalsPtr goiP){  
 	int err = 0,ii,jj;
 	
-	for(ii=0 ; ii<goiP->numvarparams ; ii++){
-		for(jj = goiP->numvarparams-1 ; jj > ii ; jj--){
+	for(ii = 0 ; ii < goiP->numvarparams ; ii++){
+		for(jj = goiP->numvarparams - 1 ; jj > ii ; jj--){
 			alpha[ii][jj] = alpha[jj][ii];
 		}
 	}
 	return err;
 }
 
-int updatePartialDerivative(double **derivativeMatrix, GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
+int updatePartialDerivative(double **derivativeMatrix, GenCurveFitInternalsPtr goiP){
 	int err = 0;
 	int ii;
-	for(ii=0 ; ii< goiP->numvarparams ; ii++){
-		if(err = partialDerivative(derivativeMatrix,ii,p,goiP,*(goiP->varparams+ii))) return err;
+	for(ii = 0 ; ii < goiP->numvarparams ; ii++){
+		if(err = partialDerivative(derivativeMatrix,ii, goiP,*(goiP->varParams+ii))) return err;
 	} 
 	return err;
 }
 
-int partialDerivative(double** derivativeMatrix,int derivativeMatrixRow, GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP,int parameterIndex){
+int partialDerivative(double** derivativeMatrix, int derivativeMatrixRow, GenCurveFitInternalsPtr goiP,int parameterIndex){
 	int err = 0;
 	double param, diff;
-	long indices[MAX_DIMENSIONS];
-	double value[2];
 	int jj;
 	
-	indices[0] = parameterIndex;
-	if(err = MDGetNumericWavePointValue(goiP->GenCurveFitCoefs,indices,value)) return err;
+	param = goiP->coefs[parameterIndex];	
+	diff = 1.e-6 * param;
+	goiP->coefs[parameterIndex] = param + diff;
 	
-	param = value[0];
-	diff = 1.e-6*param;
-	value[0] = param + diff;
-	if(err = MDSetNumericWavePointValue(goiP->GenCurveFitCoefs,indices,value)) return err;
-	
-	if(err = calcModel(&goiP->fi,goiP->GenCurveFitCoefs,goiP->dataCalc,*(derivativeMatrix+derivativeMatrixRow),goiP->xcalc,goiP->independentVariable,goiP->numVarMD,goiP->isAAO,goiP->sp))
+	if(err = lgencurvefit_fitfunction((void*) goiP, goiP->coefs, goiP->totalnumparams, *(derivativeMatrix + derivativeMatrixRow),  (const double**)goiP->independentVariable, goiP->dataPoints, goiP->numVarMD))
 		return err;
 	
-	value[0] = param - diff;	
-	if(err = MDSetNumericWavePointValue(goiP->GenCurveFitCoefs,indices,value)) return err;
+	goiP->coefs[parameterIndex] = param - diff;
 	
-	if(err = calcModel(&goiP->fi,goiP->GenCurveFitCoefs,goiP->dataCalc,goiP->dataTemp,goiP->xcalc,goiP->independentVariable,goiP->numVarMD,goiP->isAAO,goiP->sp))
+	if(err = lgencurvefit_fitfunction((void*) goiP, goiP->coefs, goiP->totalnumparams, goiP->dataTemp,  (const double**)goiP->independentVariable, goiP->dataPoints, goiP->numVarMD))
 		return err;
 	
-	for(jj=0; jj<goiP->unMaskedPoints ; jj++){
-		derivativeMatrix[derivativeMatrixRow][jj] = (derivativeMatrix[derivativeMatrixRow][jj] - *(goiP->dataTemp+jj)) / (2*diff);
-	}
+	for(jj = 0 ; jj < goiP->unMaskedPoints ; jj++)
+		derivativeMatrix[derivativeMatrixRow][jj] = (derivativeMatrix[derivativeMatrixRow][jj] - goiP->dataTemp[jj]) / (2 * diff);
 	
-	value[0] = param;	
-	if(err = MDSetNumericWavePointValue(goiP->GenCurveFitCoefs,indices,value)) return err;
+	goiP->coefs[parameterIndex] = param;	
 	
 	return err;
 }
@@ -180,8 +170,6 @@ int matrixInversion(double **a, int N, double *detA){
 	double **tempA = NULL;
 	double d;
 	*detA = 1;
-
-	
 	
 	indx = (int*)malloc(sizeof(int)*N);
 	if(indx == NULL){
