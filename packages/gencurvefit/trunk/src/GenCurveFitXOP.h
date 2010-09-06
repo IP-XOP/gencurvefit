@@ -13,7 +13,6 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #include "XOPStandardHeaders.h"			// Include ANSI headers, Mac headers, IgorXOP.h, XOP.h and XOPSupport.h
 #include <time.h>
 #include <stdlib.h>
-#include "memutils.h"
 
 #ifdef _WINDOWS_
 #define snprintf sprintf_s
