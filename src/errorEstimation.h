@@ -5,8 +5,8 @@
  */
 static int matrixInversion(double **a, int N, double *detA);
 int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP);
-int updatePartialDerivative(double**, GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP);
-int partialDerivative(double**, int, GenCurveFitRuntimeParamsPtr, GenCurveFitInternalsPtr,int);
+int updatePartialDerivative(double**, GenCurveFitInternalsPtr goiP);
+int partialDerivative(double**, int, GenCurveFitInternalsPtr,int);
 int updateAlpha(double**,double**, GenCurveFitInternalsPtr goiP);
 int calculateAlphaElement(int row, int col, double **alpha, double **derivativeMatrix, GenCurveFitInternalsPtr goiP);
 int packAlphaSymmetric(double** alpha,GenCurveFitInternalsPtr);
