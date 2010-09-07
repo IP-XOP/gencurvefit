@@ -36,7 +36,7 @@ double factorial(double num){
 	return result;
 }
 
-int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
+int getGCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	int err;
 	double **derivativeMatrix = NULL;
 	double hessianDeterminant = 0;

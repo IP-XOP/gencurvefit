@@ -4,7 +4,7 @@
  functions contained in errorEstimation.c
  */
 static int matrixInversion(double **a, int N, double *detA);
-int getCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP);
+int getGCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP);
 int updatePartialDerivative(double**, GenCurveFitInternalsPtr goiP);
 int partialDerivative(double**, int, GenCurveFitInternalsPtr,int);
 int updateAlpha(double**,double**, GenCurveFitInternalsPtr goiP);
