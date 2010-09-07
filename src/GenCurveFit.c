@@ -479,7 +479,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		if(goi.covarianceMatrix == NULL)
 		{ err = NOMEM; goto done;}
 		
-		if(generateCovariance && (!(err2 = getCovarianceMatrix(p, &goi)))){
+		if(generateCovariance && (!(err2 = getGCovarianceMatrix(p, &goi)))){
 			//set the error wave
 			for(ii = 0; ii < goi.numvarparams ; ii += 1){
 					indices[0] = goi.varParams[ii];
