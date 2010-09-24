@@ -431,7 +431,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 							   goi.coefs,
 							   goi.holdvector,
 							   (const double**) goi.limits,
-							   goi.dataPoints,
+							   goi.unMaskedPoints,
 							   goi.dataObs,
 							   (const double**) goi.independentVariable,
 							   goi.dataSig,
