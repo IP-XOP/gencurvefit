@@ -30,7 +30,6 @@
 #include <string.h>
 
 #include "updateXOP.h"
-#include "errorEstimation.h"
 
 
 //gTheWindow is a window created to show the latest position of the fit
@@ -319,8 +318,35 @@ done:
 	return err;
 }
 
+/* 
+ function obtains the covariance matrix for the fit.
+ */
+int getGCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
+	int err = 0;
+	double hessianDeterminant = 0;
+		
+	if(err = getCovarianceMatrix(&goiP->covarianceMatrix,
+								 &hessianDeterminant,
+								 goiP,
+								 lgencurvefit_fitfunction,
+								 goiP->cost,
+								 goiP->coefs,
+								 goiP->totalnumparams,
+								 goiP->holdvector,
+								 goiP->dataObs,
+								 goiP->dataSig,
+								 (const double**) goiP->independentVariable,
+								 goiP->unMaskedPoints,
+								 goiP->numVarMD,
+								 !p->WFlagEncountered))
+		return err;
+	
+	goiP->V_logBayes = exp(-0.5 * (goiP->cost) / (double)(goiP->unMaskedPoints - goiP->numvarparams));// * pow(4*3.14159,(double) goiP->numvarparams) ;//* factorial((double)goiP->numvarparams);
+	goiP->V_logBayes = goiP->V_logBayes / (sqrt(hessianDeterminant));
+	goiP->V_logBayes = log(goiP->V_logBayes);
 
-
+	return err;
+}
 
 /*
  ExecuteGenCurveFit performs the genetic curvefitting routines
@@ -342,7 +368,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 err2 carries the error code if we still want to return err, but we need to finish off
 	 something else first.	
 	 */
-	int err = 0, err2=0;
+	int err = 0, err2 = 0;
 	double value[2];
 	long indices[MAX_DIMENSIONS];
 	
@@ -353,9 +379,10 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	char varname[MAX_OBJ_NAME+1];
 	long dimensionSizes[MAX_DIMENSIONS];
 	double t1,t2, chi2;
+	double *wP;
 	long lt1 = 0;
 	char note[200], note_buffer1[MAX_WAVE_NAME+1], note_buffer2[MAX_WAVE_NAME+1], cmd[MAXCMDLEN+1];
-	int output, ii, jj, isDisplayed, quiet, generateCovariance;
+	int output, ii, isDisplayed, quiet;
 	
 	//initialise all the internal data structures to NULL
 	memset(&goi, 0, sizeof(goi));
@@ -363,7 +390,6 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	//you have to use IGOR > 5.03
 	if( igorVersion < 503 )
 		return REQUIRES_IGOR_500;
-	
 	
 	//reset the options for libgencurvefit
 	memset(&gco, 0, sizeof(gencurvefitOptions));
@@ -421,6 +447,12 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	gco.updatefrequency = 31;
 	
 	/*
+	 you want to polish the fit (at the end) using LevenbergMarquardt
+	 */
+	if(p->POLFlagEncountered)
+		gco.polishUsingLM = 1;
+	
+	/*
 	 optimiseloop does the Differential Evolution, according to Storn and Price.  When this returns 0, then 
 	 you have the best fit in the GenCurveFitInternals structure.  Otherwise it returns an error code.  If the user aborts
 	 then the FIT_ABORTED error code is returned, but it is still possible to retrieve the best solution so far
@@ -456,67 +488,44 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		//make an error wave
 		dimensionSizes[0] = goi.totalnumparams;
 		dimensionSizes[1] = 0;
-		if(err2 = MDMakeWave(&goi.W_sigma, "W_sigma",goi.cDF,dimensionSizes,NT_FP64, 1))
-		{err = err2;goto done;}
 		
-		//set the error wave to zero
-		for(ii = 0; ii < goi.totalnumparams ; ii += 1){
-			indices[0] = ii;
-			value[0] = 0;
-			if(err2 = MDSetNumericWavePointValue(goi.W_sigma,indices,value))
-			{err = err2;goto done;};					 
+		if(err = MDMakeWave(&goi.W_sigma, "W_sigma", goi.cDF,dimensionSizes, NT_FP64, 1))
+			goto done;
+		
+		//get the covariance matrix
+		if(err = getGCovarianceMatrix(p, &goi))
+			goto done;
+		   
+		//set the error wave
+		for(ii = 0; ii < goi.numvarparams ; ii += 1){
+			indices[0] = goi.varParams[ii];
+			value[0] = sqrt(goi.covarianceMatrix[goi.varParams[ii]][goi.varParams[ii]]);
+			if(err2 = MDSetNumericWavePointValue(goi.W_sigma, indices, value))
+				goto done;
 		}
+		WaveHandleModified(goi.W_sigma);
 		
-		//do the errors
-		generateCovariance = 0;
-		if(p->MATFlagEncountered){
-			generateCovariance = 1;
-			if(p->MATFlagParamsSet[0] && (int) p->MATFlag_mat == 0)
-				generateCovariance = 0;
-		}
-				
-		goi.covarianceMatrix = (double**)malloc2d(goi.numvarparams, goi.numvarparams, sizeof(double));
-		if(goi.covarianceMatrix == NULL)
-		{ err = NOMEM; goto done;}
-		
-		if(generateCovariance && (!(err2 = getGCovarianceMatrix(p, &goi)))){
-			//set the error wave
-			for(ii = 0; ii < goi.numvarparams ; ii += 1){
-					indices[0] = goi.varParams[ii];
-					value[0] = sqrt(goi.covarianceMatrix[ii][ii]);
-					if(err2 = MDSetNumericWavePointValue(goi.W_sigma, indices, value))
-						{err = err2;goto done;};
-			}					 
-			WaveHandleModified(goi.W_sigma);
+		if(p->MATFlagEncountered && !(p->MATFlagParamsSet[0] && (int) p->MATFlag_mat == 0)){
+			//make the covariance matrix
+			dimensionSizes[0] = goi.totalnumparams;
+			dimensionSizes[1] = goi.totalnumparams;
+			dimensionSizes[2] = 0;
+			if(err = MDMakeWave(&goi.M_covariance, "M_Covar", goi.cDF, dimensionSizes, NT_FP64, 1))
+				goto done;
 			
-			if(generateCovariance){
-				//make the covariance matrix
-				dimensionSizes[0] = goi.totalnumparams;
-				dimensionSizes[1] = goi.totalnumparams;
-				dimensionSizes[2] = 0;
-				if(err2 = MDMakeWave(&goi.M_covariance, "M_Covar", goi.cDF, dimensionSizes, NT_FP64, 1))
-					{err = err2; goto done;};
+			wP = WaveData(goi.M_covariance);
 			
-				for(ii = 0; ii < goi.numvarparams; ii+=1){
-					for(jj = 0 ; jj < goi.numvarparams; jj += 1){
-						indices[0] = goi.varParams[ii];
-						indices[1] = goi.varParams[jj];
-						value[0] = goi.covarianceMatrix[ii][jj];
-						if(err2 = MDSetNumericWavePointValue(goi.M_covariance, indices, value))
-							{err = err2;goto done;};  
-					}
-				}
-								
-				WaveHandleModified(goi.M_covariance);
-			}
+			memcpy(wP, *goi.covarianceMatrix, sizeof(double) * goi.totalnumparams * goi.totalnumparams);
+			
+			WaveHandleModified(goi.M_covariance);
 		}
 		
-		
-		if(err2 = isWaveDisplayed(p->dataWave.waveH, &isDisplayed))
-		{err = err2;goto done;};
+		if(err = isWaveDisplayed(p->dataWave.waveH, &isDisplayed))
+			goto done;
+
 		if(isDisplayed && goi.numVarMD == 1){
-			if(err2 = isWaveDisplayed(goi.OUT_data, &isDisplayed))
-				{err = err2 ; goto done;};
+			if(err = isWaveDisplayed(goi.OUT_data, &isDisplayed))
+				goto done;
 			
 			if(!isDisplayed){
 				strncpy(cmd, "appendtograph/w=$(winname(0,1)) ", MAXCMDLEN);
@@ -528,8 +537,8 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 					strncat(cmd, " vs ", MAXCMDLEN - strlen(cmd) - strlen(" vs "));
 					strncat(cmd, note_buffer2, MAXCMDLEN - strlen(cmd) - strlen(note_buffer2) );
 				}
-				if(err2 = XOPSilentCommand(&cmd[0]))
-					{err = err2; goto done;}
+				if(err = XOPSilentCommand(&cmd[0]))
+					goto done;
 			}
 		}
 	}
@@ -828,6 +837,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	dimensionSizes[0] = goiP->unMaskedPoints;
 	dimensionSizes[1] = 0;
 	dimensionSizes[2] = 0;
+	
 	if(err = MDMakeWave(&goiP->dataCalc,"GenCurveFit_dataCalc",goiP->cDF,dimensionSizes,NT_FP64, 1))
 		goto done;
 	if(err = MDMakeWave(&goiP->yobs,"GenCurveFit_yobs",goiP->cDF,dimensionSizes,NT_FP64, 1))
@@ -1144,7 +1154,7 @@ freeAllocMem(GenCurveFitInternalsPtr goiP){
 		free(goiP->dataObsFull);
 	if(goiP->dataSig!=NULL)
 		free(goiP->dataSig);
-	if(goiP->covarianceMatrix!=NULL)
+	if(goiP->covarianceMatrix != NULL)
 		free(goiP->covarianceMatrix);
 	if(goiP->dumpRecord.memory)
 		free(goiP->dumpRecord.memory);
@@ -1158,6 +1168,9 @@ freeAllocMem(GenCurveFitInternalsPtr goiP){
 	exists = FetchWaveFromDataFolder(goiP->cDF,"GenCurveFit_yobs");
 	if(exists != NULL)
 		err = KillWave(goiP->yobs);
+	exists = FetchWaveFromDataFolder(goiP->cDF,"GenCurveFit_sobs");
+	if(exists != NULL)
+		err = KillWave(goiP->sobs);
 	
 	for(ii=0 ; ii<goiP->numVarMD ; ii+=1){
 		if(goiP->xcalc[ii] != NULL)

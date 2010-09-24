@@ -104,6 +104,9 @@ typedef struct fitfuncStruct* fitfuncStructPtr;
 struct GenCurveFitRuntimeParams {
 	// Flag parameters.
 	
+	// Parameters for /DUMP flag group.
+	int POLFlagEncountered;
+	
 	int STGYFlagEncountered;
 	double STGYFlag_opt;
 	int STGYFlagParamsSet[1];
