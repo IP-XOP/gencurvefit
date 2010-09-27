@@ -15,6 +15,7 @@
 
 #include "XOPStandardHeaders.h"
 #include "GenCurveFitXOP.h"
+#include "gencurvefit.h"
 
 
 /*
