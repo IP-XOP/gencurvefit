@@ -82,11 +82,11 @@ int lgencurvefit_fitfunction(void *userdata, const double *coefs, unsigned int n
 	fitFunc parameters;
 	double result;
 	double *dp;
-	
+	GenCurveFitInternals *goiP = (GenCurveFitInternals*) userdata;
+
 	memset(&parameters, 0, sizeof(parameters));
 	memset(&allParameters, 0, sizeof(allParameters));
 	
-	GenCurveFitInternals *goiP = (GenCurveFitInternals*) userdata;
 
 	//cmd-dot or abort button
 	if(CheckAbort(0) == -1){
@@ -413,7 +413,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 If you want to seed the generator we can 
 	 */
 	if(p->SEEDFlagEncountered)
-		gco.seed = (uint32_t) p->SEEDFlag_seed;
+		gco.seed = (int) p->SEEDFlag_seed;
 	else 
 		gco.seed = -1;
 	
@@ -436,7 +436,8 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	if(p->OPTFlagEncountered && (((long)p->OPTFlag_opt) & (long)pow(2, 0)))
 		gco.useinitialguesses = 1;
 	
-	gco.updatefun = lgencurvefit_updatefunction;
+	
+	gco.updatefun = &lgencurvefit_updatefunction;
 	gco.k_m = goi.k_m;
 	gco.recomb = goi.recomb;
 	gco.strategy = goi.STGY;

@@ -428,7 +428,7 @@ int ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p);
 int checkInput(GenCurveFitRuntimeParamsPtr, GenCurveFitInternalsPtr);
 int checkNanInf(waveHndl);
 int checkNanInfArray(double *array, long datapoints);
-int checkZeros(waveHndl ,long* );
+int checkZeros(waveHndl , long* );
 static void freeAllocMem(GenCurveFitInternalsPtr goiP);
 static int calcModelXY(FunctionInfo*, waveHndl , waveHndl , waveHndl[MAX_MDFIT_SIZE] , int ,int ,fitfuncStruct*);
 static int findmin(double* , int );
@@ -446,8 +446,4 @@ int dumpRecordToWave(GenCurveFitInternalsPtr goiP,	MemoryStruct *dumpRecord);
 
 /* Prototypes */
 HOST_IMPORT void main(IORecHandle ioRecHandle);
-
-
-
-
 
