@@ -581,7 +581,8 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 				err = NOMEM;
 				goto done;
 			}
-			memset(goiP->holdvector, 1, sizeof(unsigned int) * goiP->totalnumparams);
+			for(ii = 0 ; ii < goiP->totalnumparams ; ii++)
+				goiP->holdvector[ii] = 1;
 			
 			/*
 			 we have to check that the holdstring is simply 0 or 1's.

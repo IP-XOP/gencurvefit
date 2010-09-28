@@ -324,7 +324,7 @@ done:
 int getGCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	int err = 0;
 	double hessianDeterminant = 0;
-		
+	
 	if(err = getCovarianceMatrix(&goiP->covarianceMatrix,
 								 &hessianDeterminant,
 								 goiP,
@@ -340,7 +340,7 @@ int getGCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr 
 								 goiP->numVarMD,
 								 !p->WFlagEncountered))
 		return err;
-	
+				
 	goiP->V_logBayes = exp(-0.5 * (goiP->cost) / (double)(goiP->unMaskedPoints - goiP->numvarparams));// * pow(4*3.14159,(double) goiP->numvarparams) ;//* factorial((double)goiP->numvarparams);
 	goiP->V_logBayes = goiP->V_logBayes / (sqrt(hessianDeterminant));
 	goiP->V_logBayes = log(goiP->V_logBayes);
@@ -477,8 +477,10 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	
 	//output the dumprecord
 	if(!err && goi.dump && goi.dumpRecord.memory)
-		if(err2 = dumpRecordToWave(&goi, &goi.dumpRecord))
-			{err = err2;goto done;}
+		if(err2 = dumpRecordToWave(&goi, &goi.dumpRecord)){
+			err = err2;
+			goto done;
+		}
 	
 	/*
 	 if there are no errors, or if the user aborted, then return the best fit.
@@ -498,10 +500,14 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 			goto done;
 		   
 		//set the error wave
-		for(ii = 0; ii < goi.numvarparams ; ii += 1){
-			indices[0] = goi.varParams[ii];
-			value[0] = sqrt(goi.covarianceMatrix[goi.varParams[ii]][goi.varParams[ii]]);
-			if(err2 = MDSetNumericWavePointValue(goi.W_sigma, indices, value))
+		for(ii = 0; ii < goi.totalnumparams ; ii += 1){
+			indices[0] = ii;
+			if(!goi.holdvector[ii])
+				value[0] = sqrt(goi.covarianceMatrix[goi.varParams[ii]][goi.varParams[ii]]);
+			else
+				value[0] = 0;
+
+			if(err = MDSetNumericWavePointValue(goi.W_sigma, indices, value))
 				goto done;
 		}
 		WaveHandleModified(goi.W_sigma);
