@@ -511,6 +511,34 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	if(p->POLFlagEncountered)
 		gco.polishUsingLM = 1;
 	
+	//make an error wave before we start the fit, to make sure it's always there
+	dimensionSizes[0] = goi.totalnumparams;
+	dimensionSizes[1] = 0;
+	if(err = MDMakeWave(&goi.W_sigma, "W_sigma", goi.cDF, dimensionSizes, NT_FP64, 1))
+			goto done;
+	for(ii = 0 ; ii < goi.totalnumparams ; ii+=1){
+		indices[0] = ii;
+		value[0] = 0;
+		if(err = MDSetNumericWavePointValue(goi.W_sigma, indices, value))
+			goto done;
+	}
+	WaveHandleModified(goi.W_sigma);
+		
+	if(p->MATFlagEncountered && !(p->MATFlagParamsSet[0] && (int) p->MATFlag_mat == 0)){
+		//make the covariance matrix
+		dimensionSizes[0] = goi.totalnumparams;
+		dimensionSizes[1] = goi.totalnumparams;
+		dimensionSizes[2] = 0;
+		if(err = MDMakeWave(&goi.M_covariance, "M_Covar", goi.cDF, dimensionSizes, NT_FP64, 1))
+				goto done;
+			
+		wP = WaveData(goi.M_covariance);
+			
+		memset(wP, 0, sizeof(double) * goi.totalnumparams * goi.totalnumparams);
+			
+		WaveHandleModified(goi.M_covariance);
+	}
+	
 	/*
 	 optimiseloop does the Differential Evolution, according to Storn and Price.  When this returns 0, then 
 	 you have the best fit in the GenCurveFitInternals structure.  Otherwise it returns an error code.  If the user aborts
@@ -544,19 +572,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 if there are no errors, or if the user aborted, then return the best fit.
 	 If the data is displayed in the top graph append the fitcurve to the top graph
 	 */
-	if(err == 0 || err == FIT_ABORTED){		
-		//return an error wave
-		//make an error wave
-		dimensionSizes[0] = goi.totalnumparams;
-		dimensionSizes[1] = 0;
-		
-		if(err = MDMakeWave(&goi.W_sigma, "W_sigma", goi.cDF,dimensionSizes, NT_FP64, 1))
-			goto done;
-		
-		//get the covariance matrix
-		if(err = getGCovarianceMatrix(p, &goi))
-			goto done;
-		   
+	if((err == 0 || err == FIT_ABORTED) && !getGCovarianceMatrix(p, &goi)){
 		//set the error wave
 		for(ii = 0; ii < goi.totalnumparams ; ii += 1){
 			indices[0] = ii;
@@ -567,6 +583,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 
 			if(err = MDSetNumericWavePointValue(goi.W_sigma, indices, value))
 				goto done;
+
 		}
 		WaveHandleModified(goi.W_sigma);
 		
@@ -575,19 +592,16 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 			dimensionSizes[0] = goi.totalnumparams;
 			dimensionSizes[1] = goi.totalnumparams;
 			dimensionSizes[2] = 0;
-			if(err = MDMakeWave(&goi.M_covariance, "M_Covar", goi.cDF, dimensionSizes, NT_FP64, 1))
-				goto done;
-			
-			wP = WaveData(goi.M_covariance);
-			
+			wP = WaveData(goi.M_covariance);			
 			memcpy(wP, *goi.covarianceMatrix, sizeof(double) * goi.totalnumparams * goi.totalnumparams);
-			
 			WaveHandleModified(goi.M_covariance);
 		}
-		
+	}
+	//append the fit to the graph
+	if(!err || err == FIT_ABORTED){
 		if(err = isWaveDisplayed(p->dataWave.waveH, &isDisplayed))
 			goto done;
-
+		
 		if(isDisplayed && goi.numVarMD == 1){
 			if(err = isWaveDisplayed(goi.OUT_data, &isDisplayed))
 				goto done;
