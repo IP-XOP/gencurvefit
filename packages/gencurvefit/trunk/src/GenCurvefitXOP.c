@@ -349,6 +349,64 @@ int getGCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr 
 }
 
 /*
+ converts a libgencurvefit error to an XOP error
+ All libgencurvefit errors are negative, all XOP errors are positive
+ */
+
+int convertlgencurvefitErrorToXOP(int lgencurvefiterror){
+	int err = lgencurvefiterror;
+	
+	if(lgencurvefiterror > -1)
+		return err;
+	
+	switch (lgencurvefiterror) {
+		case NO_MEMORY:
+			err = NOMEM;
+			break;
+		case INCORRECT_LIMITS:
+			err = LIMITS_INVALID;
+			break;
+		case HOLDVECTOR_COEFS_MISMATCH:
+			err = HOLDSTRING_NOT_RIGHT_SIZE;
+			break;
+		case NO_VARYING_PARAMS:
+			err = ALL_COEFS_BEING_HELD;
+			break;
+		case WRONG_NUMBER_OF_PARAMS:
+			break;
+		case COEFS_MUST_BE_WITHIN_LIMITS:
+			err = LIMITS_INVALID;
+			break;
+		case PROBLEM_CALCULATING_COVARIANCE:
+			err = SINGULAR_MATRIX;
+			break;
+		case NO_FIT_FUNCTION_SPECIFIED:
+			err = FITFUNC_NOT_SPECIFIED;
+			break;
+		case NO_Y_ARRAY:
+			break;
+		case NO_X_ARRAY:
+			break;
+		case NO_E_ARRAY:
+			break;
+		case NO_COEFS_ARRAY:
+			break;
+		case NO_LIMITS_ARRAY:
+			err = LIMITS_INVALID;
+			break;
+		case SINGULAR_MATRIX_ERROR:
+			err = SINGULAR_MATRIX;
+			break;
+		default:
+			break;
+	}
+	
+	
+	return err;
+}
+
+
+/*
  ExecuteGenCurveFit performs the genetic curvefitting routines
  returns 0 if no error
  returns errorcode otherwise
@@ -641,6 +699,8 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 this is ultra essential for no memory leaks.
 	 */
 done:
+	if(err)
+		err = convertlgencurvefitErrorToXOP(err);
 	
 	freeAllocMem(&goi);
 	return err;

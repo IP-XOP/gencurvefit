@@ -31,7 +31,7 @@ resource 'STR#' (1100) {					/* custom error messages */
 	//[3]
 	"Requires Double or Single Precision Wave.",
 	//[4]
-	"Waves not the same length0",
+	"Waves not the same length.",
 	//[5]
 	"Input data must be 1D.",
 	//[6]

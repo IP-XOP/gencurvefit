@@ -61,6 +61,7 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #define COSTFUNC_DOESNT_RETURN_NUMBER 36 + FIRST_XOP_ERR
 #define COSTFUNC_WAVES_CHANGED 37 + FIRST_XOP_ERR
 
+
 /*
 Structure fitfuncStruct   
 Wave w
