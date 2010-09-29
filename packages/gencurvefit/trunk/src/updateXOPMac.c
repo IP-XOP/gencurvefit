@@ -36,7 +36,7 @@ typedef struct displayData displayData;
 //this is necessary because we can't send it to the event handler directly.
 static displayData theDisplayData;
 
-void DisplayWindowXOP1Message(WindowPtr theWindow, int numcoefs, const double* coefs, double chi2, const char* fitfunc,long fititers, double convergenceNumber)
+void DisplayWindowXOP1Message(WindowPtr theWindow, int numcoefs, const double* coefs, double chi2, const char* fitfunc,long fititers, unsigned int updatetime, double convergenceNumber)
 {	
 	OSStatus err;
 	HIViewRef theHIView;	//drawing window
@@ -45,13 +45,15 @@ void DisplayWindowXOP1Message(WindowPtr theWindow, int numcoefs, const double* c
 	//stick all the data to be drawn in a structure
 	memset(&theDisplayData, 0, sizeof(theDisplayData));
 	
-	theDisplayData.theWindow = theWindow;
-	theDisplayData.numcoefs = numcoefs;
-	theDisplayData.coefs = coefs;
-	theDisplayData.chi2 = chi2;
-	theDisplayData.fitfunc = fitfunc;
-	theDisplayData.fititers = fititers;
+	if(updatetime == 1){
+		theDisplayData.theWindow = theWindow;
+		theDisplayData.numcoefs = numcoefs;
+		theDisplayData.coefs = coefs;
+		theDisplayData.chi2 = chi2;
+		theDisplayData.fitfunc = fitfunc;
+	}
 	theDisplayData.convergenceNumber = convergenceNumber;
+	theDisplayData.fititers = fititers;
 
 	//get a HiView for the window we created
 	HIViewFindByID (HIViewGetRoot(theWindow), myHIViewID, &theHIView);

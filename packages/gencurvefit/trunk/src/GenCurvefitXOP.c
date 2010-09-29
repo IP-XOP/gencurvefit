@@ -274,8 +274,8 @@ int lgencurvefit_updatefunction(void *userdata, const double *coefs, unsigned in
 	/*
 	 Display the coefficients so far.
 	 */
-	if(!goiP->noupdate && (updatetime == 1))
-		DisplayWindowXOP1Message(gTheWindow, numcoefs, coefs, cost, goiP->fi.name, iterations, convergenceNumber);
+	if(!goiP->noupdate && (updatetime == 1 || updatetime == 8))
+		DisplayWindowXOP1Message(gTheWindow, numcoefs, coefs, cost, goiP->fi.name, iterations, updatetime, convergenceNumber);
 
 	// perhaps the user wants to abort the fit using gui panel?
 	if(Abort_the_fit){
