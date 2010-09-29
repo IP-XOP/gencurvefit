@@ -44,14 +44,14 @@ void DisplayWindowXOP1Message(WindowPtr theWindow, int numcoefs, const double* c
 
 	//stick all the data to be drawn in a structure
 	memset(&theDisplayData, 0, sizeof(theDisplayData));
-	
+
 	if(updatetime == 1){
-		theDisplayData.theWindow = theWindow;
-		theDisplayData.numcoefs = numcoefs;
 		theDisplayData.coefs = coefs;
 		theDisplayData.chi2 = chi2;
-		theDisplayData.fitfunc = fitfunc;
 	}
+	theDisplayData.numcoefs = numcoefs;
+	theDisplayData.theWindow = theWindow;
+	theDisplayData.fitfunc = fitfunc;
 	theDisplayData.convergenceNumber = convergenceNumber;
 	theDisplayData.fititers = fititers;
 
@@ -59,8 +59,7 @@ void DisplayWindowXOP1Message(WindowPtr theWindow, int numcoefs, const double* c
 	HIViewFindByID (HIViewGetRoot(theWindow), myHIViewID, &theHIView);
 
 	//so we can then force the HIView to re-draw
-	err = HIViewSetNeedsDisplay (theHIView, true);
-	
+	err = HIViewSetNeedsDisplay (theHIView, true);	
 }
 
 //an event handler for redraw events on the window

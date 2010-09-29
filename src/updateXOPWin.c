@@ -15,7 +15,7 @@ static char* gXOPWindowClassName = "UpdateGenCurveFit";
 	Print a message in the hwnd window
 */
 void
-DisplayWindowXOP1Message(XOP_WINDOW_REF hwnd, int numcoefs, double* coefs, double chi2,char* fitfunc,long fititers, double convergenceNumber)
+DisplayWindowXOP1Message(XOP_WINDOW_REF hwnd, int numcoefs, double* coefs, double chi2,char* fitfunc,long fititers, unsigned int updatetime, double convergenceNumber)
 {
 	HDC hdc;
 	HBRUSH hBrush;
@@ -74,18 +74,20 @@ DisplayWindowXOP1Message(XOP_WINDOW_REF hwnd, int numcoefs, double* coefs, doubl
 	strcpy(message,"Coefficients");
 	TabbedTextOut(hdc,3,75,message,strlen(message),nTabPositions,(LPINT) lpnTabStopPositions,0);
 	strcpy(message,"");
-
+	
 	MoveToEx(hdc, 1, 90, (LPPOINT) NULL); 
     LineTo(hdc, 399, 90); 
-
-	for(jj=0 ; (jj<(int)ceil((double)numcoefs/5) && jj<6) ; jj+=1){
-		for(ii=0 ; (ii<5 && ii < (numcoefs-(jj*5))) ; ii+=1){
-			strcpy(number,"");
-			err2 = sprintf(number,"%-6.4g\t",*(coefs+ii+(jj*5)));
-			strcat(message,number);
+	
+	if(updatetime == 1){
+		for(jj=0 ; (jj<(int)ceil((double)numcoefs/5) && jj<6) ; jj+=1){
+			for(ii=0 ; (ii<5 && ii < (numcoefs-(jj*5))) ; ii+=1){
+				strcpy(number,"");
+				err2 = sprintf(number,"%-6.4g\t",*(coefs+ii+(jj*5)));
+				strcat(message,number);
+			}
+			TabbedTextOut(hdc,1,100+jj*vertoffset,message,strlen(message),nTabPositions,(LPINT) lpnTabStopPositions,0);
+			strcpy(message,"");
 		}
-		TabbedTextOut(hdc,1,100+jj*vertoffset,message,strlen(message),nTabPositions,(LPINT) lpnTabStopPositions,0);
-		strcpy(message,"");
 	}
 	DeleteObject(hFont);
 	ReleaseDC(hwnd, hdc);
