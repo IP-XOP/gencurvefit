@@ -274,7 +274,7 @@ int lgencurvefit_updatefunction(void *userdata, const double *coefs, unsigned in
 	/*
 	 Display the coefficients so far.
 	 */
-	if(!goiP->noupdate && (updatetime != 2))
+	if(!goiP->noupdate && (updatetime == 1))
 		DisplayWindowXOP1Message(gTheWindow, numcoefs, coefs, cost, goiP->fi.name, iterations, convergenceNumber);
 
 	// perhaps the user wants to abort the fit using gui panel?
@@ -440,7 +440,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	double *wP;
 	long lt1 = 0;
 	char note[200], note_buffer1[MAX_WAVE_NAME+1], note_buffer2[MAX_WAVE_NAME+1], cmd[MAXCMDLEN+1];
-	int output, ii, isDisplayed, quiet;
+	int output, ii, jj, isDisplayed, quiet;
 	
 	//initialise all the internal data structures to NULL
 	memset(&goi, 0, sizeof(goi));
@@ -572,18 +572,21 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 if there are no errors, or if the user aborted, then return the best fit.
 	 If the data is displayed in the top graph append the fitcurve to the top graph
 	 */
-	if((err == 0 || err == FIT_ABORTED) && !getGCovarianceMatrix(p, &goi)){
+	if((err == 0 || err == FIT_ABORTED) && !getGCovarianceMatrix(p, &goi) && goi.covarianceMatrix){
 		//set the error wave
+		jj = 0;
 		for(ii = 0; ii < goi.totalnumparams ; ii += 1){
 			indices[0] = ii;
-			if(!goi.holdvector[ii])
-				value[0] = sqrt(goi.covarianceMatrix[goi.varParams[ii]][goi.varParams[ii]]);
-			else
+			if(!goi.holdvector[ii]){
+				value[0] = sqrt(goi.covarianceMatrix[goi.varParams[jj]][goi.varParams[jj]]);
+				jj++;
+			} else {
 				value[0] = 0;
+			}
 
 			if(err = MDSetNumericWavePointValue(goi.W_sigma, indices, value))
 				goto done;
-
+			
 		}
 		WaveHandleModified(goi.W_sigma);
 		
