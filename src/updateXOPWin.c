@@ -78,7 +78,6 @@ DisplayWindowXOP1Message(XOP_WINDOW_REF hwnd, int numcoefs, double* coefs, doubl
 	MoveToEx(hdc, 1, 90, (LPPOINT) NULL); 
     LineTo(hdc, 399, 90); 
 	
-	if(updatetime == 1){
 		for(jj=0 ; (jj<(int)ceil((double)numcoefs/5) && jj<6) ; jj+=1){
 			for(ii=0 ; (ii<5 && ii < (numcoefs-(jj*5))) ; ii+=1){
 				strcpy(number,"");
@@ -88,7 +87,7 @@ DisplayWindowXOP1Message(XOP_WINDOW_REF hwnd, int numcoefs, double* coefs, doubl
 			TabbedTextOut(hdc,1,100+jj*vertoffset,message,strlen(message),nTabPositions,(LPINT) lpnTabStopPositions,0);
 			strcpy(message,"");
 		}
-	}
+
 	DeleteObject(hFont);
 	ReleaseDC(hwnd, hdc);
 }

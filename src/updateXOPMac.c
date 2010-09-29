@@ -45,10 +45,8 @@ void DisplayWindowXOP1Message(WindowPtr theWindow, int numcoefs, const double* c
 	//stick all the data to be drawn in a structure
 	memset(&theDisplayData, 0, sizeof(theDisplayData));
 
-	if(updatetime == 1){
-		theDisplayData.coefs = coefs;
-		theDisplayData.chi2 = chi2;
-	}
+	theDisplayData.coefs = coefs;
+	theDisplayData.chi2 = chi2;
 	theDisplayData.numcoefs = numcoefs;
 	theDisplayData.theWindow = theWindow;
 	theDisplayData.fitfunc = fitfunc;
