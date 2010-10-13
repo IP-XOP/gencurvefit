@@ -283,7 +283,7 @@ int lgencurvefit_updatefunction(void *userdata, const double *coefs, unsigned in
 		goto done;
 	}
 
-	if(updatetime == 2 || updatetime == 1){
+	if(goiP->dump && (updatetime == 2 || updatetime == 1)){
 		WriteMemoryCallback((void*) coefs, sizeof(double), goiP->totalnumparams, &(goiP->dumpRecord));
 		if(goiP->dumpRecord.memory == NULL){
 			err = NOMEM; goto done;
@@ -839,6 +839,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 		if(p->NFlagParamsSet[0] && (int) p->NFlag_noupdate == 0)
 			goiP->noupdate = 0;
 	}
+
 	
 	/* get a full copy of the datawave */
 	goiP->dataObsFull = (double*)malloc(WavePoints(p->dataWave.waveH) *sizeof(double));
