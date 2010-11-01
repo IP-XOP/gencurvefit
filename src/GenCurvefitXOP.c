@@ -560,6 +560,10 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 							   &goi))
 		goto done;
 	
+	//make sure the coefficients for the fit are updated.
+	if(err = MDStoreDPDataInNumericWave(p->coefs, goi.coefs))
+		goto done;
+	WaveHandleModified(p->coefs);
 	
 	//output the dumprecord
 	if(!err && goi.dump && goi.dumpRecord.memory)
