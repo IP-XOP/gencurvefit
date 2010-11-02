@@ -138,10 +138,11 @@ int lgencurvefit_fitfunction(void *userdata, const double *coefs, unsigned int n
 				}
 				allParameters.waveX[ii] = goiP->xcalc[ii];
 			}
-			
+
 			// call the users fit function and put the result in the output wave
 			if (err = CallFunction(&goiP->fi, (void*)&allParameters, &result))
 				goto done;
+
 			// the user may have changed the number of points in the output wave
 			if(goiP->dataCalc == NULL || WavePoints(goiP->dataCalc ) != datapoints){
 				err = USER_CHANGED_FITWAVE;
