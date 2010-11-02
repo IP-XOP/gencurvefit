@@ -25,7 +25,7 @@
  */
 int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	long numdimensions;
-	long dimsize[MAX_DIMENSIONS+1];
+	long indices[MAX_DIMENSIONS+1];
 	int  err =0;
 	int badParameterNumber;
 	int sameWave;
@@ -33,6 +33,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	char *holdstr = NULL;
 	int requiredParameterTypes[MAX_MDFIT_SIZE+2];
 	int METH=0, ii=0, jj;
+	double value[2];
 		
 	/*
 	 get the current datafolder
@@ -147,10 +148,10 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		}
 		
 		//check how many points are in the wave
-		if(err = MDGetWaveDimensions(p->dataWave.waveH, &numdimensions,dimsize)) 
+		if(err = MDGetWaveDimensions(p->dataWave.waveH, &numdimensions,indices)) 
 			goto done;
 		
-		goiP->dataPoints = dimsize[0];
+		goiP->dataPoints = indices[0];
 		//if the dataWave isn't 1D then we can't fit it.
 		if(numdimensions>1){
 			err = INPUT_WAVES_NOT_1D;
@@ -181,9 +182,9 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			goto done;
 		}
 		//check how many points are in the wave
-		if(err = MDGetWaveDimensions(p->coefs, &numdimensions,dimsize))
+		if(err = MDGetWaveDimensions(p->coefs, &numdimensions,indices))
 			goto done;
-		goiP->totalnumparams = dimsize[0];
+		goiP->totalnumparams = indices[0];
 		
 		//if the coefswave isn't 1D then we can't fit it.
 		if(numdimensions>1){
@@ -191,7 +192,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			goto done;
 		}
 		//if there are no coefficients, then you can't do anything.
-		if(dimsize[0] == 0){
+		if(indices[0] == 0){
 			err =COEF_HAS_NO_POINTS;
 			goto done;
 		}
@@ -224,7 +225,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			goto done;
 		}
 		if(goiP->numVarMD > 1){
-			if(err = MDGetWaveDimensions(p->XFlag_xx, &numdimensions,dimsize)) 
+			if(err = MDGetWaveDimensions(p->XFlag_xx, &numdimensions,indices)) 
 				goto done;
 			switch(numdimensions){
 				case 1:
@@ -252,7 +253,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 								goto done;
 							}
 							//check how many points are in the wave
-							if(err = MDGetWaveDimensions(p->XFlagWaveH[ii], &numdimensions,dimsize)) 
+							if(err = MDGetWaveDimensions(p->XFlagWaveH[ii], &numdimensions,indices)) 
 								goto done;
 							//if the xwave isn't 1D then we can't fit it.
 							if(numdimensions>1){
@@ -260,7 +261,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 								goto done;
 							}
 							//if it isn't the same size as the datawave abort.
-							if(dimsize[0] != goiP->dataPoints){
+							if(indices[0] != goiP->dataPoints){
 								err = WAVES_NOT_SAME_LENGTH;
 								goto done;
 							}
@@ -276,11 +277,11 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 						err = SPARSE_INDEPENDENT_VARIABLE;
 						goto done;
 					}
-					if(dimsize[0] != goiP->dataPoints){
+					if(indices[0] != goiP->dataPoints){
 						err = err = WAVES_NOT_SAME_LENGTH;
 						goto done;
 					}
-					if(dimsize[1] != goiP->numVarMD){
+					if(indices[1] != goiP->numVarMD){
 						err = SPARSE_INDEPENDENT_VARIABLE;
 						goto done;
 					}
@@ -301,7 +302,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 				goto done;
 			}
 			//check how many points are in the wave
-			if(err = MDGetWaveDimensions(p->XFlag_xx, &numdimensions,dimsize)) 
+			if(err = MDGetWaveDimensions(p->XFlag_xx, &numdimensions,indices)) 
 				goto done;
 			//if the ywave isn't 1D then we can't fit it.
 			if(numdimensions>1){
@@ -309,7 +310,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 				goto done;
 			}
 			//if it isn't the same size as the ywave abort.
-			if(dimsize[0] != goiP->dataPoints){
+			if(indices[0] != goiP->dataPoints){
 				err = WAVES_NOT_SAME_LENGTH;
 				goto done;
 			}
@@ -355,7 +356,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			goto done;
 		}
 		//check how many points are in the wave
-		if(err = MDGetWaveDimensions(p->WFlag_weighttype, &numdimensions,dimsize)) 
+		if(err = MDGetWaveDimensions(p->WFlag_weighttype, &numdimensions,indices)) 
 			goto done;
 		//if the weight wave isn't 1D then we can't fit it.
 		if(numdimensions>1){
@@ -363,7 +364,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			goto done;
 		}
 		//if it isn't the same size as the ywave abort.
-		if(dimsize[0] != goiP->dataPoints){
+		if(indices[0] != goiP->dataPoints){
 			err = WAVES_NOT_SAME_LENGTH;
 			goto done;
 		}
@@ -399,7 +400,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			goto done;
 		}
 		//check how many points are in the wave
-		if(err = MDGetWaveDimensions(p->MFlag_maskwave, &numdimensions,dimsize)) 
+		if(err = MDGetWaveDimensions(p->MFlag_maskwave, &numdimensions,indices)) 
 			goto done;
 		//if the weight wave isn't 1D then we can't fit it.
 		if(numdimensions>1){
@@ -407,7 +408,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			goto done;
 		}
 		//if it isn't the same size as the ywave abort.
-		if(dimsize[0] != goiP->dataPoints){
+		if(indices[0] != goiP->dataPoints){
 			err = WAVES_NOT_SAME_LENGTH;
 			goto done;
 		}
@@ -423,7 +424,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 				goto done;
 			}
 			//check how many points are in the wave
-			if(err = MDGetWaveDimensions(p->RFlag_resid, &numdimensions,dimsize)) 
+			if(err = MDGetWaveDimensions(p->RFlag_resid, &numdimensions,indices)) 
 				goto done;
 			//if the ywave isn't 1D then we can't fit it.
 			if(numdimensions>1){
@@ -431,7 +432,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 				goto done;
 			}
 			//if it isn't the same size as the ywave abort.
-			if(dimsize[0] != goiP->dataPoints){
+			if(indices[0] != goiP->dataPoints){
 				err = WAVES_NOT_SAME_LENGTH;
 				goto done;
 			}
@@ -534,9 +535,33 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	/*
 	 a holdstring is used to work out which parameters are being fitted.  i.e. "0001000111".
 	0=fit, 1=hold
+	 the holdvector gets passed to the genetic optimisation function
 	 */
+	goiP->holdvector = (unsigned int*) malloc(goiP->totalnumparams * sizeof(unsigned int));
+	if(goiP->holdvector == NULL){
+		err = NOMEM;
+		goto done;
+	}
+	for(ii = 0 ; ii < goiP->totalnumparams ; ii++)
+		goiP->holdvector[ii] = 1;
 	
-	if (!p->holdstring) {
+	//user can specify a holdwave (leads to smaller command lines)
+	if(p->HOLDFlagEncountered && p->HOLDFlag_holdwav != NULL){
+		memset(indices, 0, MAX_DIMENSIONS + 1);
+		if(WavePoints(p->HOLDFlag_holdwav) != goiP->totalnumparams){
+			err = HOLDSTRING_NOT_RIGHT_SIZE;
+			goto done;
+		}
+		for(ii = 0 ; ii < goiP->totalnumparams ; ii++){
+			indices[0] = ii;
+			if(err = MDGetNumericWavePointValue(p->HOLDFlag_holdwav, indices, value))
+				goto done;
+			if(value[0] == 0 || IsNaN64(value) || IsINF64(value)){
+				goiP->holdvector[ii] = 0;
+				goiP->numvarparams += 1;
+			}
+		}
+	} else if (!p->holdstring) {
 		//please specify holdstring
 		err = HOLDSTRING_NOT_SPECIFIED;
 		goto done;
@@ -571,18 +596,6 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 				goto done;
 			}
 			goiP->numvarparams = 0;
-
-			
-			/*
-			 the holdvector gets passed to the genetic optimisation function
-			 */
-			goiP->holdvector = (unsigned int*) malloc(goiP->totalnumparams * sizeof(unsigned int));
-			if(goiP->holdvector == NULL){
-				err = NOMEM;
-				goto done;
-			}
-			for(ii = 0 ; ii < goiP->totalnumparams ; ii++)
-				goiP->holdvector[ii] = 1;
 			
 			/*
 			 we have to check that the holdstring is simply 0 or 1's.
@@ -607,13 +620,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 					}
 				}
 			}
-			/*
-			 if all the parameters are being held then go no further.
-			 */
-			if(goiP->numvarparams == 0){
-				err = ALL_COEFS_BEING_HELD;
-				goto done;
-			}
+
 		} else {
 			/*
 			 please specify holdstring
@@ -622,6 +629,15 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			goto done;
 		}
 	}
+	
+	/*
+	 if all the parameters are being held then go no further.
+	 */
+	if(goiP->numvarparams == 0){
+		err = ALL_COEFS_BEING_HELD;
+		goto done;
+	}
+	
 	goiP->varParams = malloc(sizeof(unsigned int) * goiP->numvarparams);
 	if(!goiP->varParams){
 		err = NOMEM;
@@ -666,7 +682,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			goto done;
 		}
 		//check how many points are in the wave
-		if(err = MDGetWaveDimensions(p->limitswave, &numdimensions,dimsize)) 
+		if(err = MDGetWaveDimensions(p->limitswave, &numdimensions,indices)) 
 			goto done;
 		
 		//we need an upper and lower boundary.
@@ -675,7 +691,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			goto done;
 		}
 		//if it isn't the same size as input coefs abort.
-		if(dimsize[0] != goiP->totalnumparams){
+		if(indices[0] != goiP->totalnumparams){
 			err = LIMITS_WRONG_DIMS;
 			goto done;
 		}
