@@ -105,7 +105,11 @@ typedef struct fitfuncStruct* fitfuncStructPtr;
 struct GenCurveFitRuntimeParams {
 	// Flag parameters.
 	
-	// Parameters for /DUMP flag group.
+	// Parameters for /HOLD flag group.
+	int HOLDFlagEncountered;
+	waveHndl HOLDFlag_holdwav;
+	int HOLDFlagParamsSet[1];
+	
 	int POLFlagEncountered;
 	
 	int STGYFlagEncountered;
