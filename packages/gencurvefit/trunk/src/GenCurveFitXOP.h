@@ -327,6 +327,8 @@ struct GenCurveFitInternals{
 	double ystart,ydelta;
 	//the function being fitted.
 	FunctionInfo fi;
+	char *functionname;
+
 	//is it a structure fit?
 	fitfuncStruct* sp;
 

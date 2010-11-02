@@ -52,6 +52,8 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		if(err = GetFunctionInfo(p->fitfun, &goiP->fi))
 			goto done;
 		
+		goiP->functionname = p->fitfun;
+
 		// function is not proper fitfunc
 		if(goiP->fi.totalNumParameters < 1 || goiP->fi.totalNumParameters > MAX_MDFIT_SIZE){
 			err = INVALID_FIT_FUNC;
