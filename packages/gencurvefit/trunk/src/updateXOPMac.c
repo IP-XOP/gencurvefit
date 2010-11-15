@@ -43,8 +43,6 @@ void DisplayWindowXOP1Message(WindowPtr theWindow, int numcoefs, const double* c
 	static const HIViewID myHIViewID = { kMyHIViewSignature, kMyHIViewFieldID };
 
 	//stick all the data to be drawn in a structure
-	memset(&theDisplayData, 0, sizeof(theDisplayData));
-
 	theDisplayData.coefs = coefs;
 	theDisplayData.chi2 = chi2;
 	theDisplayData.numcoefs = numcoefs;
