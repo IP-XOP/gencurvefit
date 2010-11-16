@@ -1,4 +1,4 @@
-#pragma rtGlobals=3		// Use modern global access method.
+#pragma rtGlobals=3	// Use modern global access method.
 #pragma version = 1.18
 #pragma IgorVersion = 6.20
 #pragma ModuleName= MOTO_WM_NewGlobalFit1
@@ -116,6 +116,10 @@ Function MOTO_NewGlblFitFunc(inpw, inyw, inxw)
 	
 	Wave CoefDataSetLinkage = root:Packages:MotofitGF:NewGlobalFit:CoefDataSetLinkage
 	Wave/T FitFuncList = root:Packages:MotofitGF:NewGlobalFit:FitFuncList
+
+	//required for number of parameters ARJN
+	Wave/T NewGF_DataSetListWave = root:Packages:MotofitGF:NewGlobalFit:NewGF_DataSetListWave
+	
 	Wave SC=root:Packages:MotofitGF:NewGlobalFit:ScratchCoefs
 	
 	Variable numSets = DimSize(CoefDataSetLinkage, 0)
@@ -129,6 +133,9 @@ Function MOTO_NewGlblFitFunc(inpw, inyw, inxw)
 		//ARJN 4/2007
 		FUNCREF MOTO_GFFitFuncTemplate theFitFunc = $(FitFuncList[CoefDataSetLinkage[CoefDataSetLinkageIndex][FuncPointerCol]])
 
+		//ARJN
+		redimension/N=(str2num(NewGF_DataSetListWave[i][3])) SC
+		
 		SC = inpw[CoefDataSetLinkage[CoefDataSetLinkageIndex][FirstCoefCol+p]]
 		inyw[firstP, lastP] = theFitFunc(SC, Xw[p])
 	endfor
@@ -142,6 +149,10 @@ Function MOTO_NewGlblFitFuncAllAtOnce(inpw, inyw, inxw)
 	
 	Wave CoefDataSetLinkage = root:Packages:MotofitGF:NewGlobalFit:CoefDataSetLinkage
 	Wave/T FitFuncList = root:Packages:MotofitGF:NewGlobalFit:FitFuncList
+	
+	//required for number of parameters ARJN
+	Wave/T NewGF_DataSetListWave = root:Packages:MotofitGF:NewGlobalFit:NewGF_DataSetListWave
+
 	Wave SC=root:Packages:MotofitGF:NewGlobalFit:ScratchCoefs
 	
 	Variable CoefDataSetLinkageIndex, i
@@ -155,6 +166,8 @@ Function MOTO_NewGlblFitFuncAllAtOnce(inpw, inyw, inxw)
 		//ARJN
 		FUNCREF MOTO_GFFitAllAtOnceTemplate theFitFunc = $(FitFuncList[CoefDataSetLinkage[CoefDataSetLinkageIndex][FuncPointerCol]])
 
+		//ARJN
+		redimension/N=(str2num(NewGF_DataSetListWave[i][3])) SC
 		SC = inpw[CoefDataSetLinkage[CoefDataSetLinkageIndex][FirstCoefCol+p]]
 	
 		Duplicate/O/R=[firstP,lastP] inxw, TempXW, TempYW
