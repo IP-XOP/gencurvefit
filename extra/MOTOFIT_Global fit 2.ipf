@@ -1,5 +1,5 @@
 #pragma rtGlobals=3	// Use modern global access method.
-#pragma version = 1.18
+#pragma version = 1.19
 #pragma IgorVersion = 6.20
 #pragma ModuleName= MOTO_WM_NewGlobalFit1
 
@@ -61,6 +61,14 @@
 //			When re-opening the control panel, call to WC_WindowCoordinatesSprintf had a zero last parameter instead of one, resulting in bad sizing on Windows.
 //			When re-opening the control panel after closing it, InitNewGlobalFitGlobals() was called, destroying the last set-up.
 //			Fixed several index-out-of-range errors.
+//	1.19	Fixed bugs:
+//			If you used fit functions with unequal numbers of parameters, NewGlblFitFunc and NewGlblFitFuncAllAtOnce would cause an index out of range error
+//				during assignment to SC, due to -1 stored as a dummy in the extra slots in the CoefDataSetLinkage wave.
+//			The use of a pre-made scratch wave as the temporary coefficient wave inside NewGlblFitFunc and NewGlblFitFuncAllAtOnce when using fit functions
+//				having unequal numbers of parameters caused some fit functions to fail, if they depended on the number of points in the coefficient wave being exactly right.
+//			Changed:
+//			The temporary coefficent wave SC is now a free wave created inside NewGlblFitFunc and NewGlblFitFuncAllAtOnce instead of ScratchCoefs. That saves looking up
+//				the ScratchCoefs wave, and the code required to maintain ScratchCoefs. The ScratchCoefs wave has been eliminated.
 //**************************************
 
 //**************************************
@@ -116,12 +124,8 @@ Function MOTO_NewGlblFitFunc(inpw, inyw, inxw)
 	
 	Wave CoefDataSetLinkage = root:Packages:MotofitGF:NewGlobalFit:CoefDataSetLinkage
 	Wave/T FitFuncList = root:Packages:MotofitGF:NewGlobalFit:FitFuncList
-
-	//required for number of parameters ARJN
-	Wave/T NewGF_DataSetListWave = root:Packages:MotofitGF:NewGlobalFit:NewGF_DataSetListWave
-	
-	Wave SC=root:Packages:MotofitGF:NewGlobalFit:ScratchCoefs
-	
+	Make/FREE/N=0/D SC
+		
 	Variable numSets = DimSize(CoefDataSetLinkage, 0)
 	Variable CoefDataSetLinkageIndex, i	
 	
@@ -133,9 +137,7 @@ Function MOTO_NewGlblFitFunc(inpw, inyw, inxw)
 		//ARJN 4/2007
 		FUNCREF MOTO_GFFitFuncTemplate theFitFunc = $(FitFuncList[CoefDataSetLinkage[CoefDataSetLinkageIndex][FuncPointerCol]])
 
-		//ARJN
-		redimension/N=(str2num(NewGF_DataSetListWave[i][3])) SC
-		
+		Redimension/N=(CoefDataSetLinkage[i][NumFuncCoefsCol]) SC		
 		SC = inpw[CoefDataSetLinkage[CoefDataSetLinkageIndex][FirstCoefCol+p]]
 		inyw[firstP, lastP] = theFitFunc(SC, Xw[p])
 	endfor
@@ -149,11 +151,7 @@ Function MOTO_NewGlblFitFuncAllAtOnce(inpw, inyw, inxw)
 	
 	Wave CoefDataSetLinkage = root:Packages:MotofitGF:NewGlobalFit:CoefDataSetLinkage
 	Wave/T FitFuncList = root:Packages:MotofitGF:NewGlobalFit:FitFuncList
-	
-	//required for number of parameters ARJN
-	Wave/T NewGF_DataSetListWave = root:Packages:MotofitGF:NewGlobalFit:NewGF_DataSetListWave
-
-	Wave SC=root:Packages:MotofitGF:NewGlobalFit:ScratchCoefs
+	Make/FREE/N=0/D SC
 	
 	Variable CoefDataSetLinkageIndex, i
 	
@@ -166,15 +164,13 @@ Function MOTO_NewGlblFitFuncAllAtOnce(inpw, inyw, inxw)
 		//ARJN
 		FUNCREF MOTO_GFFitAllAtOnceTemplate theFitFunc = $(FitFuncList[CoefDataSetLinkage[CoefDataSetLinkageIndex][FuncPointerCol]])
 
-		//ARJN
-		redimension/N=(str2num(NewGF_DataSetListWave[i][3])) SC
-		SC = inpw[CoefDataSetLinkage[CoefDataSetLinkageIndex][FirstCoefCol+p]]
-	
 		Duplicate/O/R=[firstP,lastP] inxw, TempXW, TempYW
 		TempXW = inxw[p+firstP]
+
+		Redimension/N=(CoefDataSetLinkage[i][NumFuncCoefsCol]) SC
 		SC = inpw[CoefDataSetLinkage[i][p+FirstCoefCol]]
 		theFitFunc(SC, TempYW, TempXW)
-		inyw[firstP, lastP] = TempYW[p-firstP]
+		inyw[firstP, lastP] = TempYW[p-firstP]		
 	endfor
 end
 
@@ -428,12 +424,6 @@ DoUpdate
 	Duplicate/O YW, root:Packages:MotofitGF:NewGlobalFit:FitY
 	Wave FitY = root:Packages:MotofitGF:NewGlobalFit:FitY
 	FitY = NaN
-	
-	Variable MaxFuncCoefs = 0
-	for (i = 0; i < DimSize(DataSets, 0); i += 1)
-		MaxFuncCoefs = max(MaxFuncCoefs, privateLinkage[i][NumFuncCoefsCol])
-	endfor
-	Make/O/D/N=(MaxFuncCoefs) root:Packages:MotofitGF:NewGlobalFit:ScratchCoefs
 	
 	Make/D/O/N=(DimSize(CoefWave, 0)) root:Packages:MotofitGF:NewGlobalFit:MasterCoefs	
 	Wave MasterCoefs = root:Packages:MotofitGF:NewGlobalFit:MasterCoefs
@@ -1789,9 +1779,9 @@ Function MOTO_SaveSetup(saveName)
 	Wave/T/Z NewGF_FitFuncNames, NewGF_DataSetsList
 	KillWaves/Z YCumData, FitY, NewGF_FitFuncNames, NewGF_LinkageMatrix, NewGF_DataSetsList, NewGF_CoefWave
 	
-	Wave/Z CoefDataSetLinkage, DataSetPointer, ScratchCoefs, MasterCoefs, EpsilonWave
+	Wave/Z CoefDataSetLinkage, DataSetPointer, MasterCoefs, EpsilonWave
 	Wave/Z/T NewGF_CoefficientNames, FitFuncList
-	KillWaves/Z NewGF_CoefficientNames, CoefDataSetLinkage, FitFuncList, DataSetPointer, ScratchCoefs, MasterCoefs, EpsilonWave
+	KillWaves/Z NewGF_CoefficientNames, CoefDataSetLinkage, FitFuncList, DataSetPointer, MasterCoefs, EpsilonWave
 
 	Wave/Z GFWeightWave
 	Wave/Z GFMaskWave
@@ -5549,12 +5539,6 @@ Function MOTO_DoNewGlobalSim(FitFuncNames, DataSets, CoefDataSetLinkage, CoefWav
 	Duplicate/O YW, root:packages:MotofitGF:NewGlobalFit:FitY
 	Wave FitY = root:packages:MotofitGF:NewGlobalFit:FitY
 	FitY = NaN
-	
-	Variable MaxFuncCoefs = 0
-	for (i = 0; i < DimSize(DataSets, 0); i += 1)
-		MaxFuncCoefs = max(MaxFuncCoefs, privateLinkage[i][NumFuncCoefsCol])
-	endfor
-	Make/O/D/N=(MaxFuncCoefs) root:packages:MotofitGF:NewGlobalFit:ScratchCoefs
 	
 	Make/D/O/N=(DimSize(CoefWave, 0)) root:packages:MotofitGF:NewGlobalFit:MasterCoefs	
 	Wave MasterCoefs = root:packages:MotofitGF:NewGlobalFit:MasterCoefs
