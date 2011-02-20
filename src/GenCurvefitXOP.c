@@ -512,6 +512,12 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	if(p->POLFlagEncountered)
 		gco.polishUsingLM = 1;
 	
+	/*
+	 if you want to do a Monte Carlo fit.
+	 */
+	if(p->MCFlagEncountered && p->WFlagEncountered)
+		gco.monteCarlo = 1;
+	
 	//make an error wave before we start the fit, to make sure it's always there
 	dimensionSizes[0] = goi.totalnumparams;
 	dimensionSizes[1] = 0;
