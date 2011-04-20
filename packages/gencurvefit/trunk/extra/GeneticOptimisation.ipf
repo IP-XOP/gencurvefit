@@ -191,7 +191,7 @@ Function Gen_curvefitpanel_init() : Panel
 	SetVariable xdataWav_setvar_tab0,pos={294,164},size={180,20},title=" ",fsize=12
 	SetVariable xdataWav_setvar_tab0,bodyWidth= 180,noedit=1
 	MakeSetVarIntoWSPopupButton("gencurvefitpanel", "xdataWav_setvar_tab0", "Gen_waveselectionNotification", "root:Packages:Motofit:gencurvefit:xdataWav",content = WMWS_Waves)
-	PopupWS_MatchOptions("gencurvefitpanel", "xdataWav_setvar_tab0", matchStr="*", listoptions="DIMS:2,CMPLX:0,TEXT:0,BYTE:0,WORD:0,INTEGER:0,MINROWS:1",namefilterproc = "Gen_filter_xdataWav")
+	PopupWS_MatchOptions("gencurvefitpanel", "xdataWav_setvar_tab0", matchStr="*", listoptions="CMPLX:0,TEXT:0,BYTE:0,WORD:0,INTEGER:0,MINROWS:1",namefilterproc = "Gen_filter_xdataWav")
 	PopupWS_AddSelectableString("gencurvefitpanel", "xdataWav_setvar_tab0","_calculated_")
 	PopupWS_SetSelectionFullPath("gencurvefitpanel", "xdataWav_setvar_tab0","_calculated_")
 	
@@ -2070,4 +2070,29 @@ Function make2DScatter_plot_matrix(M_monteCarlo, holdstring)
 	endtry
 
 	setdatafolder $cDF
+End
+
+Function GEN_classifyN(values)
+Wave values
+//gets some stats about the convergence of an Monte Carlo run
+variable ii
+make/n=(dimsize(values, 0), 2)/o/d stats = 0
+make/n=100/free/d histo = 0
+
+for(ii = 1 ; ii < dimsize(values, 0) ; ii+=1)
+	make/d/n=(ii + 1)/free subset_values
+	subset_values[] = values[p]
+	variable V_fitoptions=4
+	histo = 0
+	Histogram/P/C/B=1 subset_values, histo
+
+	CurveFit/q/n/M=2/W=0 gauss histo
+	Wave W_coef
+	stats[ii][0] = W_coef[2]
+	stats[ii][1] = W_coef[3]
+	if(!mod(ii, 100))
+		print ii
+	endif
+endfor
+
 End
