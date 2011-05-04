@@ -572,7 +572,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	if(err = lgencurvefit_updatefunction(&goi,
 										 goi.coefs,
 										 goi.totalnumparams,
-										 0,
+										 goi.V_numfititers,
 										 chi2,
 										 16,
 										 1))
