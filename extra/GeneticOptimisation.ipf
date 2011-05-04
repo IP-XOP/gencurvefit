@@ -938,6 +938,10 @@ Function gen_graphnowbutton(ba) : ButtonControl
 	svar functionstr = root:packages:motofit:gencurvefit:functionstr
 	svar destWav = root:packages:motofit:gencurvefit:destWav
 	nvar destlen = root:packages:motofit:gencurvefit:destLen
+	svar cursorStart = root:packages:motofit:gencurvefit:cursorStart
+	svar cursorfinish = root:packages:motofit:gencurvefit:cursorfinish
+	variable cost = 0, ii, startp, endp
+	
 	variable wasOffset = 0
 	switch( ba.eventCode )
 		case 2: // mouse up
@@ -1039,6 +1043,42 @@ Function gen_graphnowbutton(ba) : ButtonControl
 				cmd = "modifygraph/W=" + winname(0,1) + " " + offset
 				execute/q cmd
 			endif
+			//lets calculate chi2
+			make/n=(dimsize(ywave, 0))/free/d chi2
+			chi2 = ywave - outputWav
+			Wave/z weighting = $weightwav
+			if(waveexists(weighting))
+				controlinfo/w=gencurvefitpanel weighting_check0_tab1
+				if(V_value)
+					chi2 /= weighting
+			       else
+			       	chi2 *= weighting
+			       endif
+			endif
+			chi2 *= chi2
+			Wave/z maskwave = $maskWav
+			if(waveexists(maskWave))
+				for(ii = 0 ; ii < dimsize(maskwave, 0) ; ii+=1)
+					if(maskwave[ii] == 0 || numtype(maskwave[ii]) == 2)
+						chi2[ii] = 0
+					endif
+				endfor
+			endif
+			if(!numtype(str2num(cursorfinish)))
+				endp = str2num(cursorfinish)
+			endif
+			if(!numtype(str2num(cursorstart)))
+				startp = str2num(cursorstart)
+			endif
+			if(stringmatch(cursorfinish, "*pcsr*"))
+				endp = pcsr(B)
+			endif
+			if(stringmatch(cursorstart, "*pcsr*"))
+				startp = pcsr(A)
+			endif
+			print "Function:", functionStr,"ywave:",ydatawav,"(",dimsize(ywave, 0),")","Chi2: ", sum(chi2, startp, endp)
+			
+			
 	endswitch
 
 	return 0
@@ -2081,12 +2121,12 @@ make/n=100/free/d histo = 0
 
 for(ii = 1 ; ii < dimsize(values, 0) ; ii+=1)
 	make/d/n=(ii + 1)/free subset_values
-	subset_values[] = values[p]
+	multithread subset_values[] = values[p]
 	variable V_fitoptions=4
 	histo = 0
-	Histogram/P/C/B=1 subset_values, histo
+	Histogram/P/C/B=3 subset_values, histo
 
-	CurveFit/q/n/M=2/W=0 gauss histo
+	CurveFit/NTHR=0/q/n/M=2/W=0 gauss histo
 	Wave W_coef
 	stats[ii][0] = W_coef[2]
 	stats[ii][1] = W_coef[3]
