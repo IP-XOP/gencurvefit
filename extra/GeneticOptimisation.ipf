@@ -1723,14 +1723,6 @@ End
 
 
 
-Static Function GEN_sort(GEN_chi2matrix)
-	Wave GEN_chi2matrix
-	variable lowestpvector
-	Wavestats/q/z/M=1 GEN_chi2matrix
-	findvalue /V=(V_min) GEN_chi2matrix
-	return V_Value
-End
-
 Static Function GEN_evaluate(evalwave,partialparamwave,gen)
 	//this function evaluates Chi2 for evalwave (the ydata).  The partial parameter wave is here (i.e. the 'pvector')
 	//the gen structure supplies the holdwave which fills up the full parameter wave.
@@ -1976,20 +1968,21 @@ End
 
 
 
-Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB])
+Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, outf])
 	String fn
 	Wave w, yy, xx, ee
 	string holdstring
 	variable Iters, cursA, cursB
+	string outf
 	//the first fit is always on the pristine data
 	
 	string cDF = getdatafolder(1)
-	variable ii,jj,kk, summ, err = 0
+	variable ii,jj,kk, summ, err = 0, fileID
 
 	newdatafolder/o root:packages
 	newdatafolder/o root:packages:motofit
 	newdatafolder/o root:packages:motofit:old_genoptimise
-
+	
 	try
 		//get limits wave, also sets default parameters.
 		GEN_setlimitsforGENcurvefit(w,holdstring,cDF)
@@ -2010,7 +2003,7 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB])
 		Wave e_montecarlo = root:packages:motofit:old_genoptimise:e_montecarlo
 		
 		//make a wave to put the montecarlo iterations in
-		make/o/d/n=(Iters, dimsize(w, 0)) M_montecarlo
+		make/o/d/n=(Iters, dimsize(w, 0)) M_montecarlo = 0
 		make/o/d/n=(iters) W_chisq
 		
 		//take care of cursors
@@ -2033,6 +2026,9 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB])
 			Gencurvefit/q/n/X=x_montecarlo/I=1/W=e_montecarlo/K={iterations,popsize, k_m, recomb}/TOL=(fittol) $fn, y_montecarlo[cursA,cursB], w, holdstring, limits
 			M_montecarlo[ii][] = w[q]
 			W_chisq[ii] = V_chisq
+			if(strlen(outf))
+				Save/J/O/M="\r\n" M_montecarlo as outf
+			endif
 			print "montecarlo ", ii, " done - total time = ", datetime-timed
 		endfor
 		print "overall time took: ", datetime - timed , " seconds"
@@ -2074,7 +2070,7 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB])
 	catch
 		err = 1	
 	endtry
-	
+
 	killwaves/z M_wavestats, goes, means, stdevs, fit_y_montecarlo
 	
 	setdatafolder $cDF
@@ -2112,6 +2108,45 @@ Function make2DScatter_plot_matrix(M_monteCarlo, holdstring)
 	setdatafolder $cDF
 End
 
+Function gen_synthMCfmCovar(coefs, M_covar, holdstring, howmany)
+wave coefs, m_covar
+string holdstring
+variable howmany
+
+variable varying = 0, ii, whichcol
+duplicate/free coefs, tempcoefs
+duplicate/free M_covar, tempM_covar
+
+varying = strlen(holdstring)
+for(ii = dimsize(coefs, 0)-1 ; ii >= 0 ; ii-=1)
+	if(str2num(holdstring[ii]))
+		deletepoints/M=0 ii, 1, tempcoefs, tempM_covar
+		deletepoints/M=1 ii, 1, tempM_covar
+		varying -=1
+	endif
+endfor
+
+//create some gaussian noise
+make /free/d/n=(varying, howmany) noises = gnoise(1., 2)
+//and create the correlated noise from the covariance matrix.
+matrixop/free correlatedNoises = (chol(tempm_covar) x noises)^t
+
+make/n=(howmany, dimsize(coefs, 0))/d/o M_montecarlo
+Multithread M_montecarlo[][] = coefs[q]
+
+//now add the correlated noise back to the parameters
+whichcol = dimsize(correlatedNoises, 1) - 1
+for(ii = dimsize(coefs, 0)-1 ; ii >= 0 ; ii-=1)
+	if(!str2num(holdstring[ii]))
+		M_montecarlo[][ii] += correlatedNoises[p][whichCol]
+		whichCol -= 1
+	endif
+endfor
+
+End
+
+
+
 Function GEN_classifyN(values)
 Wave values
 //gets some stats about the convergence of an Monte Carlo run
@@ -2135,4 +2170,25 @@ for(ii = 1 ; ii < dimsize(values, 0) ; ii+=1)
 	endif
 endfor
 
+End
+
+Function gen_gcm()
+Wave M_covar
+Duplicate/o M_Covar, CorMat	 // You can use any name instead of CorMat
+CorMat = M_Covar[p][q]/sqrt(M_Covar[p][p]*M_Covar[q][q])
+End
+
+Function gen_Chi2_guess(fitfuncstr, coefs, ywave, xwave, ewave[, cursA, cursB])
+	//return the CHI2 value for an AAO fit function
+	string fitfuncstr
+	wave coefs,  ywave, xwave, ewave
+	variable cursA, cursB
+	variable v_fitoptions=4
+	if(paramisdefault(cursA) || paramisdefault(cursB))
+		cursA = 0
+		cursB = dimsize(ywave, 0) - 1
+	endif
+	FuncFit/n/q/o $fitfuncstr coefs  ywave[cursA, cursB] /X=xwave /W=ewave /I=1
+	return V_chisq
+	
 End
