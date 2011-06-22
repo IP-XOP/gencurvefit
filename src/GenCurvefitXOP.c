@@ -265,7 +265,13 @@ double lgencurvefit_costfunction(void *userdata, const double *coefs, unsigned i
 /*
  the update function for the genetic optimisation
  */
-int lgencurvefit_updatefunction(void *userdata, const double *coefs, unsigned int numcoefs, unsigned int iterations, double cost, unsigned int updatetime, double convergenceNumber){
+int lgencurvefit_updatefunction(void *userdata,
+								const double *coefs,
+								 unsigned int numcoefs,
+								 unsigned int iterations,
+								 double cost,
+								 unsigned int updatetime,
+								 double convergenceNumber){
 	int err = 0;
 	
 	GenCurveFitInternals *goiP = (GenCurveFitInternals*) userdata;
