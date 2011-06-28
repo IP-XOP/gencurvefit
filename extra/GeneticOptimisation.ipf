@@ -1907,6 +1907,9 @@ Function GEN_setlimitsforGENcurvefit(coefs, holdstring, cDF [, limits, paramdesc
 		ListBox list0,pos={11,130},size={307,167}, win=GCF_dialog
 		ListBox list0,listWave=root:packages:motofit:old_genoptimise:limitsdialog_listwave, win=GCF_dialog
 		ListBox list0,selWave=root:packages:motofit:old_genoptimise:limitsdialog_selwave, win=GCF_dialog
+		if(!paramisdefault(paramdescription))
+			listbox list0, win = GCF_dialog, widths = {15, 25, 20, 20, 20}
+		endif
 		SetVariable setvar0,pos={11,8},size={216,19},title="iterations",fSize=12, win=GCF_dialog
 		SetVariable setvar0,limits={1,inf,10},value= root:packages:motofit:old_genoptimise:iterations, win=GCF_dialog
 		SetVariable setvar1,pos={12,32},size={215,19},title="population size",fSize=12, win=GCF_dialog
