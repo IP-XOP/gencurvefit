@@ -452,9 +452,6 @@ Function Gen_expandnpars(numpars)
 	
 End
 
-Gen_expandnpars(numpars)
-Gen_insertCoefs(coefs)
-
 Function Gen_insertCoefs(coefs)
 	Wave coefs
 	Wave/T Gen_listwave = root:packages:motofit:gencurvefit:Gen_listwave
@@ -1551,7 +1548,6 @@ function gen_savestatus()
 End
 
 function gen_setstatus()
-	
 	string ctrllist = "ydataWav_setVAR_tab0:_none_;xdataWav_setvar_tab0:_calculated_;weightWav_setvar_tab1:_none_;maskWav_setvar_tab1:_none_;destWav_setvar_tab3:_auto_;resWav_setvar_tab3:_none_;"
 	ctrllist += "coefWav_setvar_tab2:_new wave_;limitsWav_setvar_tab2:_from below_"
 	svar saveStatus = root:packages:motofit:gencurvefit:saveStatus
@@ -1621,23 +1617,6 @@ String GEN_callfolder
 variable GEN_quiet //don't print stuff in history area
 Endstructure
 
-
-Function/S dec2bin(int)
-	variable int
-	string binary="",bin=""
-	variable ii=0,remainder
-	do
-		binary+=num2istr(mod(int,2))
-		int=floor(int/2)
-	while(int!=0)
-	//now reverse order of binary to get proper number
-	for(ii=strlen(binary);ii>-1;ii-=1)
-		bin+=binary[ii]
-	endfor
-	
-	return bin
-End
-
 Function/S GEN_holdallstring(numvarparams)
 	variable numvarparams
 	variable ii
@@ -1647,54 +1626,6 @@ Function/S GEN_holdallstring(numvarparams)
 	endfor
 	return str
 End
-
-Function bin2dec(bin)
-	string bin
-	variable int=0
-	variable ii, binlen = strlen(bin) -1
-
-	for(ii=strlen(bin)-1 ; ii>-1 ; ii-=1)
-		if(cmpstr(bin[ii],"1") == 0)
-			int+=2^(binlen - ii)
-		endif
-	endfor
-	return int
-End
-
-Function GEN_isbitset(value,bit)
-	variable value,bit
-	
-	string binary=dec2bin(value)
-	
-	//if you want to examine bits higher than the logical size of the holdvalue then they must
-	//not be "set"
-	//e.g. holdstring is 110
-	// Gen_reverseString("110") returns "011"
-	// bin2dec("011") returns 3
-	// GEN_isbitset(3,2) should return 0.
-	
-	if(bit>strlen(binary)-1)
-		return 0
-	endif
-	
-	variable bool=str2num(binary[strlen(binary)-bit-1])
-	
-	return bool
-End
-
-Function/S GEN_reverseString(str)
-	//this function reverses the string order because bits are set from RHS
-	string str
-	string localcopystr = str
-	str = ""
-	variable ii
-	//now reverse order of binary to get proper number
-	for(ii=strlen(localcopystr);ii>-1;ii-=1)
-		str +=localcopystr[ii]
-	endfor
-	return str
-End
-
 
 Static Function GEN_searchparams(gen)
 	Struct GEN_optimisation &gen
@@ -1723,47 +1654,6 @@ End
 
 
 
-Static Function GEN_evaluate(evalwave,partialparamwave,gen)
-	//this function evaluates Chi2 for evalwave (the ydata).  The partial parameter wave is here (i.e. the 'pvector')
-	//the gen structure supplies the holdwave which fills up the full parameter wave.
-	Wave evalwave,partialparamwave
-	Struct GEN_optimisation &gen
-	Wave GEN_parwave=gen.GEN_parwave
-
-	Wave GEN_xx=gen.GEN_xx
-	
-	GEN_insertVaryingParams(gen.GEN_parwave,partialparamwave,gen.GEN_holdbits)								
-
-	//now evaluate the wave
-	if(gen.GEN_whattype==2)
-		Funcref GEN_fitfunc gen.fan=gen.fan
-		evalwave=gen.fan(GEN_parwave,gen.GEN_xx)
-	elseif(gen.GEN_whattype==3)
-		Funcref GEN_allatoncefitfunc gen.fin=gen.fin
-		gen.fin(GEN_parwave,evalwave,gen.GEN_xx)
-	endif
-	
-End
-
-Static Function GEN_chi2(gen)
-	//calculates chi2
-	struct GEN_optimisation &gen
-	Wave GEN_pvector=gen.GEN_pvector
-	Wave GEN_yy=gen.GEN_yy,GEN_ee=gen.GEN_ee
-	
-	variable Chi2=0
-	Wave enum
-	
-	//evaluate the enumerator using the current pvector 
-	GEN_evaluate(enum,gen.GEN_pvector,gen)
-	enum-=gen.GEN_yy
-	enum/=gen.GEN_ee
-	enum=enum*enum
-	Wavestats/q/z/M=1 enum
-	chi2=V_sum
-	
-	return Chi2
-End
 
 Function GEN_allatoncefitfunc(coefficients,ydata,xdata)
 	//the function template for an all at once fitfunction
@@ -1775,31 +1665,6 @@ Function GEN_fitfunc(coefficients,xx)
 	Wave coefficients
 	variable xx
 End
-
-Function GEN_insertVaryingParams(baseCoef,varyCoef,holdbits)
-	Wave baseCoef,varyCoef
-	variable holdbits
-	variable ii=0,jj=0
-	for(ii=0 ; ii < numpnts(baseCoef) ; ii+=1)
-		if(GEN_isBitSet(holdBits,ii) == 0)
-			baseCoef[ii] = varyCoef[jj]
-			jj+=1
-		endif		
-	endfor
-End
-
-Function GEN_extractVaryingParams(baseCoef,varyCoef, holdbits)
-	Wave baseCoef,varyCoef
-	variable holdbits	
-	variable ii=0,jj=0
-	for(ii=0 ; ii < numpnts(basecoef) ; ii+=1)
-		if(GEN_isBitSet(holdBits,ii) ==0)
-			varycoef[jj] = baseCoef[ii]
-			jj+=1
-		endif		
-	endfor
-End
-
 
 Function GEN_setlimitsforGENcurvefit(coefs, holdstring, cDF [, limits, paramdescription])
 	Wave coefs
@@ -1995,6 +1860,7 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, out
 	newdatafolder/o root:packages
 	newdatafolder/o root:packages:motofit
 	newdatafolder/o root:packages:motofit:old_genoptimise
+	newdatafolder/o root:packages:WMScatterPlotMatrixPackage
 	
 	try
 		//get limits wave, also sets default parameters.
