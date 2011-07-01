@@ -1209,12 +1209,14 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 					
 					if(p->DFlagEncountered){
 						if(p->XFlagEncountered){
-							WaveName(p->XFlag_xx,&xwavename[0]);
+							WaveName(p->XFlag_xx, &xwavename[0]);
 						} else {
 							WaveName(goiP->OUT_x[0], &xwavename[0]);
 						}
-						strcat(cmd," vs ");
-						strcat(cmd,&xwavename[0]);
+						if(!strcmp(xwavename, "_free_")){
+							strcat(cmd," vs ");
+							strcat(cmd, &xwavename[0]);
+						}
 					}
 					if(err = XOPSilentCommand(&cmd[0]))
 						goto done;
