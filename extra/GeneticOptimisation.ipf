@@ -1633,7 +1633,7 @@ Static Function GEN_searchparams(gen)
 	Variable k_m=0.7
 	Variable GEN_recombination=0.5
 	Variable GEN_generations=100
-	Variable GEN_V_fittol=0.0005
+	Variable GEN_V_fittol=0.05
 	prompt k_m,"mutation constant, e.g.0.7"
 	prompt GEN_recombination,"enter the recombination constant"
 	prompt GEN_generations,"how many generations do you want to use?"
@@ -1666,12 +1666,13 @@ Function GEN_fitfunc(coefficients,xx)
 	variable xx
 End
 
-Function GEN_setlimitsforGENcurvefit(coefs, holdstring, cDF [, limits, paramdescription])
+Function GEN_setlimitsforGENcurvefit(coefs, holdstring [, limits, paramdescription])
 	Wave coefs
 	string holdstring
-	string cDF
 	wave/z limits
 	wave/t/z paramdescription
+
+	string cDF = getdatafolder(1)
 	//sets the limits as 	root:packages:motofit:old_genoptimise:GENcurvefitlimits
 
 	newdatafolder/o root:packages
@@ -1695,7 +1696,7 @@ Function GEN_setlimitsforGENcurvefit(coefs, holdstring, cDF [, limits, paramdesc
 		variable/g k_m = 0.7
 	endif
 	if(!NVAR_exists(fittol))
-		variable/g fittol = 0.001
+		variable/g fittol = 0.05
 	endif
 	if(!paramisdefault(paramdescription) && waveexists(paramdescription) && dimsize(paramdescription, 0) == numpnts(coefs))
 		paramdescriptionoffset = 1
@@ -1785,7 +1786,7 @@ Function GEN_setlimitsforGENcurvefit(coefs, holdstring, cDF [, limits, paramdesc
 		SetVariable setvar3,fSize=12, win=GCF_dialog
 		SetVariable setvar3,limits={0,1,0.05},value= root:packages:motofit:old_genoptimise:recomb, win=GCF_dialog
 		SetVariable setvar4,pos={12,104},size={215,19},title="fit tolerance",fSize=12, win=GCF_dialog
-		SetVariable setvar4,limits={1e-7,1e-1,0.001},value= root:packages:motofit:old_genoptimise:fittol, win=GCF_dialog
+		SetVariable setvar4,limits={1e-7,0.1,0.001},value= root:packages:motofit:old_genoptimise:fittol, win=GCF_dialog
 		Button button0,pos={30,310},size={266,25},proc=GCF_dialogProc,title="Continue", win=GCF_dialog
 		Button button1,pos={251, 103},size={45, 20},proc=GCF_dialogProc,title="default", fsize=9, win=GCF_dialog
 		Button button2,pos={30,337},size={266,25},proc=GCF_dialogProc,title="Cancel", win=GCF_dialog
@@ -1864,7 +1865,7 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, out
 	
 	try
 		//get limits wave, also sets default parameters.
-		GEN_setlimitsforGENcurvefit(w,holdstring,cDF)
+		GEN_setlimitsforGENcurvefit(w,holdstring)
 		Wave limits = root:packages:motofit:old_genoptimise:GENcurvefitlimits
 
 		NVAR  iterations = root:packages:motofit:old_genoptimise:iterations
@@ -1880,6 +1881,7 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, out
 		Wave y_montecarlo = root:packages:motofit:old_genoptimise:y_montecarlo
 		Wave x_montecarlo = root:packages:motofit:old_genoptimise:x_montecarlo
 		Wave e_montecarlo = root:packages:motofit:old_genoptimise:e_montecarlo
+		duplicate/free y_montecarlo, tempdump
 		
 		//make a wave to put the montecarlo iterations in
 		make/o/d/n=(Iters, dimsize(w, 0)) M_montecarlo = 0
@@ -1896,13 +1898,8 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, out
 		//now lets do the montecarlo fitting
 		variable timed = datetime
 		for(ii=0 ; ii<Iters ; ii+=1)
-			if(ii == 0)
-				y_montecarlo[] = yy[p]
-			else
-				y_montecarlo[] = yy[p] + gnoise(ee[p], 2)
-			endif	
 			//			Gencurvefit/q/n/X=x_montecarlo/K={iterations, popsize, k_m, recomb}/TOL=(fittol) $fn, y_montecarlo[cursA,cursB], w, holdstring, limits
-			Gencurvefit/q/n/X=x_montecarlo/I=1/W=e_montecarlo/K={iterations,popsize, k_m, recomb}/TOL=(fittol) $fn, y_montecarlo[cursA,cursB], w, holdstring, limits
+			Gencurvefit/MC/D=tempdump/q/n/X=x_montecarlo/I=1/W=e_montecarlo/K={iterations,popsize, k_m, recomb}/TOL=(fittol) $fn, y_montecarlo[cursA,cursB], w, holdstring, limits
 			M_montecarlo[ii][] = w[q]
 			W_chisq[ii] = V_chisq
 			if(strlen(outf))
@@ -1954,6 +1951,21 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, out
 	
 	setdatafolder $cDF
 	return err
+End
+
+Function M_montecarloStatistics(M_monteCarlo)
+	Wave M_montecarlo
+	variable ii
+	make/o/d/n=(dimsize(M_Montecarlo, 1), 2) M_montecarlostats
+	make/d/free/n=(dimsize(M_montecarlo, 0)) vals
+
+	for(ii = 0 ; ii < dimsize(M_Montecarlo, 1) ; ii += 1)
+		vals[] = M_Montecarlo[p][ii]
+		wavestats/q vals
+		M_Montecarlostats[ii][0] = V_avg
+		M_Montecarlostats[ii][1] = V_sdev	
+	endfor
+
 End
 
 Function make2DScatter_plot_matrix(M_monteCarlo, holdstring)
