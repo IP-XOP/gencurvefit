@@ -1595,7 +1595,7 @@ int dumpRecordToWave(GenCurveFitInternalsPtr goiP,	MemoryStruct *dumpRecord){
 	long dimensionSizes[MAX_DIMENSIONS + 1]; // Array of dimension sizes 
 	
 	memset(dimensionSizes, 0, sizeof(dimensionSizes));
-	dimensionSizes[0] = goiP->numvarparams;
+	dimensionSizes[0] = goiP->totalnumparams;
 	dimensionSizes[1] = dumpRecord->size / (sizeof(double) * goiP->totalnumparams);
 	
 	if(err = MDMakeWave(&dump,"M_gencurvefitpopdump", goiP->cDF, dimensionSizes, NT_FP64, 1))
