@@ -271,7 +271,12 @@ int lgencurvefit_updatefunction(void *userdata,
 								 unsigned int iterations,
 								 double cost,
 								 unsigned int updatetime,
-								 double convergenceNumber){
+								 double convergenceNumber,
+								 const double** population,
+								 const unsigned int *varparams,
+								 unsigned int numvarparams,
+								 unsigned int popsize,
+								 const double *costmap){
 	int err = 0;
 	
 	GenCurveFitInternals *goiP = (GenCurveFitInternals*) userdata;
@@ -502,7 +507,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		gco.useinitialguesses = 1;
 	
 	
-	gco.updatefun = &lgencurvefit_updatefunction;
+	gco.updatefun = (updatefunction) &lgencurvefit_updatefunction;
 	gco.k_m = goi.k_m;
 	gco.recomb = goi.recomb;
 	gco.strategy = goi.STGY;
@@ -581,7 +586,12 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 										 goi.V_numfititers,
 										 chi2,
 										 16,
-										 1))
+										 1,
+										 NULL,
+										 NULL,
+										 0,
+										 0,
+										 NULL))
 	   goto done;
 	
 	//output the dumprecord
