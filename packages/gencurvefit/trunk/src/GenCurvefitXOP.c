@@ -275,11 +275,16 @@ int lgencurvefit_updatefunction(void *userdata,
 								 const double** population,
 								 const unsigned int *varparams,
 								 unsigned int numvarparams,
-								 unsigned int popsize,
+								 unsigned int totalpopsize,
 								 const double *costmap){
 	int err = 0;
+	double val = 0;
+	int ii, jj;
+	long indices[2];
+	double value[2];
 	
 	GenCurveFitInternals *goiP = (GenCurveFitInternals*) userdata;
+	updtFunc userUpdateFunc;
 	
 	goiP->V_numfititers = iterations;
 	
@@ -325,6 +330,25 @@ int lgencurvefit_updatefunction(void *userdata,
 		}
 		DoUpdate();		
 	}
+	
+	if(!goiP->noupdate && goiP->useIgorUpdateFunction && population && costmap){
+		userUpdateFunc.currentbestfit = goiP->OUT_coefs;
+		userUpdateFunc.population = goiP->M_population;
+		userUpdateFunc.costmap = goiP->W_costmap;
+		userUpdateFunc.updatetime = updatetime;
+
+		memcpy(WaveData(goiP->M_population), &(population[0][0]), totalpopsize * numvarparams * sizeof(double));
+		memcpy(WaveData(goiP->W_costmap), costmap, totalpopsize * sizeof(double) );
+
+		WaveHandleModified(goiP->M_population);
+		WaveHandleModified(goiP->W_costmap);
+
+		if(err = CallFunction(&goiP->igorUpdateFunction, (void*) &userUpdateFunc, &val))
+			goto done;
+		if(val)
+			err = (int)val;
+	}
+	
 	
 done:
 	return err;
@@ -1233,6 +1257,19 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 				}
 			}
 		}
+		//user also specified that they wanted a userupdate function.
+		if(goiP->useIgorUpdateFunction){
+			dimensionSizes[1] = 0;
+			dimensionSizes[0] = goiP->popsize * goiP->numvarparams;
+			if(err = MDMakeWave(&goiP->W_costmap, "TEMP_costmap", goiP->cDF, dimensionSizes, NT_FP64, 1))
+				goto done;
+
+			dimensionSizes[2] = 0;
+			dimensionSizes[1] = goiP->popsize * goiP->numvarparams;
+			dimensionSizes[0] =  goiP->numvarparams;
+			if(err = MDMakeWave(&goiP->M_population, "TEMP_population", goiP->cDF, dimensionSizes, NT_FP64, 1))
+				goto done;
+		}
 	}
 		
 
@@ -1291,6 +1328,13 @@ freeAllocMem(GenCurveFitInternalsPtr goiP){
 	exists = FetchWaveFromDataFolder(goiP->cDF,"GenCurveFit_sobs");
 	if(exists != NULL)
 		err = KillWave(goiP->sobs);
+
+	exists = FetchWaveFromDataFolder(goiP->cDF,"TEMP_population");
+	if(exists != NULL)
+		err = KillWave(goiP->M_population);
+	exists = FetchWaveFromDataFolder(goiP->cDF,"TEMP_costmap");
+	if(exists != NULL)
+		err = KillWave(goiP->W_costmap);
 	
 	for(ii=0 ; ii<goiP->numVarMD ; ii+=1){
 		if(goiP->xcalc[ii] != NULL)
