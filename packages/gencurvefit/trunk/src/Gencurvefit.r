@@ -99,7 +99,7 @@ resource 'STR#' (1100) {					/* custom error messages */
 	//[37]
 	"Do not change the length of the waves in the cost function",
 	//[38]
-	"The update function must be of the form updt(wave, wave, updatetime)",
+	"The update function must be of the form updt(wave, wave, wave, updatetime)",
 	//[39]
 	"The update function should return a number",
 	}

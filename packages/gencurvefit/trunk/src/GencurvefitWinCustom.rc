@@ -89,7 +89,7 @@ BEGIN
 	//[37]
 	"Do not change the length of the waves in the cost function\0",
 	//[38]
-	"The update function must be of the form updt(wave, wave, updatetime)\0",
+	"The update function must be of the form updt(wave, wave, wave, updatetime)\0",
 	//[39]
 	"The update function should return a number\0",
 	// You can add error messages here.
