@@ -88,6 +88,10 @@ BEGIN
 	"The costfunction should return a double precision number\0",
 	//[37]
 	"Do not change the length of the waves in the cost function\0",
+	//[38]
+	"The update function must be of the form updt(wave, wave, updatetime)\0",
+	//[39]
+	"The update function should return a number\0",
 	// You can add error messages here.
 
 	0,								// NOTE: 0 required to terminate the resource.

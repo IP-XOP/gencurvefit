@@ -60,7 +60,8 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #define INVALID_COST_FUNCTION 35 + FIRST_XOP_ERR
 #define COSTFUNC_DOESNT_RETURN_NUMBER 36 + FIRST_XOP_ERR
 #define COSTFUNC_WAVES_CHANGED 37 + FIRST_XOP_ERR
-
+#define INVALID_UPDATE_FUNCTION 38 + FIRST_XOP_ERR
+#define UPDTFUNC_DOESNT_RETURN_NUMBER 39 + FIRST_XOP_ERR
 
 /*
 Structure fitfuncStruct   
@@ -128,6 +129,11 @@ struct GenCurveFitRuntimeParams {
 	char MINFFlag_minfun[MAX_OBJ_NAME+1];
 	int MINFFlagParamsSet[1];
 
+	// Parameters for /UPDT flag group.
+	int UPDTFlagEncountered;
+	char UPDTFlag_igorUpdateFunc[MAX_OBJ_NAME + 1];
+	int UPDTFlagParamsSet[1];
+	
 	// Parameters for /DUMP flag group.
 	int DUMPFlagEncountered;
 	// There are no fields for this group because it has no parameters.
@@ -346,6 +352,14 @@ struct GenCurveFitInternals{
 	
 	//an array for dumping the population at each iteration
 	MemoryStruct dumpRecord;
+
+	//a user specified update function
+	int useIgorUpdateFunction;
+	FunctionInfo igorUpdateFunction;
+	//a wave containing the current population
+	waveHndl M_population;
+	//a wave containing the current chi2 values for each of the population
+	waveHndl W_costmap;
 	
 	//Did you want to dump the population?
 	int dump;
@@ -427,6 +441,15 @@ struct costFunc { // Used to pass parameters to the function.
 };
 typedef struct costFunc costFunc;
 typedef struct costFunc* costFuncPtr;
+
+struct updtFunc { // Used to pass parameters to the function.
+	waveHndl currentbestfit;
+	waveHndl population;
+	waveHndl costmap;
+	double updatetime;
+};
+typedef struct updtFunc updtFunc;
+typedef struct updtFunc* updtFuncPtr;
 
 #pragma pack()
 
