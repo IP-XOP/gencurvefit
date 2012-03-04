@@ -15,7 +15,7 @@ GenCurveFit.c -- An XOP for curvefitting via Differential Evolution.
 1100 STR#							// Custom error messages.
 BEGIN
     //[1]
-	"GenCurveFit requires Igor Pro 5.03 or later.\0",
+	"GenCurveFit requires Igor Pro 6.1 or later.\0",
 	//[2]
 	"Non-Existent Wave.\0",
 	//[3]

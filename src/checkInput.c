@@ -24,14 +24,14 @@
  returns error code otherwise
  */
 int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
-	long numdimensions;
-	long indices[MAX_DIMENSIONS+1];
+	int numdimensions;
+	CountInt indices[MAX_DIMENSIONS + 1];
 	int  err =0;
 	int badParameterNumber;
 	int sameWave;
 	long numzeros = 0;
 	char *holdstr = NULL;
-	int requiredParameterTypes[MAX_MDFIT_SIZE+2];
+	int requiredParameterTypes[MAX_MDFIT_SIZE + 2];
 	int METH=0, ii=0, jj;
 	double value[2];
 		
@@ -339,7 +339,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	// if no weight wave is specified then goiP->weighttype = -1.
 	if(p->IFlagEncountered){
 		if(p->IFlagParamsSet[0])
-			goiP->weighttype = p->IFlag_weighttype;
+			goiP->weighttype = (int) p->IFlag_weighttype;
 	}  else {
 		goiP->weighttype = 0;
 	}
@@ -572,7 +572,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		if(p->holdstring !=NULL)
 		{
 			char comparison[2];
-			long len;
+			BCInt len;
 			long ii;
 			int val;
 			
@@ -594,7 +594,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			/*
 			 get the holdstring from the operation handle
 			 */
-			if(err = GetCStringFromHandle(p->holdstring,holdstr,len)){
+			if(err = GetCStringFromHandle(p->holdstring, holdstr, (int) len)){
 				goto done;
 			}
 			goiP->numvarparams = 0;
@@ -738,7 +738,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		 now we need to check that the coefficients lie between the limits and
 		 that the limits are sane
 		 */
-		goiP->limits = (double**) malloc2d(2, goiP->totalnumparams, sizeof(double));
+		goiP->limits = (double**) malloc2d(2, (int) goiP->totalnumparams, sizeof(double));
 		if(goiP->limits == NULL){
 			err = NOMEM;
 			goto done;

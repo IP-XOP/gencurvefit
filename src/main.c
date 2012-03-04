@@ -47,7 +47,7 @@ messages after the INIT message.
 static void
 XOPEntry(void)
 {	
-	long result = 0;
+	XOPIORecResult result = 0;
 	
 	if (WindowMessage())							// Handle all messages related to XOP window.
 		return;
@@ -66,7 +66,7 @@ The message sent by the host must be INIT.
 main does any necessary initialization and then sets the XOPEntry field of the
 ioRecHandle to the address to be called for future messages.
 */
-HOST_IMPORT void
+HOST_IMPORT int
 main(IORecHandle ioRecHandle){
 	int result;
 	
@@ -75,19 +75,20 @@ main(IORecHandle ioRecHandle){
 	SetXOPEntry(XOPEntry);							// Set entry point for future calls.
 	
 	//CreateXOP Window Class for the update window.  This is not needed for Mac usage.
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	{
 		if (result = CreateXOPWindowClass()) {
 			SetXOPResult(result);
-			return;
+			return EXIT_FAILURE;
 		}
 	}
 #endif
 	
 	if (result = RegisterOperations()) {
 		SetXOPResult(result);
-		return;
+		return EXIT_FAILURE;
 	}
 	
 	SetXOPResult(0);
+	return EXIT_SUCCESS;
 }

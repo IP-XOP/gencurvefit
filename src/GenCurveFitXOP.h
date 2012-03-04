@@ -14,7 +14,7 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #include <time.h>
 #include <stdlib.h>
 
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 #define snprintf sprintf_s
 #endif
 
@@ -23,7 +23,7 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #define kfitfuncStructVersion 1000 
 
 // Custom error codes
-#define REQUIRES_IGOR_500 1 + FIRST_XOP_ERR
+#define REQUIRES_IGOR_600 1 + FIRST_XOP_ERR
 #define NON_EXISTENT_WAVE 2 + FIRST_XOP_ERR
 #define REQUIRES_SP_OR_DP_WAVE 3 + FIRST_XOP_ERR
 #define WAVES_NOT_SAME_LENGTH 4 + FIRST_XOP_ERR
@@ -126,7 +126,7 @@ struct GenCurveFitRuntimeParams {
 	
 	// Parameters for /MINF flag group.
 	int MINFFlagEncountered;
-	char MINFFlag_minfun[MAX_OBJ_NAME+1];
+	char MINFFlag_minfun[MAX_OBJ_NAME + 1];
 	int MINFFlagParamsSet[1];
 
 	// Parameters for /UPDT flag group.
@@ -255,6 +255,8 @@ struct GenCurveFitRuntimeParams {
 	// These are postamble fields that Igor sets.
 	int calledFromFunction;					// 1 if called from a user function, 0 otherwise.
 	int calledFromMacro;					// 1 if called from a macro, 0 otherwise.
+	UserFunctionThreadInfoPtr tp;	
+
 };
 typedef struct GenCurveFitRuntimeParams GenCurveFitRuntimeParams;
 typedef struct GenCurveFitRuntimeParams* GenCurveFitRuntimeParamsPtr;
@@ -271,7 +273,7 @@ struct GenCurveFitInternals{
 	//how many parameters are being varied
 	int numvarparams;
 	//total number of parameters
-	int totalnumparams;
+	CountInt totalnumparams;
 	//which parameters are varying;
 	unsigned int *varParams;
 	//how many dimensions you are trying to fit
@@ -310,7 +312,7 @@ struct GenCurveFitInternals{
 	//a full copy of the y data being fitted
 	double *dataObsFull;
 	//the number of dataPoints;
-	long dataPoints;
+	CountInt dataPoints;
 	//a temporary array the same length as the unmasked dataset;
 	double *dataTemp;
 	//a copy of the y data being fitted, without the masked points.
@@ -328,10 +330,10 @@ struct GenCurveFitInternals{
 	//an array specifying which y points are not included.
 	double *mask;
 	//if a range is specified for the ywave needs start and endpoints
-	long startPoint;
-	long endPoint;
+	CountInt startPoint;
+	CountInt endPoint;
 	//how many points are being fitted.
-	long unMaskedPoints;
+	CountInt unMaskedPoints;
 	//the ywave scaling, in case no x-wave is specified.
 	double ystart,ydelta;
 	//the function being fitted.
@@ -410,8 +412,8 @@ typedef struct GenCurveFitInternals* GenCurveFitInternalsPtr;
 struct waveStats {
 	double V_avg;
 	double V_stdev;
-	long V_maxloc;
-	long V_minloc;
+	CountInt V_maxloc;
+	CountInt V_minloc;
 };
 typedef struct waveStats waveStats;
 typedef struct waveStats* waveStatsPtr;
@@ -460,23 +462,23 @@ int lgencurvefit_fitfunction(void *userdata, const double *coefs, unsigned int n
 int ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p);
 int checkInput(GenCurveFitRuntimeParamsPtr, GenCurveFitInternalsPtr);
 int checkNanInf(waveHndl);
-int checkNanInfArray(double *array, long datapoints);
+int checkNanInfArray(double *array, CountInt datapoints);
 int checkZeros(waveHndl , long* );
 static void freeAllocMem(GenCurveFitInternalsPtr goiP);
 static int calcModelXY(FunctionInfo*, waveHndl , waveHndl , waveHndl[MAX_MDFIT_SIZE] , int ,int ,fitfuncStruct*);
-static int findmin(double* , int );
-static int findmax(double* , int );
+static CountInt findmin(double* , CountInt );
+static CountInt findmax(double* , CountInt );
 static int init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr, GenCurveFitInternalsPtr);
 int identicalWaves(waveHndl , waveHndl , int* );
 static int subtractTwoWaves(waveHndl, waveHndl   );
 static int scalarMultiply(waveHndl wav1, double scalar);
 static int isWaveDisplayed(waveHndl, int *);
-static int getRange (WaveRange ,long *,long *);
+static int getRange (WaveRange ,CountInt *,CountInt *);
 static double roundDouble(double);
-static waveStats getWaveStats(double*,long,int);
+static waveStats getWaveStats(double*,CountInt,int);
 int WindowMessage(void);
 int dumpRecordToWave(GenCurveFitInternalsPtr goiP,	MemoryStruct *dumpRecord);
 
 /* Prototypes */
-HOST_IMPORT void main(IORecHandle ioRecHandle);
+HOST_IMPORT int main(IORecHandle ioRecHandle);
 
