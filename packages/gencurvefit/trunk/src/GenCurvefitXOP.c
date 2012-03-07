@@ -1311,14 +1311,14 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 		if(goiP->useIgorUpdateFunction){
 			dimensionSizes[1] = 0;
 			dimensionSizes[0] = goiP->popsize * goiP->numvarparams;
-			if(err = MDMakeWave(&goiP->W_costmap, "TEMP_costmap", tempWavesDFH, dimensionSizes, NT_FP64, 1))
+			if(err = MDMakeWave(&gcf_W_costmap, "TEMP_costmap", tempWavesDFH, dimensionSizes, NT_FP64, 1))
 				goto done;
 			
 
 			dimensionSizes[2] = 0;
 			dimensionSizes[1] = goiP->popsize * goiP->numvarparams;
 			dimensionSizes[0] =  goiP->numvarparams;
-			if(err = MDMakeWave(&goiP->M_population, "TEMP_population", tempWavesDFH, dimensionSizes, NT_FP64, 1))
+			if(err = MDMakeWave(&gcf_M_population, "TEMP_population", tempWavesDFH, dimensionSizes, NT_FP64, 1))
 				goto done;
 			
 			if(igorVersion >= 620){
