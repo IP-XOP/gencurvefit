@@ -745,12 +745,12 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		
 		output = snprintf(note,
 						  199,
-						  "V_fitIters = %li; V_Chisq = %g; V_npnts= %li; V_nterms= %li; V_nheld= %li; V_logBayes = %g\r",
+						  "V_fitIters = %li; V_Chisq = %g; V_npnts= %lld; V_nterms= %lld; V_nheld= %lld; V_logBayes = %g\r",
 						  goi.V_numfititers,
 						  chi2,
-						  goi.unMaskedPoints,
-						  WavePoints(p->coefs),
-						  WavePoints(p->coefs) - goi.numvarparams,
+						  (SInt64) goi.unMaskedPoints,
+						  (SInt64) WavePoints(p->coefs),
+						  (SInt64) WavePoints(p->coefs) - goi.numvarparams,
 						  goi.V_logBayes);
 		
 		XOPNotice(note);
