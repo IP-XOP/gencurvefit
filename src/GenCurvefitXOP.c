@@ -298,6 +298,7 @@ int lgencurvefit_updatefunction(void *userdata,
 		goto done;
 	}
 
+	//We want a record of all the improvements in the fit
 	if(goiP->dump && (updatetime == 2 || updatetime == 1)){
 		WriteMemoryCallback((void*) coefs, sizeof(double), goiP->totalnumparams, &(goiP->dumpRecord));
 		if(goiP->dumpRecord.memory == NULL){
@@ -305,6 +306,7 @@ int lgencurvefit_updatefunction(void *userdata,
 		}
 	}
 	
+	//store the best fit coefficients in the original coef wave and update the output data.
 	if((updatetime == 1 && !goiP->noupdate) || updatetime == 16){
 		goiP->cost = cost;
 
@@ -329,6 +331,7 @@ int lgencurvefit_updatefunction(void *userdata,
 		DoUpdate();		
 	}
 	
+	//the user defined a user IGOR update function so call that.
 	if(!goiP->noupdate && goiP->useIgorUpdateFunction && population && costmap){
 		userUpdateFunc.currentbestfit = goiP->OUT_coefs;
 		userUpdateFunc.population = goiP->M_population;
