@@ -681,7 +681,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 					strncat(cmd, " vs ", MAXCMDLEN - strlen(cmd) - strlen(" vs "));
 					strncat(cmd, note_buffer2, MAXCMDLEN - strlen(cmd) - strlen(note_buffer2) );
 				}
-				if(err = XOPSilentCommand(&cmd[0]))
+				if(RunningInMainThread() && (err = XOPSilentCommand(&cmd[0])))
 					goto done;
 			}
 		}
@@ -911,6 +911,10 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 		if(p->NFlagParamsSet[0] && (int) p->NFlag_noupdate == 0)
 			goiP->noupdate = 0;
 	}
+	
+	//if you're not running in the main thread don't do updates
+	if(!RunningInMainThread())
+		goiP->noupdate = 1;
 
 	
 	/* get a full copy of the datawave */
@@ -1302,7 +1306,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 							strcat(cmd, &xwavename[0]);
 						}
 					}
-					if(err = XOPSilentCommand(&cmd[0]))
+					if(RunningInMainThread() && (err = XOPSilentCommand(&cmd[0])))
 						goto done;
 				}
 			}
@@ -1779,6 +1783,7 @@ identicalWaves(waveHndl wav1, waveHndl wav2, int* isSame){
  returns 0 if no error
  returns errorcode otherwise
  if(wav is displayed in top graph) then isDisplayed=1
+ if it's not displayed isDisplayed = 0
  */
 static int
 isWaveDisplayed(waveHndl wav, int *isDisplayed){
@@ -1788,6 +1793,10 @@ isWaveDisplayed(waveHndl wav, int *isDisplayed){
 	double re=-1,imag=-1;
 	int err=0;
 	*isDisplayed = 0;
+	
+	//we'll say that it's not displayed anyway if you're in a threaded environment
+	if(!RunningInMainThread())
+		return 0;
 	
 	if(wav == NULL)
 		return NON_EXISTENT_WAVE;

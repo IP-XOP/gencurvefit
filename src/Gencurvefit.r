@@ -126,7 +126,7 @@ resource 'XOPI' (1100) {
 resource 'XOPC' (1100) {
 	{
 		"GenCurveFit",								// Name of operation.
-		XOPOp+UtilOP+compilableOp,			// Operation's category.
+		XOPOp+UtilOP+compilableOp+threadSafeOp,			// Operation's category.
 	}
 };
 
