@@ -51,6 +51,11 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		//couldn't get function information
 		if(err = GetFunctionInfo(p->fitfun, &goiP->fi))
 			goto done;
+
+		if(!goiP->fi.isThreadSafe && !RunningInMainThread()){
+			err = ONLY_THREADSAFE;
+			goto done;
+		}
 		
 		goiP->functionname = p->fitfun;
 
@@ -675,6 +680,11 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		//couldn't get function information
 		if(err = GetFunctionInfo(p->UPDTFlag_igorUpdateFunc, &goiP->igorUpdateFunction))
 			goto done;
+		
+		if(!RunningInMainThread() && (!goiP->igorUpdateFunction.isThreadSafe)){
+			err = ONLY_THREADSAFE;
+			goto done;
+		}
 		
 		// function is not proper fitfunc
 		if(goiP->igorUpdateFunction.totalNumParameters != 4){
