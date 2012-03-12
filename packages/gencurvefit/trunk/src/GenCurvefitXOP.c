@@ -328,7 +328,8 @@ int lgencurvefit_updatefunction(void *userdata,
 				return err;
 			WaveHandleModified(goiP->OUT_res);
 		}
-		DoUpdate();		
+		if(RunningInMainThread())
+		   DoUpdate();		
 	}
 	
 	//the user defined a user IGOR update function so call that.
