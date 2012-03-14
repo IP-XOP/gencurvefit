@@ -117,7 +117,7 @@ END
 1100 XOPC							// Describes operations that the XOP adds to IGOR.
 BEGIN
 	"GenCurveFit\0",
-	utilOp | XOPOp | compilableOp,
+	utilOp | XOPOp | compilableOp | threadSafeOp,
 
 	"\0"							// NOTE: NULL required to terminate the resource.
 END
