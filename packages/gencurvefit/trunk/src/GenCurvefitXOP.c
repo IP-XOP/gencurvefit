@@ -495,7 +495,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	
 	//can't do this in a threadsafe manner if we're not running IGOR >6.2
 	if (igorVersion < 620 && !RunningInMainThread())
-		return IGOR_OBSOLETE;
+		return NOT_IN_THREADSAFE;
 	
 	strncpy(varname, "V_Fiterror", MAX_OBJ_NAME);
 	if(FetchNumVar(varname, &t1, &t2)!=-1){
