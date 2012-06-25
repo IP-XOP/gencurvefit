@@ -522,8 +522,13 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			err = INVALID_COST_FUNCTION;
 			goto done;
 		}
-			
-			//fit function always has to return a number, not complex or text, even if its all-at-once.
+	
+		if(!RunningInMainThread() && (!goiP->minf.isThreadSafe)){
+			err = ONLY_THREADSAFE;
+			goto done;
+		}			
+		
+		//fit function always has to return a number, not complex or text, even if its all-at-once.
 		if(goiP->minf.returnType != NT_FP64){
 			err = COSTFUNC_DOESNT_RETURN_NUMBER;
 			goto done;
