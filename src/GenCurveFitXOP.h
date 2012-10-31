@@ -301,7 +301,7 @@ struct GenCurveFitInternals{
 
 	//number of fititerations done
 	long V_numfititers;
-	//perform dynamic updates
+	//do you want to perform dynamic updates?
 	int noupdate;
 	
 	//logarithm of the Bayes Posterior probability
