@@ -328,8 +328,8 @@ int lgencurvefit_updatefunction(void *userdata,
 				return err;
 			WaveHandleModified(goiP->OUT_res);
 		}
-		if(RunningInMainThread())
-		   DoUpdate();		
+		if(RunningInMainThread() && !goiP->noupdate)
+		   DoUpdate();
 	}
 	
 	//the user defined a user IGOR update function so call that.
@@ -476,6 +476,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	CountInt dimensionSizes[MAX_DIMENSIONS + 1];
 	double t1,t2, chi2;
 	double *wP;
+    int updateStatus;
 	long lt1 = 0;
 	char note[200], note_buffer1[MAX_WAVE_NAME + 1], note_buffer2[MAX_WAVE_NAME + 1], cmd[MAXCMDLEN + 1];
 	int output, ii, jj, isDisplayed, quiet;
@@ -664,7 +665,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		}
 	}
 	//append the fit to the graph
-	if(!err || err == FIT_ABORTED){
+	if((!err || err == FIT_ABORTED) && RunningInMainThread()){
 		if(err = isWaveDisplayed(p->dataWave.waveH, &isDisplayed))
 			goto done;
 		
@@ -682,8 +683,12 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 					strncat(cmd, " vs ", MAXCMDLEN - strlen(cmd) - strlen(" vs "));
 					strncat(cmd, note_buffer2, MAXCMDLEN - strlen(cmd) - strlen(note_buffer2) );
 				}
-				if(RunningInMainThread() && (err = XOPSilentCommand(&cmd[0])))
-					goto done;
+                PauseUpdate(&updateStatus);
+				if(err = XOPSilentCommand(&cmd[0])){
+                    ResumeUpdate(&updateStatus);
+                    goto done;
+                }
+                ResumeUpdate(&updateStatus);
 			}
 		}
 	}
@@ -781,7 +786,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 done:
 	if(err)
 		err = convertlgencurvefitErrorToXOP(err);
-	
+    
 	freeAllocMem(&goi);
 	return err;
 }
@@ -893,6 +898,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	int toDisplay = 0;
 	int outPutType = NT_FP64;
 	double *dp;
+    int updateStatus;
 	CountInt temp;
 	double temp1;
 	DataFolderHandle tempWavesDFH;
@@ -1285,7 +1291,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 			return err;
 		}
 		
-		if(goiP->numVarMD == 1){
+		if(goiP->numVarMD == 1 && RunningInMainThread()){
 			if(err = isWaveDisplayed(p->dataWave.waveH, &toDisplay))
 				goto done;
 			if(toDisplay){
@@ -1307,8 +1313,12 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 							strcat(cmd, &xwavename[0]);
 						}
 					}
-					if(RunningInMainThread() && (err = XOPSilentCommand(&cmd[0])))
-						goto done;
+                    PauseUpdate(&updateStatus);
+					if(err = XOPSilentCommand(&cmd[0])){
+						ResumeUpdate(&updateStatus);
+                        goto done;
+                    }
+                    ResumeUpdate(&updateStatus);
 				}
 			}
 		}
@@ -1793,8 +1803,9 @@ isWaveDisplayed(waveHndl wav, int *isDisplayed){
 	char gwaveName[MAX_WAVE_NAME+1];
 	double re=-1,imag=-1;
 	int err=0;
+    int updateStatus = 0;
 	*isDisplayed = 0;
-	
+	   
 	//we'll say that it's not displayed anyway if you're in a threaded environment
 	if(!RunningInMainThread())
 		return 0;
@@ -1811,15 +1822,25 @@ isWaveDisplayed(waveHndl wav, int *isDisplayed){
 	WaveName(wav,gwaveName);
 	strcat(cmd,gwaveName);
 	strcat(cmd,"\",(tracenamelist(winname(0,1),\";\",1)))");
-	if(err = XOPSilentCommand(&cmd[0]))
-		return err;
+    
+    PauseUpdate(&updateStatus);
+	if(err = XOPSilentCommand(&cmd[0])){
+        ResumeUpdate(&updateStatus);
+        return err;
+    }
+    
 	if(FetchNumVar(varName, &re, &imag)==-1)
 		return EXPECTED_VARNAME;
 	if(re != -1) 
 		*isDisplayed = 1;
 	strcpy(cmd,"Killvariables/z TEMPGenCurveFit_GLOBALVAR");
-	if(err = XOPSilentCommand(&cmd[0]))
+
+	if(err = XOPSilentCommand(&cmd[0])){
+        ResumeUpdate(&updateStatus);
 		return err;
+    }
+    ResumeUpdate(&updateStatus);
+
 	return 0;
 }
 
