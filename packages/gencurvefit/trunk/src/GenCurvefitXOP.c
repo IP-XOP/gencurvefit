@@ -234,11 +234,16 @@ double lgencurvefit_costfunction(void *userdata, const double *coefs, unsigned i
 			dp = WaveData(goiP->yobs);
 			memcpy(dp, data, datapoints * sizeof(double));
 			
-			//copy the original data into the yobs wave created for the purpose
+			//copy the original data into the sobs wave created for the purpose
 			//some sneaky users probably try to change it.
 			dp = WaveData(goiP->sobs);
 			memcpy(dp, errors, datapoints * sizeof(double));
 
+			//copy the original data into the sobs wave created for the purpose
+			//some sneaky users probably try to change it.
+			dp = WaveData(goiP->dataCalc);
+			memcpy(dp, model, datapoints * sizeof(double));
+            
 			if(err = CallFunction(&goiP->minf, (void*) &userCostFunc, &val))
 				goto done;
 			
