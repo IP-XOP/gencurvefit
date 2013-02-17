@@ -469,7 +469,7 @@ static int calcModelXY(FunctionInfo*, waveHndl , waveHndl , waveHndl[MAX_MDFIT_S
 static CountInt findmin(double* , CountInt );
 static CountInt findmax(double* , CountInt );
 static int init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr, GenCurveFitInternalsPtr);
-int identicalWaves(waveHndl , waveHndl , int* );
+int identicalWaves(waveHndl , waveHndl);
 static int subtractTwoWaves(waveHndl, waveHndl   );
 static int scalarMultiply(waveHndl wav1, double scalar);
 static int isWaveDisplayed(waveHndl, int *);
