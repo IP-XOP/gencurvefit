@@ -28,7 +28,6 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	CountInt indices[MAX_DIMENSIONS + 1];
 	int  err =0;
 	int badParameterNumber;
-	int sameWave;
 	long numzeros = 0;
 	char *holdstr = NULL;
 	int requiredParameterTypes[MAX_MDFIT_SIZE + 2];
@@ -800,33 +799,27 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			goto done;
 		}
 		// the input waves and output wave shouldn't be the same
-		if(err = identicalWaves(p->DFlag_outputwave,p->coefs,&sameWave)) goto done;
-		if(sameWave == 1){
+		if(identicalWaves(p->DFlag_outputwave,p->coefs)){
 			err = OUTPUT_WAVE_OVERWRITING_INPUT;
 			goto done;
 		}
-		if(err = identicalWaves(p->DFlag_outputwave,p->dataWave.waveH,&sameWave))	goto done;
-		if(sameWave == 1){
+		if(identicalWaves(p->DFlag_outputwave,p->dataWave.waveH)){
 			err = OUTPUT_WAVE_OVERWRITING_INPUT;
 			goto done;
 		}
-		if(err = identicalWaves(p->DFlag_outputwave,p->XFlag_xx,&sameWave))	goto done;
-		if(sameWave == 1){
+		if(identicalWaves(p->DFlag_outputwave,p->XFlag_xx)){
 			err = OUTPUT_WAVE_OVERWRITING_INPUT;
 			goto done;
 		}
-		if(err = identicalWaves(p->DFlag_outputwave,p->limitswave,&sameWave))	goto done;
-		if(sameWave == 1){
+		if(identicalWaves(p->DFlag_outputwave,p->limitswave)){
 			err = OUTPUT_WAVE_OVERWRITING_INPUT;
 			goto done;
 		}
-		if(err = identicalWaves(p->DFlag_outputwave,p->MFlag_maskwave,&sameWave)) goto done;
-		if(sameWave == 1){
+		if(identicalWaves(p->DFlag_outputwave,p->MFlag_maskwave)){
 			err = OUTPUT_WAVE_OVERWRITING_INPUT;
 			goto done;
 		}
-		if(err = identicalWaves(p->DFlag_outputwave,p->WFlag_weighttype,&sameWave)) goto done;
-		if(sameWave == 1){
+		if(identicalWaves(p->DFlag_outputwave,p->WFlag_weighttype)){
 			err = OUTPUT_WAVE_OVERWRITING_INPUT;
 			goto done;
 		}

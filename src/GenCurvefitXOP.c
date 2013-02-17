@@ -1766,32 +1766,11 @@ int dumpRecordToWave(GenCurveFitInternalsPtr goiP,	MemoryStruct *dumpRecord){
  if(wav1 == wav2) then isSame=1 
  */
 int
-identicalWaves(waveHndl wav1, waveHndl wav2, int* isSame){
-	int err = 0;
-	char wav1Name[MAX_WAVE_NAME + 1];
-	char wav2Name[MAX_WAVE_NAME + 1];
-	DataFolderHandle df1H, df2H;
-	int df1,df2;
-	if(wav1 == NULL || wav2 == NULL){
-		return 0;
-	}
-	*isSame = 0;
-	WaveName(wav1,wav1Name);
-	WaveName(wav2,wav2Name);
-	
-	if(err = GetWavesDataFolder(wav1, &df1H))
-		return err;
-	if(err = GetWavesDataFolder(wav2, &df2H))
-		return err;
-	if(err= GetDataFolderIDNumber(df1H, &df1))
-		return err;
-	if(err= GetDataFolderIDNumber(df2H, &df2))
-		return err;
-	
-	if(CmpStr(wav1Name,wav2Name) == 0 && df1 == df2)
-		*isSame = 1;
-	
-	return err;
+identicalWaves(waveHndl wav1, waveHndl wav2){
+	if(wav1 == wav2)
+        return 1;
+    else
+        return 0;
 }
 
 /*
