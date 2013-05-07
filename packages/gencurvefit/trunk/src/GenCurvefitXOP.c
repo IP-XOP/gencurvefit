@@ -372,6 +372,7 @@ int getGCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr 
 								 &hessianDeterminant,
 								 goiP,
 								 lgencurvefit_fitfunction,
+                                 lgencurvefit_costfunction,
 								 goiP->cost,
 								 goiP->coefs,
 								 (int) goiP->totalnumparams,
@@ -578,20 +579,20 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	}
 	WaveHandleModified(goi.W_sigma);
 		
-	if(p->MATFlagEncountered && !(p->MATFlagParamsSet[0] && (int) p->MATFlag_mat == 0)){
-		//make the covariance matrix
-		dimensionSizes[0] = goi.totalnumparams;
-		dimensionSizes[1] = goi.totalnumparams;
-		dimensionSizes[2] = 0;
-		if(err = MDMakeWave(&goi.M_covariance, "M_Covar", goi.cDF, dimensionSizes, NT_FP64, 1))
-				goto done;
-			
-		wP = WaveData(goi.M_covariance);
-			
-		memset(wP, 0, sizeof(double) * goi.totalnumparams * goi.totalnumparams);
-			
-		WaveHandleModified(goi.M_covariance);
-	}
+//	if(p->MATFlagEncountered && !(p->MATFlagParamsSet[0] && (int) p->MATFlag_mat == 0)){
+    //make the covariance matrix
+    dimensionSizes[0] = goi.totalnumparams;
+    dimensionSizes[1] = goi.totalnumparams;
+    dimensionSizes[2] = 0;
+    if(err = MDMakeWave(&goi.M_covariance, "M_Covar", goi.cDF, dimensionSizes, NT_FP64, 1))
+            goto done;
+        
+    wP = WaveData(goi.M_covariance);
+        
+    memset(wP, 0, sizeof(double) * goi.totalnumparams * goi.totalnumparams);
+        
+    WaveHandleModified(goi.M_covariance);
+//	}
 	
 	/*
 	 optimiseloop does the Differential Evolution, according to Storn and Price.  When this returns 0, then 
@@ -659,15 +660,15 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		}
 		WaveHandleModified(goi.W_sigma);
 		
-		if(p->MATFlagEncountered && !(p->MATFlagParamsSet[0] && (int) p->MATFlag_mat == 0)){
-			//make the covariance matrix
-			dimensionSizes[0] = goi.totalnumparams;
-			dimensionSizes[1] = goi.totalnumparams;
-			dimensionSizes[2] = 0;
-			wP = WaveData(goi.M_covariance);			
-			memcpy(wP, *goi.covarianceMatrix, sizeof(double) * goi.totalnumparams * goi.totalnumparams);
-			WaveHandleModified(goi.M_covariance);
-		}
+//		if(p->MATFlagEncountered && !(p->MATFlagParamsSet[0] && (int) p->MATFlag_mat == 0)){
+        //make the covariance matrix
+        dimensionSizes[0] = goi.totalnumparams;
+        dimensionSizes[1] = goi.totalnumparams;
+        dimensionSizes[2] = 0;
+        wP = WaveData(goi.M_covariance);			
+        memcpy(wP, *goi.covarianceMatrix, sizeof(double) * goi.totalnumparams * goi.totalnumparams);
+        WaveHandleModified(goi.M_covariance);
+//		}
 	}
 	//append the fit to the graph
 	if((!err || err == FIT_ABORTED) && RunningInMainThread()){
