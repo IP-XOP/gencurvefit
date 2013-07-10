@@ -1739,7 +1739,7 @@ Function GEN_setlimitsforGENcurvefit(coefs, holdstring [, limits, paramdescripti
 		make/o/n=(0, 2) limitsForThoseBeingVaried = 0 
 	endif
 	
-	if(paramisdefault(limits))
+	if(paramisdefault(limits) || !waveexists(limits))
 		Wave/z limits = root:packages:motofit:old_genoptimise:GENcurvefitlimits
 		if(!waveexists(limits) || dimsize(limits, 0) != dimsize(coefs, 0))
 			make/o/n=(dimsize(coefs, 0), 2)/d root:packages:motofit:old_genoptimise:GENcurvefitlimits = 0
@@ -1762,8 +1762,8 @@ Function GEN_setlimitsforGENcurvefit(coefs, holdstring [, limits, paramdescripti
 		endif	
 	else
 		redimension/n=(numbeingvaried,-1) limitsForThoseBeingVaried
-		limitsforthosebeingvaried[][0] = limits[thosebeingvaried[p]]
-		limitsforthosebeingvaried[][1] = limits[thosebeingvaried[p]] 
+		limitsforthosebeingvaried[][0] = limits[thosebeingvaried[p]][0]
+		limitsforthosebeingvaried[][1] = limits[thosebeingvaried[p]] [1]
 	endif
 
 	limitsdialog_listwave[][2+ paramdescriptionoffset] = num2str(limitsforthosebeingvaried[p][0])
@@ -1799,14 +1799,14 @@ Function GEN_setlimitsforGENcurvefit(coefs, holdstring [, limits, paramdescripti
 		NVAR GCF_continue = root:packages:motofit:old_genoptimise:GCF_continue
 		if(!GCF_continue)
 			setdatafolder $cDF
-			abort
+			return 1
 		endif
 		limitsforthosebeingvaried[][0] = str2num(limitsdialog_listwave[p][2+ paramdescriptionoffset])
 		limitsforthosebeingvaried[][1] = str2num(limitsdialog_listwave[p][3+ paramdescriptionoffset])
 	
 		for(ii=0 ; ii < numbeingvaried ; ii+=1)
 			limits[thosebeingvaried[ii]][0] = limitsforthosebeingvaried[ii][0] 
-			limits[thosebeingvaried[ii]][1] = limitsforthosebeingvaried[ii][1] 
+			limits[thosebeingvaried[ii]][1] = limitsforthosebeingvaried[ii][1]
 			if(limits[thosebeingvaried[ii]][0] <= limits[thosebeingvaried[ii]][1])
 				thoseOK+=1
 			endif
@@ -1814,9 +1814,11 @@ Function GEN_setlimitsforGENcurvefit(coefs, holdstring [, limits, paramdescripti
 		if(thoseOK != numbeingvaried)
 			Doalert 0, "Lower limit needs to be less than upper limit"
 		endif
+		
 	while (thoseOK != numbeingvaried)
-	
+	duplicate/o limits, GENcurvefitlimits
 	setdatafolder $cDF
+	return 0
 End
 
 Function GCF_dialog_hook(s)
@@ -1903,9 +1905,9 @@ ThreadSafe Function motoMCWorkerFunc1()
 			DFRef tdf  =ThreadGroupGetDFR(0,1000)	
 			if(!Datafolderrefstatus(tdf))
 				if( GetRTError(2) )	// New in 6.2 to allow this distinction:
-					Print "worker closing down due to group release"
+//					Print "worker closing down due to group release"
 				else
-					Print "worker thread still waiting for input queue"
+//					Print "worker thread still waiting for input queue"
 				endif
 			else
 				break
@@ -2009,27 +2011,32 @@ End
 
 
 
-Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, outf, fakeweight])
+Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[limits, cursA, cursB, outf, fakeweight, verbose, otherDataDF])
 	String fn
 	Wave w, yy, xx, ee
 	string holdstring
+	Wave limits
 	variable Iters, cursA, cursB
 	string outf
 	variable fakeweight //fake weight means that you know the weights, but aren't prepared to weight the data as well.
-
+	variable verbose
+	string otherDataDF	//folder containing information relevant to the fit. This cannot be the current datafolder, or the ancestor of the current datafolder
+	
 	string cDF = getdatafolder(1)
-	string allwaves, alltilewaves = "", funcinfo=""
+	string allwaves="", alltilewaves = "", funcinfo=""
 	variable ii,jj,kk, summ, err = 0, fileID, nthreads= ThreadProcessorCount
 	variable timed = datetime
-
+	
 	newdatafolder/o root:packages
 	newdatafolder/o root:packages:motofit
 	newdatafolder/o root:packages:motofit:old_genoptimise
 	newdatafolder/o root:packages:WMScatterPlotMatrixPackage
 	try
 		//get limits wave, also sets default parameters.
-		GEN_setlimitsforGENcurvefit(w,holdstring)
-		Wave limits = root:packages:motofit:old_genoptimise:GENcurvefitlimits
+		if(paramisdefault(limits))
+			GEN_setlimitsforGENcurvefit(w,holdstring)
+			Wave limits = root:packages:motofit:old_genoptimise:GENcurvefitlimits	
+		endif
 
 		NVAR  iterations = root:packages:motofit:old_genoptimise:iterations
 		NVAR  popsize = root:packages:motofit:old_genoptimise:popsize
@@ -2048,16 +2055,26 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, out
 			cursB = dimsize(yy, 0)-1
 		endif
 		
+		if(paramisdefault(verbose))
+			verbose = 1
+		endif
+	
 		make/n=(iters, dimsize(w, 0))/o/d M_Montecarlo = NaN
-		allwaves = make2DScatter_plot_matrix(M_monteCarlo, holdstring)
-		for(ii = 0 ; ii < itemsinlist(allwaves) ; ii+=1)
-			alltilewaves += stringfromlist(ii, allwaves) + "_HIST;"
-		endfor
-		maketileplot(alltilewaves)
-		
+		if(verbose)
+			allwaves = make2DScatter_plot_matrix(M_monteCarlo, holdstring)
+			for(ii = 0 ; ii < itemsinlist(allwaves) ; ii+=1)
+				alltilewaves += stringfromlist(ii, allwaves) + "_HIST;"
+			endfor
+			maketileplot(alltilewaves)
+		endif
+			
 		//see if the fitfunction is threadsafe
 		funcinfo = functioninfo(fn)
 		if(stringmatch(stringbykey("THREADSAFE", funcinfo), "NO") == 1)
+			if(!paramisdefault(otherDataDF))
+				Setdatafolder $otherDataDF
+			endif
+			
 			duplicate/free w, output
 			duplicate/free yy, yytemp, tempcorefinement
 			
@@ -2070,7 +2087,10 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, out
 				endif	
 				print "done", ii, "of", iters
 	 			M_Montecarlo[ii][] = output[q]
-				allwaves = make2DScatter_plot_matrix(M_monteCarlo, holdstring)
+	 			
+	 			if(verbose)
+					allwaves = make2DScatter_plot_matrix(M_monteCarlo, holdstring)
+				endif
 				doupdate
 			endfor
 		
@@ -2081,7 +2101,12 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, out
 			endfor
 			
 			for(ii = 0 ; ii < iters ; ii += 1)
-				NewDataFolder/S $(cdf + "forThread")
+				if(paramisdefault(otherDataDF))
+					NewDataFolder/S $(cdf + "forThread")
+				else
+					DuplicateDataFolder $(otherDataDF), $(cdf+"forThread")
+					setdatafolder $(cdf+"forThread")
+				endif
 				duplicate w, wtemp
 				duplicate yy, yytemp
 				duplicate xx, xxtemp
@@ -2111,7 +2136,9 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, out
 					endif
 				while(1)
 				Wave/sdfr=dfr W_output
-				print "Completed", ii, "iterations, time taken is:", datetime - timed, "."			
+				if(verbose)
+					print "Completed", ii, "iterations, time taken is:", datetime - timed, "."
+				endif
 				M_Montecarlo[ii][] = W_output[q]
 				
 				// The next two statements are not really needed as the same action
@@ -2119,10 +2146,10 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, out
 				// when this function returns.
 				WAVEClear W_output
 				KillDataFolder dfr
-				
-				//update the montecarlo scatterplot
-				allwaves = make2DScatter_plot_matrix(M_monteCarlo, holdstring)
-	
+				if(verbose)
+					//update the montecarlo scatterplot
+					allwaves = make2DScatter_plot_matrix(M_monteCarlo, holdstring)
+				endif
 				Doupdate
 			endfor
 		endif
@@ -2141,6 +2168,7 @@ Function Moto_montecarlo(fn, w, yy, xx, ee, holdstring, Iters,[cursA, cursB, out
 			Wavestats/M=2/q/w goes
 			Wave M_wavestats
 			W_sigma[ii] =  M_wavestats[4]
+			w[ii] = M_wavestats[3]
 			means[ii] = M_wavestats[3]
 			stdevs[ii] = M_wavestats[4]
 			if(stringmatch(holdstring[ii], "1"))
