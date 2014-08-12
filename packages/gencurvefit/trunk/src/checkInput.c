@@ -17,7 +17,6 @@
 #include "GenCurveFitXOP.h"
 #include "gencurvefit.h"
 
-
 /*
  this function checks the input from all the parameters IGOR gives it.
  returns 0 if error
@@ -477,14 +476,6 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	goiP->iterations = (long) p->KFlag_iterations;
 	goiP->popsize = (long) p->KFlag_popsize;
 	
-	/*
-	 Did you want Monte Carlo tempering?
-	 */
-	
-	if(p->TEMPFlagEncountered && p->TEMPFlag_opt > 0)
-		goiP->temperature = p->TEMPFlag_opt;
-	else
-		goiP->temperature = -1;
 
 	/*
 	 the cost function for minimisation is now specified.  
@@ -713,7 +704,6 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		goiP->useIgorUpdateFunction = 1;
 	}
 	
-	
 	/*
 	 Checkout the limits wave
 	 */
@@ -760,25 +750,6 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		if(err = MDGetDPDataFromNumericWave(p->limitswave, *(goiP->limits)))
 		   goto done;
 		   
-		for(ii = 0L; ii < goiP->totalnumparams ; ii++){
-			if(goiP->holdvector[ii] == 0){
-				/*
-				 lowerlim must be < upperlim and param must be in between.
-				 */
-				if(p->OPTFlagEncountered && (((long)p->OPTFlag_opt) & (long)pow(2, 0))){
-
-					if(goiP->limits[0][ii] > goiP->limits[1][ii] || goiP->limits[0][ii] > goiP->coefs[ii] || goiP->coefs[ii] > goiP->limits[1][ii]){
-						err = LIMITS_INVALID;
-						goto done;
-					}
-				} else {//it doesn't need to be inbetween because we generate our own values
-					if(goiP->limits[1][ii] < goiP->limits[0][ii]){
-						err = LIMITS_INVALID;
-						goto done;
-					}
-				}
-			}
-		}
 	} else {
 		/*
 		 if you don't have a limits wave you can't do anything
@@ -829,7 +800,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		goiP->dump = 1;
 	
 done:
-	if(holdstr != NULL)
+	if(holdstr)
 		free(holdstr);
 
 	return err;
