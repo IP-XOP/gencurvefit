@@ -119,10 +119,12 @@ struct GenCurveFitRuntimeParams {
 	int STGYFlagEncountered;
 	double STGYFlag_opt;
 	int STGYFlagParamsSet[1];
-	
-	int TEMPFlagEncountered;
-	double TEMPFlag_opt;
-	int TEMPFlagParamsSet[1];
+    
+    // Parameters for /DITH flag group.
+	int DITHFlagEncountered;
+	double DITHFlag_dith1;
+	double DITHFlag_dith2;
+	int DITHFlagParamsSet[2];
 	
 	// Parameters for /MINF flag group.
 	int MINFFlagEncountered;
@@ -287,7 +289,6 @@ struct GenCurveFitInternals{
 	double tolerance;
 	long popsize;
 	long iterations;
-	double temperature;
 	
 	//lowest cost
 	double cost;

@@ -543,7 +543,14 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	if(p->OPTFlagEncountered && (((long)p->OPTFlag_opt) & (long)pow(2, 0)))
 		gco.useinitialguesses = 1;
 	
-	
+	if(p->DITHFlagEncountered && p->DITHFlagParamsSet[0] && p->DITHFlagParamsSet[1]){
+        gco.dither[0] = p->DITHFlag_dith1;
+        gco.dither[1] = p->DITHFlag_dith2;
+    } else {
+        gco.dither[0] = -1.;
+        gco.dither[1] = -1.;
+    }
+    
 	gco.updatefun = (updatefunction) &lgencurvefit_updatefunction;
 	gco.k_m = goi.k_m;
 	gco.recomb = goi.recomb;
@@ -551,7 +558,6 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	gco.tolerance = goi.tolerance;
 	gco.popsizeMultiplier = goi.popsize;
 	gco.iterations = goi.iterations;
-	gco.temp = goi.temperature;
 	gco.updatefrequency = 31;
 	
 	/*
