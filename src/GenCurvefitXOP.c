@@ -544,8 +544,8 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		gco.useinitialguesses = 1;
 	
 	if(p->DITHFlagEncountered && p->DITHFlagParamsSet[0] && p->DITHFlagParamsSet[1]){
-        gco.dither[0] = p->DITHFlag_dith1;
-        gco.dither[1] = p->DITHFlag_dith2;
+        gco.dither[0] = p->dith1;
+        gco.dither[1] = p->dith2;
     } else {
         gco.dither[0] = -1.;
         gco.dither[1] = -1.;

@@ -125,7 +125,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	}
 	
 	if(p->STGYFlagEncountered){
-		goiP->STGY = (int) p->STGYFlag_opt;
+		goiP->STGY = (int) p->stgy;
 		if(goiP->STGY < 0 || goiP->STGY > 8)
 			goiP->STGY = 0;
 	}
@@ -504,7 +504,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	 */
 	if (p->MINFFlagEncountered) {
 		//couldn't get function information
-		if(err = GetFunctionInfo(p->MINFFlag_minfun, &goiP->minf))
+		if(err = GetFunctionInfo(p->minfun, &goiP->minf))
 			goto done;
 			
 			// function is not proper costfunc
@@ -548,15 +548,15 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		goiP->holdvector[ii] = 1;
 	
 	//user can specify a holdwave (leads to smaller command lines)
-	if(p->HOLDFlagEncountered && p->HOLDFlag_holdwav != NULL){
+	if(p->HOLDFlagEncountered && p->holdwav != NULL){
 		memset(indices, 0, MAX_DIMENSIONS + 1);
-		if(WavePoints(p->HOLDFlag_holdwav) != goiP->totalnumparams){
+		if(WavePoints(p->holdwav) != goiP->totalnumparams){
 			err = HOLDSTRING_NOT_RIGHT_SIZE;
 			goto done;
 		}
 		for(ii = 0 ; ii < goiP->totalnumparams ; ii++){
 			indices[0] = ii;
-			if(err = MDGetNumericWavePointValue(p->HOLDFlag_holdwav, indices, value))
+			if(err = MDGetNumericWavePointValue(p->holdwav, indices, value))
 				goto done;
 			if(value[0] == 0 || IsNaN64(value) || IsINF64(value)){
 				goiP->holdvector[ii] = 0;
