@@ -105,32 +105,36 @@ typedef struct fitfuncStruct* fitfuncStructPtr;
 
 struct GenCurveFitRuntimeParams {
 	// Flag parameters.
-
-	// Parameters for /MC flag group.
+    
+    // Parameters for /MC flag group.
 	int MCFlagEncountered;
-	
+	// There are no fields for this group because it has no parameters.
+    
 	// Parameters for /HOLD flag group.
 	int HOLDFlagEncountered;
-	waveHndl HOLDFlag_holdwav;
+	waveHndl holdwav;
 	int HOLDFlagParamsSet[1];
-	
+    
+	// Parameters for /POL flag group.
 	int POLFlagEncountered;
-	
+	// There are no fields for this group because it has no parameters.
+    
+	// Parameters for /STGY flag group.
 	int STGYFlagEncountered;
-	double STGYFlag_opt;
+	double stgy;
 	int STGYFlagParamsSet[1];
     
-    // Parameters for /DITH flag group.
-	int DITHFlagEncountered;
-	double DITHFlag_dith1;
-	double DITHFlag_dith2;
-	int DITHFlagParamsSet[2];
-	
 	// Parameters for /MINF flag group.
 	int MINFFlagEncountered;
-	char MINFFlag_minfun[MAX_OBJ_NAME + 1];
+	char minfun[MAX_OBJ_NAME + 1];
 	int MINFFlagParamsSet[1];
-
+    
+	// Parameters for /DITH flag group.
+	int DITHFlagEncountered;
+	double dith1;
+	double dith2;
+	int DITHFlagParamsSet[2];
+    
 	// Parameters for /UPDT flag group.
 	int UPDTFlagEncountered;
 	char UPDTFlag_igorUpdateFunc[MAX_OBJ_NAME + 1];
