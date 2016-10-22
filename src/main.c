@@ -10,7 +10,6 @@
  */
 #include "XOPStandardHeaders.h"
 #include "GenCurveFitXOP.h"
-#include "updateXOP.h"
 
 static int
 RegisterGenCurveFit(void){
@@ -48,10 +47,7 @@ static void
 XOPEntry(void)
 {	
 	XOPIORecResult result = 0;
-	
-	if (WindowMessage())							// Handle all messages related to XOP window.
-		return;
-	
+		
 	switch (GetXOPMessage()) {
 		// We don't need to handle any messages for this XOP.
 	}
@@ -73,16 +69,6 @@ main(IORecHandle ioRecHandle){
 	XOPInit(ioRecHandle);							// Do standard XOP initialization.
 	
 	SetXOPEntry(XOPEntry);							// Set entry point for future calls.
-	
-	//CreateXOP Window Class for the update window.  This is not needed for Mac usage.
-#ifdef WINIGOR
-	{
-		if (result = CreateXOPWindowClass()) {
-			SetXOPResult(result);
-			return EXIT_FAILURE;
-		}
-	}
-#endif
 	
 	if (result = RegisterOperations()) {
 		SetXOPResult(result);

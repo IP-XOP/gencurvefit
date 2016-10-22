@@ -29,11 +29,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "updateXOP.h"
-
-
-//gTheWindow is a window created to show the latest position of the fit
-XOP_WINDOW_REF gTheWindow = NULL;
 
 /*
  a variable which sees if the fit is to be aborted.
@@ -294,8 +289,6 @@ int lgencurvefit_updatefunction(void *userdata,
 	/*
 	 Display the coefficients so far.
 	 */
-	if(!goiP->noupdate && (updatetime == 1 || updatetime == 8))
-		DisplayWindowXOP1Message(gTheWindow, numcoefs, coefs, cost, goiP->fi.name, iterations, updatetime, convergenceNumber);
 
 	// perhaps the user wants to abort the fit using gui panel?
 	if(Abort_the_fit){
@@ -373,7 +366,6 @@ int getGCovarianceMatrix(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr 
 								 goiP,
 								 lgencurvefit_fitfunction,
                                  lgencurvefit_costfunction,
-								 goiP->cost,
 								 goiP->coefs,
 								 (int) goiP->totalnumparams,
 								 goiP->holdvector,
@@ -1026,19 +1018,15 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	if(err = MDMakeWave(&gcf_sobs, "GenCurveFit_sobs", tempWavesDFH, dimensionSizes,NT_FP64, 1))
 		goto done;
 	
-	if(igorVersion >= 620){
-		if(err = HoldWave(gcf_dataCalc, &goiP->dataCalc))
-			goto done;
-		if(err = HoldWave(gcf_yobs, &goiP->yobs))
-			goto done;
-		if(err = HoldWave(gcf_sobs, &goiP->sobs))
-			goto done;
-	} else {
-		goiP->dataCalc= gcf_dataCalc;
-		goiP->yobs = gcf_yobs;
-		goiP->sobs = gcf_sobs;
-	}
-
+	if(err = HoldWave(gcf_dataCalc))
+		goto done;
+	if(err = HoldWave(gcf_yobs))
+		goto done;
+	if(err = HoldWave(gcf_sobs))
+		goto done;
+	goiP->dataCalc= gcf_dataCalc;
+	goiP->yobs = gcf_yobs;
+	goiP->sobs = gcf_sobs;
 	
 	if(goiP->isAAO){
 		for(ii=0 ; ii<goiP->numVarMD ; ii+=1){
@@ -1047,11 +1035,9 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 			strcat(&xwavename[0],&letter[0]);
 			if(err = MDMakeWave(&gcf_xcalc[ii], xwavename, tempWavesDFH, dimensionSizes,NT_FP64, 1))
 				goto done;
-			if(igorVersion >= 620)
-				if(err = HoldWave(gcf_xcalc[ii], &goiP->xcalc[ii]))
-					goto done;
-			else
-				goiP->xcalc[ii] = gcf_xcalc[ii];
+			if(err = HoldWave(gcf_xcalc[ii]))
+				goto done;
+			goiP->xcalc[ii] = gcf_xcalc[ii];
 		}
 	}
 	
@@ -1066,11 +1052,9 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 		strcat(&xwavename[0], &letter[0]);
 		if(err = MDMakeWave(&gcf_fullExtentOfData[ii], xwavename, tempWavesDFH, dimensionSizes, NT_FP64, 1))
 			goto done;
-		if(igorVersion >= 620)
-			if(err = HoldWave(gcf_fullExtentOfData[ii], &goiP->fullExtentOfData[ii]))
-				goto done;
-			else
-				goiP->fullExtentOfData[ii] = gcf_fullExtentOfData[ii];
+		if(err = HoldWave(gcf_fullExtentOfData[ii]))
+			goto done;
+		goiP->fullExtentOfData[ii] = gcf_fullExtentOfData[ii];
 	}
 	
 	
@@ -1081,11 +1065,9 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	if(err = MDMakeWave(&gcf_GenCurveFitCoefs, "GenCurveFit_coefs", tempWavesDFH, dimensionSizes, NT_FP64, 1))
 		goto done;
 	goiP->OUT_coefs = p->coefs;
-	if(igorVersion >= 620)
-		if(err = HoldWave(gcf_GenCurveFitCoefs, &goiP->GenCurveFitCoefs))
-			goto done;
-		else
-			goiP->GenCurveFitCoefs = gcf_GenCurveFitCoefs;
+	if(err = HoldWave(gcf_GenCurveFitCoefs))
+		goto done;
+	goiP->GenCurveFitCoefs = gcf_GenCurveFitCoefs;
 	
 	/*
 	 initialise space for an array containing the unmasked fitpoint ydata 
@@ -1256,11 +1238,9 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 				goto done;
 			if(err = MDMakeWave(&gcf_tempWaveHndl_OUTx, xwavename, tempWavesDFH, dimensionSizes, NT_FP64, 1))
 				goto done;
-			if(igorVersion >= 620)
-				if(err = HoldWave(gcf_tempWaveHndl_OUTx, &goiP->tempWaveHndl_OUTx))
+			if(err = HoldWave(gcf_tempWaveHndl_OUTx))
 					goto done;
-			else
-				goiP->tempWaveHndl_OUTx = gcf_tempWaveHndl_OUTx;
+			goiP->tempWaveHndl_OUTx = gcf_tempWaveHndl_OUTx;
 			
 			goiP->OUT_x[0] = goiP->tempWaveHndl_OUTx;
 			
@@ -1296,13 +1276,6 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	
 	//if you are doing updates, then append fit output to the topgraph (if data is shown there)
 	if(!goiP->noupdate){
-		//window for displaying output
-		gTheWindow = CreateXOPWindow();
-		if(gTheWindow == NULL){
-			err = UNSPECIFIED_ERROR;
-			return err;
-		}
-		
 		if(goiP->numVarMD == 1 && RunningInMainThread()){
 			if(err = isWaveDisplayed(p->dataWave.waveH, &toDisplay))
 				goto done;
@@ -1348,15 +1321,12 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 			if(err = MDMakeWave(&gcf_M_population, "TEMP_population", tempWavesDFH, dimensionSizes, NT_FP64, 1))
 				goto done;
 			
-			if(igorVersion >= 620){
-				if(err = HoldWave(gcf_W_costmap, &goiP->W_costmap))
-					goto done;
-				if(err = HoldWave(gcf_M_population, &goiP->M_population))
-					goto done;
-			} else {
-				goiP->W_costmap = gcf_W_costmap;
-				goiP->M_population = gcf_M_population;
-			}
+			if(err = HoldWave(gcf_W_costmap))
+				goto done;
+			if(err = HoldWave(gcf_M_population))
+				goto done;
+			goiP->W_costmap = gcf_W_costmap;
+			goiP->M_population = gcf_M_population;
 			
 		}
 	}
@@ -1374,88 +1344,84 @@ done:
  freeAllocMem frees all the temporary arrays in the GenCurveFitInternals structure
  */
 static void
-freeAllocMem(GenCurveFitInternalsPtr goiP){
-	int err=0,ii=0;
-	
+freeAllocMem(GenCurveFitInternalsPtr goiP) {
+	int err = 0, ii = 0;
+
 	waveHndl exists = NULL;
-	if(goiP->varParams)
+	if (goiP->varParams)
 		free(goiP->varParams);
-	if(goiP->dataTemp)
+	if (goiP->dataTemp)
 		free(goiP->dataTemp);
-	if(goiP->holdvector)
+	if (goiP->holdvector)
 		free(goiP->holdvector);
-	if(goiP->coefs)
+	if (goiP->coefs)
 		free(goiP->coefs);
-	if(goiP->limits != NULL)
+	if (goiP->limits != NULL)
 		free(goiP->limits);
-	if(goiP->mask!=NULL)
+	if (goiP->mask != NULL)
 		free(goiP->mask);
-	if(goiP->independentVariable!=NULL)
+	if (goiP->independentVariable != NULL)
 		free(goiP->independentVariable);
-	if(goiP->allIndependentVariable!=NULL)
+	if (goiP->allIndependentVariable != NULL)
 		free(goiP->allIndependentVariable);
-	if(goiP->dataObs!=NULL)
+	if (goiP->dataObs != NULL)
 		free(goiP->dataObs);
-	if(goiP->dataObsFull)
+	if (goiP->dataObsFull)
 		free(goiP->dataObsFull);
-	if(goiP->dataSig!=NULL)
+	if (goiP->dataSig != NULL)
 		free(goiP->dataSig);
-	if(goiP->covarianceMatrix != NULL)
+	if (goiP->covarianceMatrix != NULL)
 		free(goiP->covarianceMatrix);
-	if(goiP->dumpRecord.memory)
+	if (goiP->dumpRecord.memory)
 		free(goiP->dumpRecord.memory);
-	
-	if(igorVersion < 620){
-		exists = FetchWaveFromDataFolder(goiP->cDF,"GenCurveFit_coefs");
-		if(exists != NULL)
-			err= KillWave(exists);	
-		exists = FetchWaveFromDataFolder(goiP->cDF,"GenCurveFit_dataCalc");
-		if(exists != NULL)
+
+	if (igorVersion < 620) {
+		exists = FetchWaveFromDataFolder(goiP->cDF, "GenCurveFit_coefs");
+		if (exists != NULL)
+			err = KillWave(exists);
+		exists = FetchWaveFromDataFolder(goiP->cDF, "GenCurveFit_dataCalc");
+		if (exists != NULL)
 			err = KillWave(goiP->dataCalc);
-		exists = FetchWaveFromDataFolder(goiP->cDF,"GenCurveFit_yobs");
-		if(exists != NULL)
+		exists = FetchWaveFromDataFolder(goiP->cDF, "GenCurveFit_yobs");
+		if (exists != NULL)
 			err = KillWave(goiP->yobs);
-		exists = FetchWaveFromDataFolder(goiP->cDF,"GenCurveFit_sobs");
-		if(exists != NULL)
+		exists = FetchWaveFromDataFolder(goiP->cDF, "GenCurveFit_sobs");
+		if (exists != NULL)
 			err = KillWave(goiP->sobs);
 
-		exists = FetchWaveFromDataFolder(goiP->cDF,"TEMP_population");
-		if(exists != NULL)
+		exists = FetchWaveFromDataFolder(goiP->cDF, "TEMP_population");
+		if (exists != NULL)
 			err = KillWave(goiP->M_population);
-		exists = FetchWaveFromDataFolder(goiP->cDF,"TEMP_costmap");
-		if(exists != NULL)
+		exists = FetchWaveFromDataFolder(goiP->cDF, "TEMP_costmap");
+		if (exists != NULL)
 			err = KillWave(goiP->W_costmap);
-		
-		for(ii = 0 ; ii < goiP->numVarMD ; ii += 1){
-			if(goiP->xcalc[ii] != NULL)
+
+		for (ii = 0; ii < goiP->numVarMD; ii += 1) {
+			if (goiP->xcalc[ii] != NULL)
 				err = KillWave(goiP->xcalc[ii]);
 		}
-		if(goiP->tempWaveHndl_OUTx != NULL)
+		if (goiP->tempWaveHndl_OUTx != NULL)
 			err = KillWave(goiP->tempWaveHndl_OUTx);
-		
-		for(ii=0 ; ii<goiP->numVarMD ; ii+=1){
-			if(goiP->fullExtentOfData[ii] != NULL)
+
+		for (ii = 0; ii < goiP->numVarMD; ii += 1) {
+			if (goiP->fullExtentOfData[ii] != NULL)
 				err = KillWave(goiP->fullExtentOfData[ii]);
 		}
-	} else {
+	}
+	else {
 		err = ReleaseWave(&goiP->GenCurveFitCoefs);
 		err = ReleaseWave(&goiP->dataCalc);
 		err = ReleaseWave(&goiP->yobs);
 		err = ReleaseWave(&goiP->sobs);
 		err = ReleaseWave(&goiP->M_population);
 		err = ReleaseWave(&goiP->W_costmap);
-		for(ii = 0 ; ii < goiP->numVarMD ; ii += 1)
+		for (ii = 0; ii < goiP->numVarMD; ii += 1)
 			err = ReleaseWave(&goiP->xcalc[ii]);
 		err = ReleaseWave(&goiP->tempWaveHndl_OUTx);
-		for(ii = 0 ; ii < goiP->numVarMD ; ii += 1)
+		for (ii = 0; ii < goiP->numVarMD; ii += 1)
 			err = ReleaseWave(&goiP->fullExtentOfData[ii]);
 	}
-	
-	//gTheWindow is a window created to show the latest position of the fit
-	if (gTheWindow != NULL) {
-		DestroyXOPWindow(gTheWindow);
-		gTheWindow = NULL;
-	}
+
 }
 
 /*
@@ -1881,44 +1847,6 @@ roundDouble(double val){
 		}
 	}
 	return retval;
-}
-
-int
-WindowMessage(void){
-	XOPIORecParam item0;										// Item from IO list.
-	long message;
-	
-	message = GetXOPMessage();
-	
-	if ((message & XOPWINDOWCODE) == 0)
-		return 0;
-	
-	item0 = GetXOPItem(0);
-	
-	switch (message) {
-#ifdef MACIGOR			// [
-		case UPDATE:
-		{
-		}
-			break;			
-		case ACTIVATE:
-		{
-		}
-			break;			
-		case CLICK:
-		{
-		}
-			break;
-#endif
-		case CLOSE:
-			HideAndDeactivateXOPWindow(gTheWindow);
-			break;
-			
-		case NULLEVENT:				// This is not sent on Windows. Instead, similar processing is done in response to the WM_MOUSEMOVE message.
-			ArrowCursor();
-			break;
-	}												// Ignore other window messages.
-	return 1;
 }
 
 static waveStats getWaveStats(double *sort, CountInt length, int moment){

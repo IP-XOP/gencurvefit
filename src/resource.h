@@ -1,14 +1,7 @@
-// SVN date:    $Date$
-// SVN author:  $Author$
-// SVN rev.:    $Revision$
-// SVN URL:     $HeadURL$
-// SVN ID:      $Id$
-
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by XOP1.rc
+// Microsoft Visual C++ generated include file.
+// Used by GenCurvefit.rc
 //
-
 
 // Next default values for new objects
 // 
