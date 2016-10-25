@@ -1,9 +1,3 @@
-// SVN date:    $Date$
-// SVN author:  $Author$
-// SVN rev.:    $Revision$
-// SVN URL:     $HeadURL$
-// SVN ID:      $Id$
-
 /*
 GenCurveFit.c -- An XOP for curvefitting via Differential Evolution.
 @copyright: Andrew Nelson and the Australian Nuclear Science and Technology Organisation 2007.
@@ -17,15 +11,15 @@ resource 'vers' (1) {						// XOP version info.
 };
 
 resource 'vers' (2) {						// Igor version info.
-	0x05, 0x00, release, 0x00, 0,			// Version bytes and country integer.
-	"5.00",
+	0x07, 0x00, release, 0x00, 0,			// Version bytes and country integer.
+	"7.00",
 	"(for Igor 5.00 or later)"
 };
 
 resource 'STR#' (1100) {					/* custom error messages */
 	{
 	//[1]
-	"GenCurvefit requires Igor Pro 6.10 or later.",
+	"GenCurvefit requires Igor Pro 7.0 or later.",
 	//[2]
 	"Non-Existent Wave.",
 	//[3]

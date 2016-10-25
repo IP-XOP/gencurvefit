@@ -97,7 +97,7 @@ struct fitfuncStruct {
  SVARRec svars[5];
  void* funcRef[10];
  
-unsigned long version;     // Structure version. 
+ UInt32 version;     // Structure version.
 
 }; 
 typedef struct fitfuncStruct fitfuncStruct; 
@@ -481,9 +481,7 @@ static int isWaveDisplayed(waveHndl, int *);
 static int getRange (WaveRange ,CountInt *,CountInt *);
 static double roundDouble(double);
 static waveStats getWaveStats(double*,CountInt,int);
-int WindowMessage(void);
 int dumpRecordToWave(GenCurveFitInternalsPtr goiP,	MemoryStruct *dumpRecord);
 
 /* Prototypes */
-HOST_IMPORT int main(IORecHandle ioRecHandle);
-
+HOST_IMPORT int XOPMain(IORecHandle ioRecHandle);
