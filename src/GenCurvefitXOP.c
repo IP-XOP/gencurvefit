@@ -78,11 +78,10 @@ int lgencurvefit_fitfunction(void *userdata, const double *coefs, unsigned int n
 	fitFunc parameters;
 	double result;
 	double *dp;
-	GenCurveFitInternals *goiP = (GenCurveFitInternals*) userdata;
+    GenCurveFitInternals *goiP = (GenCurveFitInternals*) userdata;
 
 	memset(&parameters, 0, sizeof(parameters));
 	memset(&allParameters, 0, sizeof(allParameters));
-	
 
 	//cmd-dot or abort button
 	if(CheckAbort(0) == -1){
@@ -101,8 +100,11 @@ int lgencurvefit_fitfunction(void *userdata, const double *coefs, unsigned int n
 	/*
 	 Place the parameters into the coefficient wave
 	 */
-	if(err = MDStoreDPDataInNumericWave(goiP->GenCurveFitCoefs, (double*) coefs))
-		goto done;
+    dp = WaveData(goiP->GenCurveFitCoefs);
+    memcpy(dp, coefs, sizeof(double) * numcoefs);
+
+//	if(err = MDStoreDPDataInNumericWave(goiP->GenCurveFitCoefs, (double*) coefs))
+//		goto done;
 			
 	switch(goiP->isAAO){
 		case 0:
@@ -193,7 +195,6 @@ int lgencurvefit_fitfunction(void *userdata, const double *coefs, unsigned int n
 		err = FITFUNC_RETURNED_NANINF;
 		goto done;
 	}
-
 
 done:		
 
