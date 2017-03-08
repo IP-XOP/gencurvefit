@@ -84,7 +84,11 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 				goiP->sp->numVarMD = goiP->numVarMD;
 				
 				requiredParameterTypes[0] = FV_STRUCT_TYPE | FV_REF_TYPE;
-				if(err = CheckFunctionForm(&goiP->fi, goiP->fi.totalNumParameters, requiredParameterTypes, &badParameterNumber, -1)){
+				if(err = CheckFunctionForm(&goiP->fi,
+                                           goiP->fi.totalNumParameters,
+                                           requiredParameterTypes,
+                                           &badParameterNumber,
+                                           NT_FP64)){
 					err = INVALID_FIT_FUNC;
 					goto done;
 				}
@@ -99,14 +103,22 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 				
 				goiP->numVarMD = goiP->fi.totalNumParameters-1;
 				goiP->isAAO = 0;
-				err = CheckFunctionForm(&goiP->fi,goiP->fi.totalNumParameters,requiredParameterTypes,&badParameterNumber,-1);
+				err = CheckFunctionForm(&goiP->fi,
+                                        goiP->fi.totalNumParameters,
+                                        requiredParameterTypes,
+                                        &badParameterNumber,
+                                        NT_FP64);
 				
 				if(err){ //it may be all-at-once
 					for(ii = 0 ; ii <goiP->fi.totalNumParameters ; ii+=1)
 						requiredParameterTypes[ii] = WAVE_TYPE;
 					goiP->numVarMD = goiP->fi.totalNumParameters-2;
 					goiP->isAAO = 1;
-					if(err = CheckFunctionForm(&goiP->fi, goiP->fi.totalNumParameters, requiredParameterTypes, &badParameterNumber,-1)){
+					if(err = CheckFunctionForm(&goiP->fi,
+                                               goiP->fi.totalNumParameters,
+                                               requiredParameterTypes,
+                                               &badParameterNumber,
+                                               NT_FP64)){
 						err = INVALID_FIT_FUNC;					
 						goto done;
 					}
@@ -119,6 +131,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 					break;
 		}
 	} else {
+        
 		//no fit function was specified.
 		err = FITFUNC_NOT_SPECIFIED;
 		goto done;
@@ -151,7 +164,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			err = REQUIRES_SP_OR_DP_WAVE;
 			goto done;
 		}
-		
+
 		//check how many points are in the wave
 		if(err = MDGetWaveDimensions(p->dataWave.waveH, &numdimensions,indices)) 
 			goto done;
