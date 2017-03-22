@@ -456,7 +456,6 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 GenCurveFitInternals carries the internal data structures for doing the fitting.
 	 */
 	GenCurveFitInternals goi;
-	//initialise the structure to be zero
 	
 	/*
 	 err carries the errors for all the operations
@@ -465,6 +464,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 */
 	int err = 0, err2 = 0;
 	double value[2];
+    int numDimensions;
 	CountInt indices[MAX_DIMENSIONS];
 	
 	//libgencurvefit options
@@ -535,6 +535,18 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	
 	if(p->OPTFlagEncountered && (((long)p->OPTFlag_opt) & (long)pow(2, 0)))
 		gco.useinitialguesses = 1;
+    
+    if(p->POPFlagEncountered && p->initial_popwave != NULL){
+        //check how many points are in the wave
+        if(err = MDGetWaveDimensions(p->initial_popwave, &numDimensions, indices))
+            goto done;
+        if(numDimensions != 2 || indices[0] != goi.totalnumparams || indices[1] < 1){
+            err = INCORRECT_INITIAL_POPULATION;
+            goto done;
+        }
+        gco.initial_population_rows = indices[1];
+        gco.initial_population = (double *)WaveData(p->initial_popwave);
+    }
 	
 	if(p->DITHFlagEncountered && p->DITHFlagParamsSet[0] && p->DITHFlagParamsSet[1]){
         gco.dither[0] = p->dith1;

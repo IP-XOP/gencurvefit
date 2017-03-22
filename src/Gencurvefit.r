@@ -96,6 +96,8 @@ resource 'STR#' (1100) {					/* custom error messages */
 	"The update function must be of the form updt(wave, wave, wave, updatetime)",
 	//[39]
 	"The update function should return a number",
+    //[40]
+    "If you specify an initial population is should have dimensions [numcoefs][N], where N > 0",
 	}
 };
 
