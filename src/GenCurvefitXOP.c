@@ -465,7 +465,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	int err = 0, err2 = 0;
 	double value[2];
     int numDimensions;
-	CountInt indices[MAX_DIMENSIONS];
+	CountInt indices[MAX_DIMENSIONS + 1];
 	
 	//libgencurvefit options
 	gencurvefitOptions gco;
