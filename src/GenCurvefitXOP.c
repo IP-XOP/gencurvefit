@@ -466,6 +466,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	double value[2];
     int numDimensions;
 	CountInt indices[MAX_DIMENSIONS + 1];
+    int wtype = 0;
 	
 	//libgencurvefit options
 	gencurvefitOptions gco;
@@ -536,8 +537,15 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	if(p->OPTFlagEncountered && (((long)p->OPTFlag_opt) & (long)pow(2, 0)))
 		gco.useinitialguesses = 1;
     
+    
     if(p->POPFlagEncountered && p->initial_popwave != NULL){
         //check how many points are in the wave
+        wtype = WaveType(p->initial_popwave);
+        if(wtype != NT_FP64){
+            err = INITIAL_POPULATION_DP;
+            goto done;
+        }
+        
         if(err = MDGetWaveDimensions(p->initial_popwave, &numDimensions, indices))
             goto done;
         if(numDimensions != 2 || indices[0] != goi.totalnumparams || indices[1] < 1){

@@ -94,6 +94,8 @@ BEGIN
 	"The update function should return a number\0",
 	//[40]
     "If you specify an initial population is should have dimensions [numcoefs][N], where N > 0\0",
+	//[41]
+    "Initial population wave needs to be double precision\0",
 	// You can add error messages here.
 
 	0,								// NOTE: 0 required to terminate the resource.

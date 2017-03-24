@@ -63,6 +63,7 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #define INVALID_UPDATE_FUNCTION 38 + FIRST_XOP_ERR
 #define UPDTFUNC_DOESNT_RETURN_NUMBER 39 + FIRST_XOP_ERR
 #define INCORRECT_INITIAL_POPULATION 40 + FIRST_XOP_ERR
+#define INITIAL_POPULATION_DP 41 + FIRST_XOP_ERR
 
 /*
 Structure fitfuncStruct   

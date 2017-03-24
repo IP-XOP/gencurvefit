@@ -98,6 +98,8 @@ resource 'STR#' (1100) {					/* custom error messages */
 	"The update function should return a number",
     //[40]
     "If you specify an initial population is should have dimensions [numcoefs][N], where N > 0",
+    //[41]
+    "Initial population needs to be a double precision wave",
 	}
 };
 
