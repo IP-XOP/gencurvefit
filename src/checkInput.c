@@ -296,7 +296,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 						goto done;
 					}
 					if(indices[0] != goiP->dataPoints){
-						err = err = WAVES_NOT_SAME_LENGTH;
+						err = WAVES_NOT_SAME_LENGTH;
 						goto done;
 					}
 					if(indices[1] != goiP->numVarMD){
@@ -591,7 +591,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			
 			memset(comparison, 0, sizeof(char) * 2);
 			
-			len = GetHandleSize(p->holdstring);
+			len = WMGetHandleSize(p->holdstring);
 			//if specified the holdstring should be the same length as the coefficient wave
 			if(len != goiP->totalnumparams){
 				err = HOLDSTRING_NOT_RIGHT_SIZE;
