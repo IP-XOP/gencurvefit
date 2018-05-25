@@ -483,20 +483,12 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	
 	//initialise all the internal data structures to NULL
 	memset(&goi, 0, sizeof(goi));
-	
-	//you have to use IGOR > 6.10
-	if( igorVersion < 700 )
-        return IGOR_OBSOLETE;
-	
+		
 	//reset the options for libgencurvefit
 	memset(&gco, 0, sizeof(gencurvefitOptions));
 	
 	//reset the abort condition
 	Abort_the_fit = 0;
-	
-	//can't do this in a threadsafe manner if we're not running IGOR >6.2
-	if (igorVersion < 700 && !RunningInMainThread())
-		return NOT_IN_THREADSAFE;
 	
 	strncpy(varname, "V_Fiterror", MAX_OBJ_NAME);
 	if(FetchNumVar(varname, &t1, &t2)!=-1){
@@ -931,10 +923,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	waveHndl gcf_dataCalc, gcf_yobs, gcf_sobs, gcf_xcalc[MAX_MDFIT_SIZE], gcf_fullExtentOfData[MAX_MDFIT_SIZE], gcf_GenCurveFitCoefs;
 	waveHndl gcf_tempWaveHndl_OUTx, gcf_W_costmap, gcf_M_population;
 	
-	if(igorVersion < 620)
-		tempWavesDFH = goiP->cDF;
-	else 
-		tempWavesDFH = (DataFolderHandle) -1;
+    tempWavesDFH = (DataFolderHandle) -1;
 
 	//do we want dynamic updates?
 	goiP->noupdate = 0;
