@@ -7,14 +7,11 @@
 
 static int
 RegisterGenCurveFit(void){
-	char* cmdTemplate;
-	char* runtimeNumVarList;
-	char* runtimeStrVarList;
+	char const * cmdTemplate = "GenCurveFit/MC/HOLD=wave:holdwav/POL/STGY=number:stgy/MINF=name:minfun/DITH={number:dith1, number:dith2}/UPDT=name:igorUpdateFunc/DUMP/STRC=structure:{sp,fitfuncStruct}/opt=number:opt /MAT[=number:mat] /q[=number:quiet] /n[=number:noupdate] /SEED=number:seed /L=number:destLen /R[=Wave:resid] /meth=number:method /X={Wave:xx[,Wave[49]]}  /D=wave:outputwave /W=wave:weighttype /I=[number:weighttype] /M=wave:maskwave /k={number:iterations, number:popsize, number:km, number:recomb}/TOL=number:tol/POP=wave:initial_popwave name:fitfun, waveRange:dataWave, wave:coefs, string:holdstring, wave:limitswave";
+	char const * runtimeNumVarList = "V_Chisq;V_fitIters;V_npnts;V_nterms;V_nheld;V_logBayes";
+	char const * runtimeStrVarList = "";
 
 	// NOTE: If you change this template, you must change the GenCurveFitRuntimeParams structure as well.
-	cmdTemplate = "GenCurveFit/MC/HOLD=wave:holdwav/POL/STGY=number:stgy/MINF=name:minfun/DITH={number:dith1, number:dith2}/UPDT=name:igorUpdateFunc/DUMP/STRC=structure:{sp,fitfuncStruct}/opt=number:opt /MAT[=number:mat] /q[=number:quiet] /n[=number:noupdate] /SEED=number:seed /L=number:destLen /R[=Wave:resid] /meth=number:method /X={Wave:xx[,Wave[49]]}  /D=wave:outputwave /W=wave:weighttype /I=[number:weighttype] /M=wave:maskwave /k={number:iterations, number:popsize, number:km, number:recomb}/TOL=number:tol/POP=wave:initial_popwave name:fitfun, waveRange:dataWave, wave:coefs, string:holdstring, wave:limitswave";
-	runtimeNumVarList = "V_Chisq;V_fitIters;V_npnts;V_nterms;V_nheld;V_logBayes";
-	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(GenCurveFitRuntimeParams), (void*)ExecuteGenCurveFit, kOperationIsThreadSafe);
 }
 
