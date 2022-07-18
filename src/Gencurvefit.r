@@ -19,7 +19,7 @@ resource 'vers' (2) {						// Igor version info.
 resource 'STR#' (1100) {					/* custom error messages */
 	{
 	//[1]
-	"GenCurvefit requires Igor Pro 7.0 or later.",
+	"GenCurvefit requires Igor Pro 9.0 or later.",
 	//[2]
 	"Non-Existent Wave.",
 	//[3]

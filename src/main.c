@@ -64,6 +64,11 @@ XOPMain(IORecHandle ioRecHandle){
 	
 	SetXOPEntry(XOPEntry);							// Set entry point for future calls.
 	
+    if (igorVersion < 900){
+        SetXOPResult(IGOR_OBSOLETE);
+        return EXIT_FAILURE;
+    }
+
 	if (result = RegisterOperations()) {
 		SetXOPResult(result);
 		return EXIT_FAILURE;

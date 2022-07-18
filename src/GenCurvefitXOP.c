@@ -483,8 +483,8 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	memset(&goi, 0, sizeof(goi));
 	
 	//you have to use IGOR > 6.10
-	if( igorVersion < 610 )
-		return REQUIRES_IGOR_610;
+	if( igorVersion < 900 )
+		return REQUIRES_IGOR_900;
 	
 	//reset the options for libgencurvefit
 	memset(&gco, 0, sizeof(gencurvefitOptions));
@@ -504,7 +504,11 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 			lt1 = 1;
 		
 		err = 0;
-		if(err2 = SetIgorIntVar(varname, lt1, 1)){err = err2;goto done;};
+		if(err2 = SetIgorIntVar(varname, lt1, 1)){
+            err = err2;
+            goto done;
+            
+        };
 	}	
 	
 	/*

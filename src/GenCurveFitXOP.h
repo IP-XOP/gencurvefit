@@ -23,7 +23,7 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #define kfitfuncStructVersion 1000 
 
 // Custom error codes
-#define REQUIRES_IGOR_610 1 + FIRST_XOP_ERR
+#define REQUIRES_IGOR_900 1 + FIRST_XOP_ERR
 #define NON_EXISTENT_WAVE 2 + FIRST_XOP_ERR
 #define REQUIRES_SP_OR_DP_WAVE 3 + FIRST_XOP_ERR
 #define WAVES_NOT_SAME_LENGTH 4 + FIRST_XOP_ERR
