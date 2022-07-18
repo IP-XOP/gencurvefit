@@ -78,11 +78,10 @@ int lgencurvefit_fitfunction(void *userdata, const double *coefs, unsigned int n
 	fitFunc parameters;
 	double result;
 	double *dp;
-	GenCurveFitInternals *goiP = (GenCurveFitInternals*) userdata;
+    GenCurveFitInternals *goiP = (GenCurveFitInternals*) userdata;
 
 	memset(&parameters, 0, sizeof(parameters));
 	memset(&allParameters, 0, sizeof(allParameters));
-	
 
 	//cmd-dot or abort button
 	if(CheckAbort(0) == -1){
@@ -101,8 +100,11 @@ int lgencurvefit_fitfunction(void *userdata, const double *coefs, unsigned int n
 	/*
 	 Place the parameters into the coefficient wave
 	 */
-	if(err = MDStoreDPDataInNumericWave(goiP->GenCurveFitCoefs, (double*) coefs))
-		goto done;
+    dp = WaveData(goiP->GenCurveFitCoefs);
+    memcpy(dp, coefs, sizeof(double) * numcoefs);
+
+//	if(err = MDStoreDPDataInNumericWave(goiP->GenCurveFitCoefs, (double*) coefs))
+//		goto done;
 			
 	switch(goiP->isAAO){
 		case 0:
@@ -193,7 +195,6 @@ int lgencurvefit_fitfunction(void *userdata, const double *coefs, unsigned int n
 		err = FITFUNC_RETURNED_NANINF;
 		goto done;
 	}
-
 
 done:		
 
@@ -455,7 +456,6 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 GenCurveFitInternals carries the internal data structures for doing the fitting.
 	 */
 	GenCurveFitInternals goi;
-	//initialise the structure to be zero
 	
 	/*
 	 err carries the errors for all the operations
@@ -464,7 +464,9 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 */
 	int err = 0, err2 = 0;
 	double value[2];
-	CountInt indices[MAX_DIMENSIONS];
+    int numDimensions;
+	CountInt indices[MAX_DIMENSIONS + 1];
+    int wtype = 0;
 	
 	//libgencurvefit options
 	gencurvefitOptions gco;
@@ -482,19 +484,15 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	//initialise all the internal data structures to NULL
 	memset(&goi, 0, sizeof(goi));
 	
-	//you have to use IGOR > 6.10
+	//you have to use IGOR > 9.00
 	if( igorVersion < 900 )
 		return REQUIRES_IGOR_900;
-	
-	//reset the options for libgencurvefit
+
+    //reset the options for libgencurvefit
 	memset(&gco, 0, sizeof(gencurvefitOptions));
 	
 	//reset the abort condition
 	Abort_the_fit = 0;
-	
-	//can't do this in a threadsafe manner if we're not running IGOR >6.2
-	if (igorVersion < 620 && !RunningInMainThread())
-		return NOT_IN_THREADSAFE;
 	
 	strncpy(varname, "V_Fiterror", MAX_OBJ_NAME);
 	if(FetchNumVar(varname, &t1, &t2)!=-1){
@@ -538,6 +536,25 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	
 	if(p->OPTFlagEncountered && (((long)p->OPTFlag_opt) & (long)pow(2, 0)))
 		gco.useinitialguesses = 1;
+    
+    
+    if(p->POPFlagEncountered && p->initial_popwave != NULL){
+        //check how many points are in the wave
+        wtype = WaveType(p->initial_popwave);
+        if(wtype != NT_FP64){
+            err = INITIAL_POPULATION_DP;
+            goto done;
+        }
+        
+        if(err = MDGetWaveDimensions(p->initial_popwave, &numDimensions, indices))
+            goto done;
+        if(numDimensions != 2 || indices[0] != goi.totalnumparams || indices[1] < 1){
+            err = INCORRECT_INITIAL_POPULATION;
+            goto done;
+        }
+        gco.initial_population_rows = indices[1];
+        gco.initial_population = (double *)WaveData(p->initial_popwave);
+    }
 	
 	if(p->DITHFlagEncountered && p->DITHFlagParamsSet[0] && p->DITHFlagParamsSet[1]){
         gco.dither[0] = p->dith1;
@@ -914,10 +931,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	waveHndl gcf_dataCalc, gcf_yobs, gcf_sobs, gcf_xcalc[MAX_MDFIT_SIZE], gcf_fullExtentOfData[MAX_MDFIT_SIZE], gcf_GenCurveFitCoefs;
 	waveHndl gcf_tempWaveHndl_OUTx, gcf_W_costmap, gcf_M_population;
 	
-	if(igorVersion < 620)
-		tempWavesDFH = goiP->cDF;
-	else 
-		tempWavesDFH = (DataFolderHandle) -1;
+    tempWavesDFH = (DataFolderHandle) -1;
 
 	//do we want dynamic updates?
 	goiP->noupdate = 0;
@@ -1351,7 +1365,6 @@ static void
 freeAllocMem(GenCurveFitInternalsPtr goiP) {
 	int err = 0, ii = 0;
 
-	waveHndl exists = NULL;
 	if (goiP->varParams)
 		free(goiP->varParams);
 	if (goiP->dataTemp)
@@ -1379,52 +1392,17 @@ freeAllocMem(GenCurveFitInternalsPtr goiP) {
 	if (goiP->dumpRecord.memory)
 		free(goiP->dumpRecord.memory);
 
-	if (igorVersion < 620) {
-		exists = FetchWaveFromDataFolder(goiP->cDF, "GenCurveFit_coefs");
-		if (exists != NULL)
-			err = KillWave(exists);
-		exists = FetchWaveFromDataFolder(goiP->cDF, "GenCurveFit_dataCalc");
-		if (exists != NULL)
-			err = KillWave(goiP->dataCalc);
-		exists = FetchWaveFromDataFolder(goiP->cDF, "GenCurveFit_yobs");
-		if (exists != NULL)
-			err = KillWave(goiP->yobs);
-		exists = FetchWaveFromDataFolder(goiP->cDF, "GenCurveFit_sobs");
-		if (exists != NULL)
-			err = KillWave(goiP->sobs);
-
-		exists = FetchWaveFromDataFolder(goiP->cDF, "TEMP_population");
-		if (exists != NULL)
-			err = KillWave(goiP->M_population);
-		exists = FetchWaveFromDataFolder(goiP->cDF, "TEMP_costmap");
-		if (exists != NULL)
-			err = KillWave(goiP->W_costmap);
-
-		for (ii = 0; ii < goiP->numVarMD; ii += 1) {
-			if (goiP->xcalc[ii] != NULL)
-				err = KillWave(goiP->xcalc[ii]);
-		}
-		if (goiP->tempWaveHndl_OUTx != NULL)
-			err = KillWave(goiP->tempWaveHndl_OUTx);
-
-		for (ii = 0; ii < goiP->numVarMD; ii += 1) {
-			if (goiP->fullExtentOfData[ii] != NULL)
-				err = KillWave(goiP->fullExtentOfData[ii]);
-		}
-	}
-	else {
-		err = ReleaseWave(&goiP->GenCurveFitCoefs);
-		err = ReleaseWave(&goiP->dataCalc);
-		err = ReleaseWave(&goiP->yobs);
-		err = ReleaseWave(&goiP->sobs);
-		err = ReleaseWave(&goiP->M_population);
-		err = ReleaseWave(&goiP->W_costmap);
-		for (ii = 0; ii < goiP->numVarMD; ii += 1)
-			err = ReleaseWave(&goiP->xcalc[ii]);
-		err = ReleaseWave(&goiP->tempWaveHndl_OUTx);
-		for (ii = 0; ii < goiP->numVarMD; ii += 1)
-			err = ReleaseWave(&goiP->fullExtentOfData[ii]);
-	}
+    err = ReleaseWave(&goiP->GenCurveFitCoefs);
+    err = ReleaseWave(&goiP->dataCalc);
+    err = ReleaseWave(&goiP->yobs);
+    err = ReleaseWave(&goiP->sobs);
+    err = ReleaseWave(&goiP->M_population);
+    err = ReleaseWave(&goiP->W_costmap);
+    for (ii = 0; ii < goiP->numVarMD; ii += 1)
+        err = ReleaseWave(&goiP->xcalc[ii]);
+    err = ReleaseWave(&goiP->tempWaveHndl_OUTx);
+    for (ii = 0; ii < goiP->numVarMD; ii += 1)
+        err = ReleaseWave(&goiP->fullExtentOfData[ii]);
 
 }
 

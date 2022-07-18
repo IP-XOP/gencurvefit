@@ -70,7 +70,7 @@ BEGIN
 	"User redimensioned/killed Internal Gencurvefit fitwave.\0",
 	//[31]
 	"Wrong Index for cost function.\0",
-    //[32]	
+    //[32]
 	"Subrange limited to point specification (you specified xscaling) - remember to sort wave.\0",
 	//[33]
 	"Null structure specified in GenCurvefit.\0",
@@ -86,6 +86,10 @@ BEGIN
 	"The update function must be of the form updt(wave, wave, wave, updatetime)\0",
 	//[39]
 	"The update function should return a number\0",
+	//[40]
+    "If you specify an initial population is should have dimensions [numcoefs][N], where N > 0\0",
+	//[41]
+    "Initial population wave needs to be double precision\0",
 	// You can add error messages here.
 
 	0,								// NOTE: 0 required to terminate the resource.

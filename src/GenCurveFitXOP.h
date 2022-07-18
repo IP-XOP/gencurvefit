@@ -62,6 +62,8 @@ GenCurvefit.c -- An XOP for curvefitting via Differential Evolution.
 #define COSTFUNC_WAVES_CHANGED 37 + FIRST_XOP_ERR
 #define INVALID_UPDATE_FUNCTION 38 + FIRST_XOP_ERR
 #define UPDTFUNC_DOESNT_RETURN_NUMBER 39 + FIRST_XOP_ERR
+#define INCORRECT_INITIAL_POPULATION 40 + FIRST_XOP_ERR
+#define INITIAL_POPULATION_DP 41 + FIRST_XOP_ERR
 
 /*
 Structure fitfuncStruct   
@@ -231,6 +233,11 @@ struct GenCurveFitRuntimeParams {
 	double TOLFlag_tol;
 	int TOLFlagParamsSet[1];
 
+    // Parameters for /HOLD flag group.
+    int POPFlagEncountered;
+    waveHndl initial_popwave;
+    int POPFlagParamsSet[1];
+    
 	// Main parameters.
 
 	// Parameters for simple main group #0.
