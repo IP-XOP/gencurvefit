@@ -71,11 +71,6 @@ XOPMain(IORecHandle ioRecHandle){
 		return EXIT_FAILURE;
 	}
 	
-    if (igorVersion < 700){
-        SetXOPResult(IGOR_OBSOLETE);
-        return EXIT_FAILURE;
-    }else{
-        SetXOPResult(0L);
-        return EXIT_SUCCESS;
-    }
+    SetXOPResult(0L);
+    return EXIT_SUCCESS;
 }
