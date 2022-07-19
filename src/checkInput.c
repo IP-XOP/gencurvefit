@@ -46,7 +46,8 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	goiP->numVarMD = -1;
 	
 	if (p->fitfunEncountered) {
-		//couldn't get function information
+        //couldn't get function information
+        
 		if(err = GetFunctionInfo(p->fitfun, &goiP->fi))
 			goto done;
 
@@ -515,37 +516,37 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	/*
 	 the user specifies a costfunction
 	 */
-	if (p->MINFFlagEncountered) {
-		//couldn't get function information
-		if(err = GetFunctionInfo(p->minfun, &goiP->minf))
-			goto done;
-			
-			// function is not proper costfunc
-		if(goiP->minf.totalNumParameters != 4){
-			err = INVALID_COST_FUNCTION;
-			goto done;
-		}
-	
-		if(!RunningInMainThread() && (!goiP->minf.isThreadSafe)){
-			err = ONLY_THREADSAFE;
-			goto done;
-		}			
-		
-		//fit function always has to return a number, not complex or text, even if its all-at-once.
-		if(goiP->minf.returnType != NT_FP64){
-			err = COSTFUNC_DOESNT_RETURN_NUMBER;
-			goto done;
-		}
-		requiredParameterTypes[0] = WAVE_TYPE;
-		requiredParameterTypes[1] = WAVE_TYPE;
-		requiredParameterTypes[2] = WAVE_TYPE;
-		requiredParameterTypes[3] = WAVE_TYPE;
-		if(err = CheckFunctionForm(&goiP->minf, 4, requiredParameterTypes, &badParameterNumber, NT_FP64)){
-			err = INVALID_COST_FUNCTION;
-			goto done;
-		}
-		goiP->METH = 2;
-	}
+//	if (p->MINFFlagEncountered) {
+//		//couldn't get function information
+//		if(err = GetFunctionInfo(p->minfun, &goiP->minf))
+//			goto done;
+//
+//			// function is not proper costfunc
+//		if(goiP->minf.totalNumParameters != 4){
+//			err = INVALID_COST_FUNCTION;
+//			goto done;
+//		}
+//
+//		if(!RunningInMainThread() && (!goiP->minf.isThreadSafe)){
+//			err = ONLY_THREADSAFE;
+//			goto done;
+//		}
+//
+//		//fit function always has to return a number, not complex or text, even if its all-at-once.
+//		if(goiP->minf.returnType != NT_FP64){
+//			err = COSTFUNC_DOESNT_RETURN_NUMBER;
+//			goto done;
+//		}
+//		requiredParameterTypes[0] = WAVE_TYPE;
+//		requiredParameterTypes[1] = WAVE_TYPE;
+//		requiredParameterTypes[2] = WAVE_TYPE;
+//		requiredParameterTypes[3] = WAVE_TYPE;
+//		if(err = CheckFunctionForm(&goiP->minf, 4, requiredParameterTypes, &badParameterNumber, NT_FP64)){
+//			err = INVALID_COST_FUNCTION;
+//			goto done;
+//		}
+//		goiP->METH = 2;
+//	}
 	
 	/*
 	 a holdstring is used to work out which parameters are being fitted.  i.e. "0001000111".
@@ -684,38 +685,38 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	/*
 	 the user specifies an update function
 	 */
-	if (p->UPDTFlagEncountered) {
-		//couldn't get function information
-		if(err = GetFunctionInfo(p->igorUpdateFunc, &goiP->igorUpdateFunction))
-			goto done;
-		
-		if(!RunningInMainThread() && (!goiP->igorUpdateFunction.isThreadSafe)){
-			err = ONLY_THREADSAFE;
-			goto done;
-		}
-		
-		// function is not proper fitfunc
-		if(goiP->igorUpdateFunction.totalNumParameters != 4){
-			err = INVALID_UPDATE_FUNCTION;
-			goto done;
-		}
-		
-		//update function has to return a number
-		if(goiP->igorUpdateFunction.returnType != NT_FP64){
-			err = UPDTFUNC_DOESNT_RETURN_NUMBER;
-			goto done;
-		}
-		requiredParameterTypes[0] = WAVE_TYPE;
-		requiredParameterTypes[1] = WAVE_TYPE;
-		requiredParameterTypes[2] = WAVE_TYPE;
-		requiredParameterTypes[3] = NT_FP64;
-		
-		if(err = CheckFunctionForm(&goiP->igorUpdateFunction, 4, requiredParameterTypes, &badParameterNumber, NT_FP64)){
-			err = INVALID_UPDATE_FUNCTION;
-			goto done;
-		}
-		goiP->useIgorUpdateFunction = 1;
-	}
+//	if (p->UPDTFlagEncountered) {
+//		//couldn't get function information
+//		if(err = GetFunctionInfo(p->igorUpdateFunc, &goiP->igorUpdateFunction))
+//			goto done;
+//
+//		if(!RunningInMainThread() && (!goiP->igorUpdateFunction.isThreadSafe)){
+//			err = ONLY_THREADSAFE;
+//			goto done;
+//		}
+//
+//		// function is not proper fitfunc
+//		if(goiP->igorUpdateFunction.totalNumParameters != 4){
+//			err = INVALID_UPDATE_FUNCTION;
+//			goto done;
+//		}
+//
+//		//update function has to return a number
+//		if(goiP->igorUpdateFunction.returnType != NT_FP64){
+//			err = UPDTFUNC_DOESNT_RETURN_NUMBER;
+//			goto done;
+//		}
+//		requiredParameterTypes[0] = WAVE_TYPE;
+//		requiredParameterTypes[1] = WAVE_TYPE;
+//		requiredParameterTypes[2] = WAVE_TYPE;
+//		requiredParameterTypes[3] = NT_FP64;
+//
+//		if(err = CheckFunctionForm(&goiP->igorUpdateFunction, 4, requiredParameterTypes, &badParameterNumber, NT_FP64)){
+//			err = INVALID_UPDATE_FUNCTION;
+//			goto done;
+//		}
+//		goiP->useIgorUpdateFunction = 1;
+//	}
 	
 	/*
 	 Checkout the limits wave

@@ -142,7 +142,7 @@ struct GenCurveFitRuntimeParams {
     int UPDTFlagEncountered;
     char igorUpdateFunc[MAX_OBJ_NAME+1];
     int UPDTFlagParamsSet[1];
-	
+
     // Parameters for /DUMP flag group.
     int DUMPFlagEncountered;
     // There are no fields for this group because it has no parameters.
@@ -278,6 +278,7 @@ struct MemoryStruct {
 	size_t size;
 };
 typedef struct MemoryStruct MemoryStruct;
+
 
 //this structure contains all the internal memory arrays necessary for the fit to proceed.
 struct GenCurveFitInternals{

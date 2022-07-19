@@ -522,27 +522,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 checkInput checks the input that IGOR sends to the XOP.  If everything is correct it returns 0, 
 	 else it returns an error.  Errors can be caused by, e.g. different x and y wave lengths, etc.
 	 */
-    struct fitfuncStruct {
-     waveHndl w;
-     waveHndl yy;
-     waveHndl xx[MAX_MDFIT_SIZE];
-     short numVarMD;
-
-     waveHndl otherNumWaves[50];
-     waveHndl otherTextWaves[10];
-     
-     double var[5];
-     Handle str[5];
-     
-     NVARRec nvars[5];
-     SVARRec svars[5];
-     void* funcRef[10];
-     
-     UInt32 version;     // Structure version.
-
-    };
-    typedef struct fitfuncStruct fitfuncStruct;
-    typedef struct fitfuncStruct* fitfuncStructPtr; 	if(err = checkInput(p, &goi))
+    if(err = checkInput(p, &goi))
 		goto done;
 	
 	/*
