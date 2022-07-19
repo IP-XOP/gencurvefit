@@ -83,7 +83,7 @@ uint32 ffsversion    // Structure version.
 EndStructure 
 */
 #pragma pack(2)
-struct fitfuncStruct { 
+struct fitfuncStruct {
  waveHndl w;
  waveHndl yy;
  waveHndl xx[MAX_MDFIT_SIZE];
@@ -101,149 +101,147 @@ struct fitfuncStruct {
  
  UInt32 version;     // Structure version.
 
-}; 
-typedef struct fitfuncStruct fitfuncStruct; 
-typedef struct fitfuncStruct* fitfuncStructPtr; 
+};
+typedef struct fitfuncStruct fitfuncStruct;
+typedef struct fitfuncStruct* fitfuncStructPtr;
+
 
 struct GenCurveFitRuntimeParams {
 	// Flag parameters.
     
     // Parameters for /MC flag group.
-	int MCFlagEncountered;
-	// There are no fields for this group because it has no parameters.
+    int MCFlagEncountered;
+    // There are no fields for this group because it has no parameters.
     
-	// Parameters for /HOLD flag group.
-	int HOLDFlagEncountered;
-	waveHndl holdwav;
-	int HOLDFlagParamsSet[1];
-    
+    // Parameters for /HOLD flag group.
+    int HOLDFlagEncountered;
+    waveHndl holdwav;
+    int HOLDFlagParamsSet[1];
+        
 	// Parameters for /POL flag group.
-	int POLFlagEncountered;
+    int POLFlagEncountered;
 	// There are no fields for this group because it has no parameters.
     
-	// Parameters for /STGY flag group.
-	int STGYFlagEncountered;
-	double stgy;
-	int STGYFlagParamsSet[1];
+    // Parameters for /STGY flag group.
+    int STGYFlagEncountered;
+    double stgy;
+    int STGYFlagParamsSet[1];
     
-	// Parameters for /MINF flag group.
-	int MINFFlagEncountered;
-	char minfun[MAX_OBJ_NAME + 1];
-	int MINFFlagParamsSet[1];
+    // Parameters for /MINF flag group.
+    int MINFFlagEncountered;
+    char minfun[MAX_OBJ_NAME+1];
+    int MINFFlagParamsSet[1];
     
 	// Parameters for /DITH flag group.
-	int DITHFlagEncountered;
-	double dith1;
-	double dith2;
-	int DITHFlagParamsSet[2];
-    
+    int DITHFlagEncountered;
+    double dith1;
+    double dith2;
+    int DITHFlagParamsSet[2];
+
 	// Parameters for /UPDT flag group.
-	int UPDTFlagEncountered;
-	char UPDTFlag_igorUpdateFunc[MAX_OBJ_NAME + 1];
-	int UPDTFlagParamsSet[1];
+    int UPDTFlagEncountered;
+    char igorUpdateFunc[MAX_OBJ_NAME+1];
+    int UPDTFlagParamsSet[1];
 	
-	// Parameters for /DUMP flag group.
-	int DUMPFlagEncountered;
-	// There are no fields for this group because it has no parameters.
+    // Parameters for /DUMP flag group.
+    int DUMPFlagEncountered;
+    // There are no fields for this group because it has no parameters.
 	
-	// Parameters for /STRC flag group.
-	int STRCFlagEncountered;
-	fitfuncStruct* STRCFlag_sp;
-	int STRCFlagParamsSet[1];
+    // Parameters for /STRC flag group.
+    int STRCFlagEncountered;
+    fitfuncStruct* sp;
+    int STRCFlagParamsSet[1];
 
-	// Parameters for /OPT flag group.
-	int OPTFlagEncountered;
-	double OPTFlag_opt;
-	int OPTFlagParamsSet[1];
+    // Parameters for /OPT flag group.
+    int OPTFlagEncountered;
+    double opt;
+    int OPTFlagParamsSet[1];
 
-	// Parameters for /MAT flag group.
-	int MATFlagEncountered;
-	double MATFlag_mat;
-	int MATFlagParamsSet[1];
-	// There are no fields for this group because it has no parameters.
+    // Parameters for /MAT flag group.
+    int MATFlagEncountered;
+    double mat;                                // Optional parameter.
+    int MATFlagParamsSet[1];
 
-	// Parameters for /Q flag group.
-	int QFlagEncountered;
-	double QFlag_quiet;
-	int QFlagParamsSet[1];
+    // Parameters for /Q flag group.
+    int QFlagEncountered;
+    double quiet;                            // Optional parameter.
+    int QFlagParamsSet[1];
 
-	// Parameters for /N flag group.
-	int NFlagEncountered;
-	double NFlag_noupdate;
-	int NFlagParamsSet[1];
-	
-	// There are no fields for this group because it has no parameters.
+    // Parameters for /N flag group.
+    int NFlagEncountered;
+    double noupdate;                        // Optional parameter.
+    int NFlagParamsSet[1];
 
-	// Parameters for /SEED flag group.
-	int SEEDFlagEncountered;
-	double SEEDFlag_seed;
-	int SEEDFlagParamsSet[1];
+    // Parameters for /SEED flag group.
+    int SEEDFlagEncountered;
+    double seed;
+    int SEEDFlagParamsSet[1];
 
-	// Parameters for /L flag group.
-	int LFlagEncountered;
-	double LFlag_destLen;
-	int LFlagParamsSet[1];
+    // Parameters for /L flag group.
+    int LFlagEncountered;
+    double destLen;
+    int LFlagParamsSet[1];
+    
+    // Parameters for /R flag group.
+    int RFlagEncountered;
+    waveHndl resid;                            // Optional parameter.
+    int RFlagParamsSet[1];
 
-	// Parameters for /R flag group.
-	int RFlagEncountered;
-	waveHndl RFlag_resid;					// Optional parameter.
-	int RFlagParamsSet[1];
+    // Parameters for /METH flag group.
+    int METHFlagEncountered;
+    double method;
+    int METHFlagParamsSet[1];
 
-	// Parameters for /METH flag group.
-	int METHFlagEncountered;
-	double METHFlag_method;
-	int METHFlagParamsSet[1];
+    // Parameters for /X flag group.
+    int XFlagEncountered;
+    waveHndl xx;
+    waveHndl XFlagWaveH[49];                // Optional parameter.
+    int XFlagParamsSet[50];
 
-	// Parameters for /X flag group.
-	int XFlagEncountered;
-	waveHndl XFlag_xx;
-	waveHndl XFlagWaveH[49];				// Optional parameter.
-	int XFlagParamsSet[50];
+    // Parameters for /D flag group.
+    int DFlagEncountered;
+    waveHndl outputwave;
+    int DFlagParamsSet[1];
 
-	// Parameters for /D flag group.
-	int DFlagEncountered;
-	waveHndl DFlag_outputwave;
-	int DFlagParamsSet[1];
+    // Parameters for /W flag group.
+    int WFlagEncountered;
+    waveHndl weighttype;
+    int WFlagParamsSet[1];
 
-	// Parameters for /W flag group.
-	int WFlagEncountered;
-	waveHndl WFlag_weighttype;
-	int WFlagParamsSet[1];
+    // Parameters for /I flag group.
+    int IFlagEncountered;
+    double iflag;
+    int IFlagParamsSet[1];
 
-	// Parameters for /I flag group.
-	int IFlagEncountered;
-	double IFlag_weighttype;
-	int IFlagParamsSet[1];
+    // Parameters for /M flag group.
+    int MFlagEncountered;
+    waveHndl maskwave;
+    int MFlagParamsSet[1];
 
-	// Parameters for /M flag group.
-	int MFlagEncountered;
-	waveHndl MFlag_maskwave;
-	int MFlagParamsSet[1];
+    // Parameters for /K flag group.
+    int KFlagEncountered;
+    double iterations;
+    double popsize;
+    double km;
+    double recomb;
+    int KFlagParamsSet[4];
+    
+    // Parameters for /TOL flag group.
+    int TOLFlagEncountered;
+    double tol;
+    int TOLFlagParamsSet[1];
 
-	// Parameters for /K flag group.
-	int KFlagEncountered;
-	double KFlag_iterations;
-	double KFlag_popsize;
-	double KFlag_km;
-	double KFlag_recomb;
-	int KFlagParamsSet[4];
-
-	// Parameters for /TOL flag group.
-	int TOLFlagEncountered;
-	double TOLFlag_tol;
-	int TOLFlagParamsSet[1];
-
-    // Parameters for /HOLD flag group.
+    // Parameters for /POP flag group.
     int POPFlagEncountered;
     waveHndl initial_popwave;
     int POPFlagParamsSet[1];
-    
+        
 	// Main parameters.
 
-	// Parameters for simple main group #0.
-	int fitfunEncountered;
-	char fitfun[MAX_OBJ_NAME+1];
-	int fitfunParamsSet[1];
+    // Parameters for simple main group #0.
+    int fitfunEncountered;
+    char fitfun[MAX_OBJ_NAME+1];
+    int fitfunParamsSet[1];
 
 	// Parameters for simple main group #1.
 	int dataWaveEncountered;

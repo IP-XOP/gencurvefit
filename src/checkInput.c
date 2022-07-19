@@ -65,14 +65,14 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 		
 		switch(goiP->fi.totalNumParameters){
 			case 1:
-				if(p->STRCFlag_sp){
-					goiP->sp = p->STRCFlag_sp;
+				if(p->sp){
+					goiP->sp = p->sp;
 					
-					if(p->STRCFlag_sp == NULL){
+					if(p->sp == NULL){
 						err = NULL_STRUCTURE;
 						goto done;
 					}					
-					if (p->STRCFlag_sp->version != kfitfuncStructVersion) { 
+					if (p->sp->version != kfitfuncStructVersion) {
 						err = INCOMPATIBLE_STRUCT_VERSION; 
 						goto done; 
 					} 
@@ -80,7 +80,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 					err = NEED_STRC;
 					goto done;
 				}
-				goiP->numVarMD = p->STRCFlag_sp->numVarMD;
+				goiP->numVarMD = p->sp->numVarMD;
 				goiP->sp->numVarMD = goiP->numVarMD;
 				
 				requiredParameterTypes[0] = FV_STRUCT_TYPE | FV_REF_TYPE;
@@ -144,12 +144,12 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	}
 	
 	if(p->LFlagEncountered){
-		if(IsNaN64(&p->LFlag_destLen) || IsINF64(&p->LFlag_destLen) || p->LFlag_destLen<1){
+		if(IsNaN64(&p->destLen) || IsINF64(&p->destLen) || p->destLen<1){
 			err = BAD_FLAG_NUM;
 			goto done;
 		}
 	} else {
-		p->LFlag_destLen = 200;
+		p->destLen = 200;
 	}
 	
 	if (p->dataWaveEncountered) {
@@ -238,12 +238,12 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	 check if the independent variables are specified.
 	 */
 	if (p->XFlagEncountered) {
-		if(p->XFlag_xx == NULL){
+		if(p->xx == NULL){
 			err = NON_EXISTENT_WAVE;
 			goto done;
 		}
 		if(goiP->numVarMD > 1){
-			if(err = MDGetWaveDimensions(p->XFlag_xx, &numdimensions,indices)) 
+			if(err = MDGetWaveDimensions(p->xx, &numdimensions,indices))
 				goto done;
 			switch(numdimensions){
 				case 1:
@@ -315,12 +315,12 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 				goto done;
 			}
 			//if the xwave isn't Double precision
-			if(!((WaveType(p->XFlag_xx) == NT_FP64) || (WaveType(p->XFlag_xx) == NT_FP32))){
+			if(!((WaveType(p->xx) == NT_FP64) || (WaveType(p->xx) == NT_FP32))){
 				err = REQUIRES_SP_OR_DP_WAVE;
 				goto done;
 			}
 			//check how many points are in the wave
-			if(err = MDGetWaveDimensions(p->XFlag_xx, &numdimensions,indices)) 
+			if(err = MDGetWaveDimensions(p->xx, &numdimensions,indices))
 				goto done;
 			//if the ywave isn't 1D then we can't fit it.
 			if(numdimensions>1){
@@ -333,7 +333,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 				goto done;
 			}
 			//if the xwave contains NaN or INF, then stop.
-			if(err = checkNanInf(p->XFlag_xx)){
+			if(err = checkNanInf(p->xx)){
 				err = INPUT_WAVES_CONTAINS_NANINF; 
 				goto done;
 			}
@@ -355,7 +355,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	// if no weight wave is specified then goiP->weighttype = -1.
 	if(p->IFlagEncountered){
 		if(p->IFlagParamsSet[0])
-			goiP->weighttype = (int) p->IFlag_weighttype;
+			goiP->weighttype = (int) p->iflag;
 	}  else {
 		goiP->weighttype = 0;
 	}
@@ -363,18 +363,18 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	/*
 	 was there a weight (sd) wave specified?
 	 */
-	if (p->WFlag_weighttype) {
-		if(p->WFlag_weighttype == NULL){
+	if (p->weighttype) {
+		if(p->weighttype == NULL){
 			err = NON_EXISTENT_WAVE;
 			goto done;
 		}
 		//if the weightwave isn't Double precision
-		if(!((WaveType(p->WFlag_weighttype) == NT_FP64) || (WaveType(p->WFlag_weighttype) == NT_FP32))){
+		if(!((WaveType(p->weighttype) == NT_FP64) || (WaveType(p->weighttype) == NT_FP32))){
 			err = REQUIRES_SP_OR_DP_WAVE;
 			goto done;
 		}
 		//check how many points are in the wave
-		if(err = MDGetWaveDimensions(p->WFlag_weighttype, &numdimensions,indices)) 
+		if(err = MDGetWaveDimensions(p->weighttype, &numdimensions,indices))
 			goto done;
 		//if the weight wave isn't 1D then we can't fit it.
 		if(numdimensions>1){
@@ -387,14 +387,14 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 			goto done;
 		}
 		//check the weightwave for NaN/INF
-		if(err = checkNanInf(p->WFlag_weighttype)){
+		if(err = checkNanInf(p->weighttype)){
 			err = INPUT_WAVES_CONTAINS_NANINF;
 			goto done;
 		}
 		//check if there are any zeros in the weightwave
 		//this is because you will get a divide by zero error if chi2 uses the value
 		//as a denominator
-		if(err = checkZeros(p->WFlag_weighttype, &numzeros))
+		if(err = checkZeros(p->weighttype, &numzeros))
 			goto done;
 		if(goiP->weighttype == 1 && numzeros>0){
 			err = STANDARD_DEV_IS_ZERO;
@@ -408,17 +408,17 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	 was there a mask wave specified?  Set to 0 or NaN to mask points from a fit.
 	 */
 	if (p->MFlagEncountered) {
-		if(p->MFlag_maskwave == NIL){
+		if(p->maskwave == NIL){
 			err = NON_EXISTENT_WAVE;
 			goto done;
 		}
 		//if the maskwave isn't Double precision
-		if(!((WaveType(p->MFlag_maskwave) == NT_FP64) || (WaveType(p->MFlag_maskwave) == NT_FP32))){
+		if(!((WaveType(p->maskwave) == NT_FP64) || (WaveType(p->maskwave) == NT_FP32))){
 			err = REQUIRES_SP_OR_DP_WAVE;
 			goto done;
 		}
 		//check how many points are in the wave
-		if(err = MDGetWaveDimensions(p->MFlag_maskwave, &numdimensions,indices)) 
+		if(err = MDGetWaveDimensions(p->maskwave, &numdimensions,indices))
 			goto done;
 		//if the weight wave isn't 1D then we can't fit it.
 		if(numdimensions>1){
@@ -436,13 +436,13 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	 check if we are producing residuals.
 	 */
 	if (p->RFlagEncountered) {
-		if(p->RFlag_resid != NULL){
-			if(!((WaveType(p->RFlag_resid) == NT_FP64) || (WaveType(p->RFlag_resid) == NT_FP32))){
+		if(p->resid != NULL){
+			if(!((WaveType(p->resid) == NT_FP64) || (WaveType(p->resid) == NT_FP32))){
 				err = REQUIRES_SP_OR_DP_WAVE;
 				goto done;
 			}
 			//check how many points are in the wave
-			if(err = MDGetWaveDimensions(p->RFlag_resid, &numdimensions,indices)) 
+			if(err = MDGetWaveDimensions(p->resid, &numdimensions,indices)) 
 				goto done;
 			//if the ywave isn't 1D then we can't fit it.
 			if(numdimensions>1){
@@ -462,39 +462,39 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	 */
 	if (p->KFlagEncountered) {
 		//can't have duff genetic optimisation input
-		if(IsNaN64(&p->KFlag_iterations) || IsINF64(&p->KFlag_iterations) || p->KFlag_iterations<1){
+		if(IsNaN64(&p->iterations) || IsINF64(&p->iterations) || p->iterations<1){
 			err = GenCurveFit_PARS_INCORRECT;
 			goto done;
 		}
-		if(IsNaN64(&p->KFlag_popsize) || IsINF64(&p->KFlag_popsize) || p->KFlag_popsize <1){
+		if(IsNaN64(&p->popsize) || IsINF64(&p->popsize) || p->popsize <1){
 			err = GenCurveFit_PARS_INCORRECT;
 			goto done;
 		}
-		if(IsNaN64(&p->KFlag_km) || IsINF64(&p->KFlag_km) || p->KFlag_km<=0 || p->KFlag_km > 1){
+		if(IsNaN64(&p->km) || IsINF64(&p->km) || p->km<=0 || p->km > 1){
 			err = GenCurveFit_PARS_INCORRECT;
 			goto done;
 		}
-		if(IsNaN64(&p->KFlag_recomb) || IsINF64(&p->KFlag_recomb) || p->KFlag_recomb<=0 || p->KFlag_recomb>1){
+		if(IsNaN64(&p->recomb) || IsINF64(&p->recomb) || p->recomb<=0 || p->recomb>1){
 			err = GenCurveFit_PARS_INCORRECT;
 			goto done;
 		}
 	} else {
-		p->KFlag_iterations = 100.;
-		p->KFlag_popsize = 20.;
-		p->KFlag_km = 0.7;
-		p->KFlag_recomb = 0.5;
+		p->iterations = 100.;
+		p->popsize = 20.;
+		p->km = 0.7;
+		p->recomb = 0.5;
 	}
-	goiP->recomb = p->KFlag_recomb;
-	goiP->k_m = p->KFlag_km;
-	goiP->iterations = (long) p->KFlag_iterations;
-	goiP->popsize = (long) p->KFlag_popsize;
+	goiP->recomb = p->recomb;
+	goiP->k_m = p->km;
+	goiP->iterations = (long) p->iterations;
+	goiP->popsize = (long) p->popsize;
 	
 
 	/*
 	 the cost function for minimisation is now specified.  
 	 */
 	if(p->METHFlagEncountered){
-		METH = (int)p->METHFlag_method;
+		METH = (int)p->method;
 		switch(METH){
 			case 0:		//this will be Chi2
 				goiP->METH = METH;
@@ -671,13 +671,13 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	 the fractional tolerance for stopping the fit.
 	 */
 	if (p->TOLFlagEncountered) {
-		if(IsNaN64(&p->TOLFlag_tol)
-		   || IsINF64(&p->TOLFlag_tol) 
-		   || p->TOLFlag_tol < 0){
+		if(IsNaN64(&p->tol)
+		   || IsINF64(&p->tol)
+		   || p->tol < 0){
 			err = STOPPING_TOL_INVALID;
 			goto done;
 		}
-		goiP->tolerance = p->TOLFlag_tol;
+		goiP->tolerance = p->tol;
 	} else
 		goiP->tolerance = 0.0001;
 
@@ -686,7 +686,7 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	 */
 	if (p->UPDTFlagEncountered) {
 		//couldn't get function information
-		if(err = GetFunctionInfo(p->UPDTFlag_igorUpdateFunc, &goiP->igorUpdateFunction))
+		if(err = GetFunctionInfo(p->igorUpdateFunc, &goiP->igorUpdateFunction))
 			goto done;
 		
 		if(!RunningInMainThread() && (!goiP->igorUpdateFunction.isThreadSafe)){
@@ -773,37 +773,37 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	
 	//DFlag will be the output
 	if(p->DFlagEncountered){
-		if(p->DFlag_outputwave == NULL){
+		if(p->outputwave == NULL){
 			err = NON_EXISTENT_WAVE;
 			goto done;
 		}
 		// the output wave has to be the same size as the input fit wave
-		if(WavePoints(p->DFlag_outputwave) != WavePoints(p->dataWave.waveH)){
+		if(WavePoints(p->outputwave) != WavePoints(p->dataWave.waveH)){
 			err = OUTPUT_WAVE_WRONG_SIZE;
 			goto done;
 		}
 		// the input waves and output wave shouldn't be the same
-		if(identicalWaves(p->DFlag_outputwave,p->coefs)){
+		if(identicalWaves(p->outputwave, p->coefs)){
 			err = OUTPUT_WAVE_OVERWRITING_INPUT;
 			goto done;
 		}
-		if(identicalWaves(p->DFlag_outputwave,p->dataWave.waveH)){
+		if(identicalWaves(p->outputwave, p->dataWave.waveH)){
 			err = OUTPUT_WAVE_OVERWRITING_INPUT;
 			goto done;
 		}
-		if(identicalWaves(p->DFlag_outputwave,p->XFlag_xx)){
+		if(identicalWaves(p->outputwave, p->xx)){
 			err = OUTPUT_WAVE_OVERWRITING_INPUT;
 			goto done;
 		}
-		if(identicalWaves(p->DFlag_outputwave,p->limitswave)){
+		if(identicalWaves(p->outputwave, p->limitswave)){
 			err = OUTPUT_WAVE_OVERWRITING_INPUT;
 			goto done;
 		}
-		if(identicalWaves(p->DFlag_outputwave,p->MFlag_maskwave)){
+		if(identicalWaves(p->outputwave, p->maskwave)){
 			err = OUTPUT_WAVE_OVERWRITING_INPUT;
 			goto done;
 		}
-		if(identicalWaves(p->DFlag_outputwave,p->WFlag_weighttype)){
+		if(identicalWaves(p->outputwave, p->weighttype)){
 			err = OUTPUT_WAVE_OVERWRITING_INPUT;
 			goto done;
 		}

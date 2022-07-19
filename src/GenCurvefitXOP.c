@@ -514,7 +514,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 If you want to seed the generator we can 
 	 */
 	if(p->SEEDFlagEncountered)
-		gco.seed = (int) p->SEEDFlag_seed;
+		gco.seed = (int) p->seed;
 	else 
 		gco.seed = -1;
 	
@@ -522,7 +522,27 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	 checkInput checks the input that IGOR sends to the XOP.  If everything is correct it returns 0, 
 	 else it returns an error.  Errors can be caused by, e.g. different x and y wave lengths, etc.
 	 */
-	if(err = checkInput(p, &goi))
+    struct fitfuncStruct {
+     waveHndl w;
+     waveHndl yy;
+     waveHndl xx[MAX_MDFIT_SIZE];
+     short numVarMD;
+
+     waveHndl otherNumWaves[50];
+     waveHndl otherTextWaves[10];
+     
+     double var[5];
+     Handle str[5];
+     
+     NVARRec nvars[5];
+     SVARRec svars[5];
+     void* funcRef[10];
+     
+     UInt32 version;     // Structure version.
+
+    };
+    typedef struct fitfuncStruct fitfuncStruct;
+    typedef struct fitfuncStruct* fitfuncStructPtr; 	if(err = checkInput(p, &goi))
 		goto done;
 	
 	/*
@@ -534,9 +554,8 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	if(err = init_GenCurveFitInternals(p, &goi))
 		goto done;
 	
-	if(p->OPTFlagEncountered && (((long)p->OPTFlag_opt) & (long)pow(2, 0)))
+	if(p->OPTFlagEncountered && (((long)p->opt) & (long)pow(2, 0)))
 		gco.useinitialguesses = 1;
-    
     
     if(p->POPFlagEncountered && p->initial_popwave != NULL){
         //check how many points are in the wave
@@ -598,7 +617,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	}
 	WaveHandleModified(goi.W_sigma);
 		
-//	if(p->MATFlagEncountered && !(p->MATFlagParamsSet[0] && (int) p->MATFlag_mat == 0)){
+//	if(p->MATFlagEncountered && !(p->MATFlagParamsSet[0] && (int) p->mat == 0)){
     //make the covariance matrix
     dimensionSizes[0] = goi.totalnumparams;
     dimensionSizes[1] = goi.totalnumparams;
@@ -679,7 +698,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 		}
 		WaveHandleModified(goi.W_sigma);
 		
-//		if(p->MATFlagEncountered && !(p->MATFlagParamsSet[0] && (int) p->MATFlag_mat == 0)){
+//		if(p->MATFlagEncountered && !(p->MATFlagParamsSet[0] && (int) p->mat == 0)){
         //make the covariance matrix
         dimensionSizes[0] = goi.totalnumparams;
         dimensionSizes[1] = goi.totalnumparams;
@@ -704,7 +723,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 				strncat(cmd, &note_buffer1[0], MAXCMDLEN - strlen(note_buffer1));
 				
 				if(p->DFlagEncountered && p->XFlagEncountered){
-					WaveName(p->XFlag_xx,&note_buffer2[0]);
+					WaveName(p->xx, &note_buffer2[0]);
 					strncat(cmd, " vs ", MAXCMDLEN - strlen(cmd) - strlen(" vs "));
 					strncat(cmd, note_buffer2, MAXCMDLEN - strlen(cmd) - strlen(note_buffer2) );
 				}
@@ -755,7 +774,7 @@ ExecuteGenCurveFit(GenCurveFitRuntimeParamsPtr p)
 	quiet = 0;
 	if(p->QFlagEncountered){
 		quiet = 1;
-		if(p->QFlagParamsSet[0] && (int) p->QFlag_quiet == 0)
+		if(p->QFlagParamsSet[0] && (int) p->quiet == 0)
 			quiet = 0;
 	}
 	
@@ -937,7 +956,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	goiP->noupdate = 0;
 	if(p->NFlagEncountered){
 		goiP->noupdate = 1;
-		if(p->NFlagParamsSet[0] && (int) p->NFlag_noupdate == 0)
+		if(p->NFlagParamsSet[0] && (int) p->noupdate == 0)
 			goiP->noupdate = 0;
 	}
 	
@@ -998,7 +1017,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	 */
 	goiP->unMaskedPoints = WavePoints(p->dataWave.waveH);
 	if(p->MFlagEncountered){
-		if(err = MDGetDPDataFromNumericWave(p->MFlag_maskwave, goiP->mask)) // Get copy.
+		if(err = MDGetDPDataFromNumericWave(p->maskwave, goiP->mask)) // Get copy.
 			goto done;
 	} else {
 		//there was no mask wave specfied, use unit weighting
@@ -1125,12 +1144,12 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	 this section initialises the weightwave, except for those that are masked
 	 if there is no weightwave specified then set the weight wave to unity
 	 */
-	if(p->WFlagEncountered && p->WFlag_weighttype){
+	if(p->WFlagEncountered && p->weighttype){
 		jj = 0;
 		for(ii = 0 ; ii < goiP->dataPoints ; ii += 1){
 			if(!(goiP->mask[ii] == 0 || IsNaN64(goiP->mask + ii))){
 				indices[0] = ii;
-				if(err = MDGetNumericWavePointValue(p->WFlag_weighttype, indices, &temp1))
+				if(err = MDGetNumericWavePointValue(p->weighttype, indices, &temp1))
 					goto done;
 				
 				if((int)goiP->weighttype == 0)
@@ -1169,10 +1188,10 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	 Either way, fill goiP->fullExtentOfData with the total range of x-values.
 	 */
 	if(p->XFlagEncountered){
-		if(err = MDGetWaveDimensions(p->XFlag_xx, &numdimensions, dimensionSizes)) 
+		if(err = MDGetWaveDimensions(p->xx, &numdimensions, dimensionSizes))
 			goto done;
 		if(goiP->numVarMD > 1 && numdimensions == 1){
-			if (err = MDGetDPDataFromNumericWave(p->XFlag_xx, *goiP->allIndependentVariable))// Get copy.
+			if (err = MDGetDPDataFromNumericWave(p->xx, *goiP->allIndependentVariable))// Get copy.
 				goto done;
 			
 			for(ii = 1 ; ii < goiP->numVarMD ; ii += 1)
@@ -1180,7 +1199,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 					goto done;
 
 		} else
-			if (err = MDGetDPDataFromNumericWave(p->XFlag_xx, *goiP->allIndependentVariable))// Get copy.
+			if (err = MDGetDPDataFromNumericWave(p->xx, *goiP->allIndependentVariable))// Get copy.
 				goto done;
 		
 		jj = 0;
@@ -1243,14 +1262,14 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	
 	if(!p->DFlagEncountered){		//if there is no destination wave specified
 		if(goiP->numVarMD == 1){	//and if the data is 1D
-			dimensionSizes[0] = (CountInt)p->LFlag_destLen;
+			dimensionSizes[0] = (CountInt)p->destLen;
 			outPutType = WaveType(p->dataWave.waveH);	//to save memory use datawaves type
 			if(err = MDMakeWave(&goiP->OUT_data, datawavename, goiP->cDF, dimensionSizes, outPutType, 1))
 				goto done;
 			minpos = findmin(*goiP->allIndependentVariable, goiP->dataPoints);
 			maxpos = findmax(*goiP->allIndependentVariable, goiP->dataPoints);
 			temp1 = (*goiP->allIndependentVariable)[maxpos] - (*goiP->allIndependentVariable)[minpos];
-			temp1 /= floor(p->LFlag_destLen) - 1;
+			temp1 /= floor(p->destLen) - 1;
 			
 			if(err = MDSetWaveScaling(goiP->OUT_data, ROWS, &temp1, &(goiP->allIndependentVariable[0][minpos])))
 				goto done;
@@ -1262,7 +1281,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 			
 			goiP->OUT_x[0] = goiP->tempWaveHndl_OUTx;
 			
-			for(ii = 0 ; ii < (CountInt)p->LFlag_destLen ; ii += 1){
+			for(ii = 0 ; ii < (CountInt)p->destLen ; ii += 1){
 				indices[0] = ii;
 				value[0] = goiP->allIndependentVariable[0][minpos]+((double)ii) * temp1;
 				if(err = MDSetNumericWavePointValue(goiP->OUT_x[0], indices, value))
@@ -1278,12 +1297,12 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 	} else {		//destination wave specified
 		for(ii = 0; ii < MAX_MDFIT_SIZE ; ii += 1)
 			goiP->OUT_x[ii] = goiP->fullExtentOfData[ii];
-		goiP->OUT_data = p->DFlag_outputwave;	
+		goiP->OUT_data = p->outputwave;	
 	}
 	
 	if(p->RFlagEncountered){
-		if(p->RFlag_resid != NULL){
-			goiP->OUT_res = p->RFlag_resid;
+		if(p->resid != NULL){
+			goiP->OUT_res = p->resid;
 		} else {
 			dimensionSizes[1] = 0;
 			dimensionSizes[0] = WavePoints(p->dataWave.waveH);
@@ -1307,7 +1326,7 @@ init_GenCurveFitInternals(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr
 					
 					if(p->DFlagEncountered){
 						if(p->XFlagEncountered){
-							WaveName(p->XFlag_xx, &xwavename[0]);
+							WaveName(p->xx, &xwavename[0]);
 						} else {
 							WaveName(goiP->OUT_x[0], &xwavename[0]);
 						}
