@@ -47,7 +47,6 @@ int checkInput(GenCurveFitRuntimeParamsPtr p, GenCurveFitInternalsPtr goiP){
 	
 	if (p->fitfunEncountered) {
         //couldn't get function information
-        
 		if(err = GetFunctionInfo(p->fitfun, &goiP->fi))
 			goto done;
 

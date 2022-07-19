@@ -11,9 +11,9 @@ resource 'vers' (1) {						// XOP version info.
 };
 
 resource 'vers' (2) {						// Igor version info.
-	0x07, 0x00, release, 0x00, 0,			// Version bytes and country integer.
-	"7.00",
-	"(for Igor 5.00 or later)"
+	0x08, 0x00, release, 0x00, 0,			// Version bytes and country integer.
+	"8.00",
+	"(for Igor 8.00 or later)"
 };
 
 resource 'STR#' (1100) {					/* custom error messages */
@@ -116,9 +116,9 @@ resource 'STR#' (1101) {					// Misc strings for XOP.
 resource 'XOPI' (1100) {
 	XOP_VERSION,							// XOP protocol version.
 	DEV_SYS_CODE,							// Development system information.
-	0,										// Obsolete - set to zero.
-	0,										// Obsolete - set to zero.
-	XOP_TOOLKIT_VERSION,					// XOP Toolkit version.
+    XOP_FEATURE_FLAGS,                        // Tells Igor about XOP features
+    XOPI_RESERVED,                            // Reserved - must be zero.
+    XOP_TOOLKIT_VERSION,                    // XOP Toolkit version.
 };
 
 resource 'XOPC' (1100) {
